@@ -1,75 +1,146 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
+import Navbar from './components/Nafbar'; // Fixed typo: 'nafbar' -> 'Navbar'
+import PrivateRoute from './components/PrivateRoute';
+// import Home from './pages/Home';
+// import Login from './pages/Login';
+// import Dashboard from './pages/Dashboard';
+// Import other pages as needed
+// import StudentHealthProfile from './pages/StudentHealthProfile';
+// import MedicationSubmission from './pages/MedicationSubmission';
+// import MedicalEvents from './pages/MedicalEvents';
+// import MedicalSupplies from './pages/MedicalSupplies';
+// import VaccinationCampaigns from './pages/VaccinationCampaigns';
+// import HealthCheckCampaigns from './pages/HealthCheckCampaigns';
+// import Appointments from './pages/Appointments';
+// import UserManagement from './pages/UserManagement';
+// import Posts from './pages/Posts';
 
 const App = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('');
-  const [loggedIn, setLoggedIn] = useState(false);
+  // Initialize userRole from localStorage
+  const [userRole, setUserRole] = useState(localStorage.getItem('role') || null);
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-
-    // Tạm thời bỏ qua xác thực thật
-    if (email && password && role) {
-      localStorage.setItem('role', role);
-      setLoggedIn(true);
-      alert(`Đăng nhập thành công với vai trò: ${role}`);
+  // Update userRole in localStorage whenever it changes
+  useEffect(() => {
+    if (userRole) {
+      localStorage.setItem('role', userRole);
     } else {
-      alert('Vui lòng nhập đầy đủ thông tin');
+      localStorage.removeItem('role');
     }
+  }, [userRole]);
+
+  const handleLogin = (role) => {
+    setUserRole(role);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('role');
-    setLoggedIn(false);
-    setEmail('');
-    setPassword('');
-    setRole('');
+    setUserRole(null);
   };
 
   return (
-    <div className="login-page">
-      <div className="background-image" />
-      <div className="overlay" />
-
-      {!loggedIn ? (
-        <form className="login-card" onSubmit={handleLogin}>
-          <h2>Đăng nhập</h2>
-
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
+    <Router>
+      <div className="app">
+        <div className="background-image" />
+        <div className="overlay" />
+        <Navbar userRole={userRole} onLogout={handleLogout} />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route
+            path="/login"
+            element={
+              userRole ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />
+            }
           />
 
-          <input
-            type="password"
-            placeholder="Mật khẩu"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
+          {/* Protected Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute allowedRoles={['Admin', 'MedicalStaff', 'Parent', 'Student']}>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/student-health-profile"
+            element={
+              <PrivateRoute allowedRoles={['Parent', 'Student']}>
+                <StudentHealthProfile />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/medication-submission"
+            element={
+              <PrivateRoute allowedRoles={['Parent', 'MedicalStaff']}>
+                <MedicationSubmission />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/medical-events"
+            element={
+              <PrivateRoute allowedRoles={['MedicalStaff']}>
+                <MedicalEvents />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/medical-supplies"
+            element={
+              <PrivateRoute allowedRoles={['MedicalStaff', 'Admin']}>
+                <MedicalSupplies />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/vaccination-campaigns"
+            element={
+              <PrivateRoute allowedRoles={['MedicalStaff', 'Parent']}>
+                <VaccinationCampaigns />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/health-check-campaigns"
+            element={
+              <PrivateRoute allowedRoles={['MedicalStaff', 'Parent']}>
+                <HealthCheckCampaigns />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/appointments"
+            element={
+              <PrivateRoute allowedRoles={['MedicalStaff', 'Parent']}>
+                <Appointments />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/user-management"
+            element={
+              <PrivateRoute allowedRoles={['Admin']}>
+                <UserManagement />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/posts"
+            element={
+              <PrivateRoute allowedRoles={['Admin', 'MedicalStaff']}>
+                <Posts />
+              </PrivateRoute>
+            }
           />
 
-          {/* <select value={role} onChange={(e) => setRole(e.target.value)} required>
-            <option value="">-- Chọn vai trò --</option>
-            <option value="parent">Phụ huynh</option>
-            <option value="student">Học sinh</option>
-            <option value="nurse">Nhân viên y tế</option>
-            <option value="admin">Quản trị viên</option>
-          </select> */}
-
-          <button type="submit">Đăng nhập</button>
-        </form>
-      ) : (
-        <div className="login-card">
-          <h2>Chào mừng, vai trò: {role}</h2>
-          <button onClick={handleLogout}>Đăng xuất</button>
-        </div>
-      )}
-    </div>
+          {/* Fallback Route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </Router>
   );
 };
 
