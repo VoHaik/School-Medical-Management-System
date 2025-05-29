@@ -157,6 +157,56 @@ This will start the Node.js server with nodemon, which will automatically restar
   - JPA/Hibernate
   - MySQL
 
+## Troubleshooting
+
+### Common Issues
+
+#### "localhost refused to connect" Error
+
+If you encounter a "localhost refused to connect" error when trying to access the application:
+
+1. **Wait for initialization**: The services might still be starting up. Wait a minute and try again.
+
+2. **Check command windows**: Look at the command windows for any error messages. If you see errors:
+   - For frontend issues: Check if there are any dependency or compilation errors
+   - For backend issues: Check if the ports are already in use or if there are database connection issues
+
+3. **Verify ports are available**: Make sure no other applications are using ports 3000, 5000, or 8080.
+
+4. **Set PORT environment variable**: If the React app isn't starting on port 3000, explicitly set the PORT:
+   ```
+   set PORT=3000
+   npm start
+   ```
+
+5. **Restart the application**: Close all command windows and run the start scripts again.
+
+6. **Clear node_modules**: If you're experiencing dependency issues:
+   ```
+   cd frontend
+   rd /s /q node_modules
+   npm install
+   ```
+
+   ```
+   cd backend
+   rd /s /q node_modules
+   npm install
+   ```
+
+#### Database Connection Issues
+
+If you encounter database connection issues:
+
+1. **Verify MySQL is running**: Make sure your MySQL server is running on port 3306.
+
+2. **Check database credentials**: Verify that the username and password in `application.properties` match your MySQL credentials.
+
+3. **Create the database**: Make sure the `school_health_db` database exists:
+   ```sql
+   CREATE DATABASE school_health_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
