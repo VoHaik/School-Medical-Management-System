@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medications - School Health Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/medications.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>School Health MS</h2>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <div class="sidebar-user">
+                <div class="user-avatar">
+                    <img src="images/avatar.png" alt="User Avatar">
+                </div>
+                <div class="user-info">
+                    <h3>John Doe</h3>
+                    <p class="user-role">Parent</p>
+                </div>
+            </div>            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+                    </li>
+                    <li>
+                        <a href="health-records.html"><i class="fas fa-notes-medical"></i> Health Records</a>
+                    </li>
+                    <li class="active">
+                        <a href="medications.html"><i class="fas fa-pills"></i> Medications</a>
+                    </li>
+                    <li>
+                        <a href="medical-events.html"><i class="fas fa-first-aid"></i> Medical Events</a>
+                    </li>
+                    <li>
+                        <a href="vaccinations.html"><i class="fas fa-syringe"></i> Vaccinations</a>
+                    </li>
+                    <li>
+                        <a href="health-checkups.html"><i class="fas fa-stethoscope"></i> Health Check-ups</a>
+                    </li>
+                    <li>
+                        <a href="appointments.html"><i class="fas fa-calendar-check"></i> Appointments</a>
+                    </li>
+                    <li>
+                        <a href="emergency-contacts.html"><i class="fas fa-phone-alt"></i> Emergency Contacts</a>
+                    </li>
+                    <li>
+                        <a href="medical-supplies.html"><i class="fas fa-box-open"></i> Medical Supplies</a>
+                    </li>
+                    <li>
+                        <a href="reports.html"><i class="fas fa-chart-bar"></i> Reports</a>
+                    </li>
+                    <li>
+                        <a href="settings.html"><i class="fas fa-cog"></i> Settings</a>
+                    </li>
+                    <li>
+                        <a href="help.html"><i class="fas fa-question-circle"></i> Help</a>
+                    </li>
+                    <li>
+                        <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="index.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="header-left">
+                    <h1>Medications</h1>
+                    <p>Manage your child's medications</p>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary" id="request-medication-btn">
+                        <i class="fas fa-plus"></i> Request Medication
+                    </button>
+                </div>
+            </header>
+
+            <div class="medications-container">
+                <!-- Student Selector -->
+                <div class="student-selector">
+                    <label for="student-select">Select Student:</label>
+                    <div class="select-wrapper">
+                        <select id="student-select">
+                            <option value="student1">Emily Doe - Grade 5</option>
+                            <option value="student2">Michael Doe - Grade 3</option>
+                        </select>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+
+                <!-- Active Medications -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2>Active Medications</h2>
+                        <div class="card-actions">
+                            <button class="btn-icon-text" id="medication-history-btn">
+                                <i class="fas fa-history"></i> View History
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Medication</th>
+                                        <th>Dosage</th>
+                                        <th>Schedule</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Albuterol Inhaler</td>
+                                        <td>2 puffs</td>
+                                        <td>As needed for wheezing</td>
+                                        <td>Jan 15, 2025</td>
+                                        <td>Jan 15, 2026</td>
+                                        <td><span class="badge badge-success">Active</span></td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                                                <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                                                <button class="btn-icon text-danger" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Allergy Medication (Cetirizine)</td>
+                                        <td>5mg</td>
+                                        <td>Once daily in the morning</td>
+                                        <td>Mar 10, 2025</td>
+                                        <td>May 30, 2025</td>
+                                        <td><span class="badge badge-success">Active</span></td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                                                <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                                                <button class="btn-icon text-danger" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="no-data-message" style="display: none;">
+                            <i class="fas fa-pills"></i>
+                            <p>No active medications found</p>
+                            <button class="btn btn-primary" id="no-data-request-btn">
+                                Request Medication
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medication Administration Log -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2>Administration Log</h2>
+                        <div class="card-actions">
+                            <div class="date-filter">
+                                <label>Filter by:</label>
+                                <select id="log-time-filter">
+                                    <option value="week">This Week</option>
+                                    <option value="month" selected>This Month</option>
+                                    <option value="quarter">Last 3 Months</option>
+                                    <option value="custom">Custom Range</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="medication-log">
+                            <div class="log-item">
+                                <div class="log-date">
+                                    <span class="day">28</span>
+                                    <span class="month">May</span>
+                                </div>
+                                <div class="log-details">
+                                    <h4>Allergy Medication (Cetirizine)</h4>
+                                    <p><strong>Administered by:</strong> Nurse Sarah Johnson</p>
+                                    <p><strong>Time:</strong> 8:30 AM</p>
+                                    <p><strong>Notes:</strong> Given as scheduled. No adverse reactions observed.</p>
+                                </div>
+                                <div class="log-status">
+                                    <span class="badge badge-success"><i class="fas fa-check"></i> Completed</span>
+                                </div>
+                            </div>
+                            <div class="log-item">
+                                <div class="log-date">
+                                    <span class="day">27</span>
+                                    <span class="month">May</span>
+                                </div>
+                                <div class="log-details">
+                                    <h4>Allergy Medication (Cetirizine)</h4>
+                                    <p><strong>Administered by:</strong> Nurse Sarah Johnson</p>
+                                    <p><strong>Time:</strong> 8:45 AM</p>
+                                    <p><strong>Notes:</strong> Given as scheduled. No adverse reactions observed.</p>
+                                </div>
+                                <div class="log-status">
+                                    <span class="badge badge-success"><i class="fas fa-check"></i> Completed</span>
+                                </div>
+                            </div>
+                            <div class="log-item">
+                                <div class="log-date">
+                                    <span class="day">26</span>
+                                    <span class="month">May</span>
+                                </div>
+                                <div class="log-details">
+                                    <h4>Allergy Medication (Cetirizine)</h4>
+                                    <p><strong>Administered by:</strong> Nurse Michael Smith</p>
+                                    <p><strong>Time:</strong> 8:30 AM</p>
+                                    <p><strong>Notes:</strong> Given as scheduled. No adverse reactions observed.</p>
+                                </div>
+                                <div class="log-status">
+                                    <span class="badge badge-success"><i class="fas fa-check"></i> Completed</span>
+                                </div>
+                            </div>
+                            <div class="log-item">
+                                <div class="log-date">
+                                    <span class="day">25</span>
+                                    <span class="month">May</span>
+                                </div>
+                                <div class="log-details">
+                                    <h4>Albuterol Inhaler</h4>
+                                    <p><strong>Administered by:</strong> Nurse Sarah Johnson</p>
+                                    <p><strong>Time:</strong> 1:15 PM</p>
+                                    <p><strong>Notes:</strong> Student reported mild wheezing after PE class. Administered 2 puffs. Symptoms improved within 15 minutes.</p>
+                                </div>
+                                <div class="log-status">
+                                    <span class="badge badge-success"><i class="fas fa-check"></i> Completed</span>
+                                </div>
+                            </div>
+                            <div class="log-item">
+                                <div class="log-date">
+                                    <span class="day">25</span>
+                                    <span class="month">May</span>
+                                </div>
+                                <div class="log-details">
+                                    <h4>Allergy Medication (Cetirizine)</h4>
+                                    <p><strong>Administered by:</strong> Nurse Sarah Johnson</p>
+                                    <p><strong>Time:</strong> 8:30 AM</p>
+                                    <p><strong>Notes:</strong> Given as scheduled. No adverse reactions observed.</p>
+                                </div>
+                                <div class="log-status">
+                                    <span class="badge badge-success"><i class="fas fa-check"></i> Completed</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pagination">
+                            <button class="pagination-btn"><i class="fas fa-chevron-left"></i></button>
+                            <span>Page 1 of 3</span>
+                            <button class="pagination-btn"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medication Request Form Modal -->
+                <div class="modal" id="medication-modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Request Medication Administration</h2>
+                            <button class="close-btn"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="medication-form">
+                                <div class="form-group">
+                                    <label for="student-name">Student</label>
+                                    <select id="student-name" required>
+                                        <option value="">Select Student</option>
+                                        <option value="emily">Emily Doe - Grade 5</option>
+                                        <option value="michael">Michael Doe - Grade 3</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="medication-name">Medication Name</label>
+                                    <input type="text" id="medication-name" placeholder="Enter medication name" required>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="dosage">Dosage</label>
+                                        <input type="text" id="dosage" placeholder="e.g., 5mg, 1 tablet" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="route">Route</label>
+                                        <select id="route" required>
+                                            <option value="">Select Route</option>
+                                            <option value="oral">Oral</option>
+                                            <option value="topical">Topical</option>
+                                            <option value="inhaled">Inhaled</option>
+                                            <option value="injection">Injection</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="schedule">Administration Schedule</label>
+                                    <input type="text" id="schedule" placeholder="e.g., Once daily, As needed" required>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="start-date">Start Date</label>
+                                        <input type="date" id="start-date" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="end-date">End Date</label>
+                                        <input type="date" id="end-date" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="prescriber">Prescribing Physician</label>
+                                    <input type="text" id="prescriber" placeholder="Enter physician's name" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="reason">Reason for Medication</label>
+                                    <textarea id="reason" rows="3" placeholder="Explain why this medication is needed" required></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="special-instructions">Special Instructions</label>
+                                    <textarea id="special-instructions" rows="3" placeholder="Any special instructions for administration"></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Prescription Upload</label>
+                                    <div class="file-upload-container">
+                                        <input type="file" id="prescription-file" class="file-input">
+                                        <label for="prescription-file" class="file-label">
+                                            <i class="fas fa-upload"></i> Upload Prescription
+                                        </label>
+                                        <span class="file-name">No file chosen</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="parent-consent" required>
+                                        <label for="parent-consent">I consent for the school health staff to administer the above medication to my child.</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-actions">
+                                    <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/script.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/medications.js"></script>
+</body>
+</html>
