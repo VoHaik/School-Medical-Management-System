@@ -1,0 +1,46 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="student1Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff9a9e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fecfef;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="200" height="200" fill="url(#student1Gradient)" rx="100"/>
+  
+  <!-- Student illustration -->
+  <g>
+    <!-- Head -->
+    <circle cx="100" cy="70" r="40" fill="#fff"/>
+    
+    <!-- Hair -->
+    <path d="M 65 45 Q 100 30 135 45 Q 135 65 100 60 Q 65 65 65 45" fill="#8b4513"/>
+    
+    <!-- Face features -->
+    <!-- Eyes -->
+    <circle cx="88" cy="65" r="3" fill="#333"/>
+    <circle cx="112" cy="65" r="3" fill="#333"/>
+    
+    <!-- Nose -->
+    <ellipse cx="100" cy="75" rx="2" ry="3" fill="#ffb3ba"/>
+    
+    <!-- Smile -->
+    <path d="M 90 82 Q 100 90 110 82" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+    
+    <!-- Body -->
+    <rect x="60" y="110" width="80" height="90" fill="#fff" rx="10"/>
+    
+    <!-- School uniform details -->
+    <rect x="70" y="120" width="60" height="70" fill="#4169e1" rx="5"/>
+    <rect x="85" y="130" width="30" height="40" fill="#fff" rx="3"/>
+  </g>
+  
+  <!-- Decorative elements -->
+  <g fill="rgba(255,255,255,0.3)">
+    <circle cx="30" cy="40" r="8"/>
+    <circle cx="170" cy="60" r="6"/>
+    <circle cx="25" cy="160" r="10"/>
+    <circle cx="175" cy="140" r="7"/>
+  </g>
+</svg>

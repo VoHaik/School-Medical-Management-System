@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vaccinations Management - School Health Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/vaccinations.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="logo">
+                <img src="images/logo.png" alt="School Health Logo">
+                <h2>School Health</h2>
+            </div>            <nav>
+                <ul>
+                    <li><a href="dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+                    <li><a href="health-records.html"><i class="fas fa-file-medical"></i> Health Records</a></li>
+                    <li><a href="medications.html"><i class="fas fa-pills"></i> Medications</a></li>
+                    <li><a href="medical-events.html"><i class="fas fa-first-aid"></i> Medical Events</a></li>
+                    <li class="active"><a href="vaccinations.html"><i class="fas fa-syringe"></i> Vaccinations</a></li>
+                    <li><a href="health-checkups.html"><i class="fas fa-stethoscope"></i> Health Check-ups</a></li>
+                    <li><a href="appointments.html"><i class="fas fa-calendar-check"></i> Appointments</a></li>
+                    <li><a href="emergency-contacts.html"><i class="fas fa-phone-alt"></i> Emergency Contacts</a></li>
+                    <li><a href="medical-supplies.html"><i class="fas fa-box-open"></i> Medical Supplies</a></li>
+                    <li><a href="reports.html"><i class="fas fa-chart-bar"></i> Reports</a></li>
+                    <li><a href="settings.html"><i class="fas fa-cog"></i> Settings</a></li>
+                    <li><a href="help.html"><i class="fas fa-question-circle"></i> Help</a></li>
+                    <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
+                    <li><a href="login.html"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <header>
+                <div class="header-content">
+                    <h1>Vaccinations Management</h1>
+                    <div class="user-info">
+                        <div class="notifications">
+                            <i class="fas fa-bell"></i>
+                            <span class="badge">3</span>
+                        </div>
+                        <div class="user">
+                            <img src="images/user-avatar.png" alt="User Avatar">
+                            <span>Jane Doe</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-wrapper">
+                <div class="content-header">
+                    <div class="search-bar">
+                        <input type="text" placeholder="Search vaccinations...">
+                        <button><i class="fas fa-search"></i></button>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn primary" id="addVaccinationBtn"><i class="fas fa-plus"></i> New Vaccination Record</button>
+                        <button class="btn secondary"><i class="fas fa-download"></i> Export</button>
+                    </div>
+                </div>
+
+                <!-- Vaccination Management Tabs -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="upcoming">Upcoming Vaccinations</button>
+                    <button class="tab-btn" data-tab="history">Vaccination History</button>
+                    <button class="tab-btn" data-tab="campaigns">Vaccination Campaigns</button>
+                    <button class="tab-btn" data-tab="inventory">Vaccine Inventory</button>
+                </div>
+
+                <!-- Upcoming Vaccinations Tab -->
+                <div class="tab-content active" id="upcoming">
+                    <div class="card">
+                        <h3>Upcoming Scheduled Vaccinations</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Class</th>
+                                    <th>Vaccination Type</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Michael Brown</td>
+                                    <td>Grade 5A</td>
+                                    <td>Measles, Mumps, Rubella (MMR)</td>
+                                    <td>May 15, 2023</td>
+                                    <td><span class="status pending">Pending</span></td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-check"></i></button>
+                                        <button class="btn icon"><i class="fas fa-times"></i></button>
+                                        <button class="btn icon"><i class="fas fa-edit"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Sarah Johnson</td>
+                                    <td>Grade 3B</td>
+                                    <td>Tdap Booster</td>
+                                    <td>May 18, 2023</td>
+                                    <td><span class="status scheduled">Scheduled</span></td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-check"></i></button>
+                                        <button class="btn icon"><i class="fas fa-times"></i></button>
+                                        <button class="btn icon"><i class="fas fa-edit"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>David Lee</td>
+                                    <td>Grade 1C</td>
+                                    <td>Varicella (Chickenpox)</td>
+                                    <td>May 20, 2023</td>
+                                    <td><span class="status pending">Pending</span></td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-check"></i></button>
+                                        <button class="btn icon"><i class="fas fa-times"></i></button>
+                                        <button class="btn icon"><i class="fas fa-edit"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Emily Wilson</td>
+                                    <td>Grade 6A</td>
+                                    <td>HPV Vaccine (Dose 2)</td>
+                                    <td>May 25, 2023</td>
+                                    <td><span class="status scheduled">Scheduled</span></td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-check"></i></button>
+                                        <button class="btn icon"><i class="fas fa-times"></i></button>
+                                        <button class="btn icon"><i class="fas fa-edit"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="card">
+                        <h3>Required Consent Forms</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Class</th>
+                                    <th>Vaccination Type</th>
+                                    <th>Consent Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>James Thompson</td>
+                                    <td>Grade 4B</td>
+                                    <td>Influenza</td>
+                                    <td><span class="status pending">Awaiting</span></td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-envelope"></i></button>
+                                        <button class="btn icon"><i class="fas fa-file-alt"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Olivia Martinez</td>
+                                    <td>Grade 2A</td>
+                                    <td>Hepatitis A</td>
+                                    <td><span class="status approved">Approved</span></td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-file-alt"></i></button>
+                                        <button class="btn icon"><i class="fas fa-print"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>William Davis</td>
+                                    <td>Grade 5C</td>
+                                    <td>Meningococcal</td>
+                                    <td><span class="status denied">Declined</span></td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-file-alt"></i></button>
+                                        <button class="btn icon"><i class="fas fa-comment"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Vaccination History Tab -->
+                <div class="tab-content" id="history">
+                    <div class="card">
+                        <h3>Vaccination History</h3>
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label for="grade-filter">Grade:</label>
+                                <select id="grade-filter">
+                                    <option value="all">All Grades</option>
+                                    <option value="1">Grade 1</option>
+                                    <option value="2">Grade 2</option>
+                                    <option value="3">Grade 3</option>
+                                    <option value="4">Grade 4</option>
+                                    <option value="5">Grade 5</option>
+                                    <option value="6">Grade 6</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="vaccine-filter">Vaccine Type:</label>
+                                <select id="vaccine-filter">
+                                    <option value="all">All Types</option>
+                                    <option value="mmr">MMR</option>
+                                    <option value="tdap">Tdap</option>
+                                    <option value="hpv">HPV</option>
+                                    <option value="flu">Influenza</option>
+                                    <option value="varicella">Varicella</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="date-filter">Date Range:</label>
+                                <input type="date" id="date-from">
+                                <span>to</span>
+                                <input type="date" id="date-to">
+                            </div>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Class</th>
+                                    <th>Vaccination Type</th>
+                                    <th>Date Administered</th>
+                                    <th>Administered By</th>
+                                    <th>Batch Number</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>John Smith</td>
+                                    <td>Grade 4A</td>
+                                    <td>Influenza</td>
+                                    <td>Nov 12, 2022</td>
+                                    <td>Dr. Amanda Chen</td>
+                                    <td>FLU22-45678</td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-file-alt"></i></button>
+                                        <button class="btn icon"><i class="fas fa-print"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Emma Williams</td>
+                                    <td>Grade 2B</td>
+                                    <td>MMR (Dose 2)</td>
+                                    <td>Oct 5, 2022</td>
+                                    <td>Nurse Robert Johnson</td>
+                                    <td>MMR22-98765</td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-file-alt"></i></button>
+                                        <button class="btn icon"><i class="fas fa-print"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Sophia Garcia</td>
+                                    <td>Grade 6B</td>
+                                    <td>HPV (Dose 1)</td>
+                                    <td>Sep 15, 2022</td>
+                                    <td>Dr. Michael Lee</td>
+                                    <td>HPV22-34567</td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-file-alt"></i></button>
+                                        <button class="btn icon"><i class="fas fa-print"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Noah Johnson</td>
+                                    <td>Grade 3C</td>
+                                    <td>Hepatitis B (Dose 3)</td>
+                                    <td>Aug 20, 2022</td>
+                                    <td>Nurse Sarah Brown</td>
+                                    <td>HEP22-23456</td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-file-alt"></i></button>
+                                        <button class="btn icon"><i class="fas fa-print"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Vaccination Campaigns Tab -->
+                <div class="tab-content" id="campaigns">
+                    <div class="card">
+                        <h3>Current and Upcoming Vaccination Campaigns</h3>
+                        <div class="campaigns-list">
+                            <div class="campaign-item">
+                                <div class="campaign-header">
+                                    <h4>Annual Influenza Vaccination Program</h4>
+                                    <span class="status active">Active</span>
+                                </div>
+                                <div class="campaign-details">
+                                    <div class="detail-group">
+                                        <span class="label">Start Date:</span>
+                                        <span class="value">Oct 1, 2023</span>
+                                    </div>
+                                    <div class="detail-group">
+                                        <span class="label">End Date:</span>
+                                        <span class="value">Dec 15, 2023</span>
+                                    </div>
+                                    <div class="detail-group">
+                                        <span class="label">Target Grades:</span>
+                                        <span class="value">All Grades</span>
+                                    </div>
+                                    <div class="detail-group">
+                                        <span class="label">Progress:</span>
+                                        <div class="progress-bar">
+                                            <div class="progress" style="width: 65%;">65%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="campaign-actions">
+                                    <button class="btn secondary">View Details</button>
+                                    <button class="btn primary">Manage Schedule</button>
+                                </div>
+                            </div>
+
+                            <div class="campaign-item">
+                                <div class="campaign-header">
+                                    <h4>HPV Vaccination Program for 6th Graders</h4>
+                                    <span class="status scheduled">Scheduled</span>
+                                </div>
+                                <div class="campaign-details">
+                                    <div class="detail-group">
+                                        <span class="label">Start Date:</span>
+                                        <span class="value">Jan 15, 2024</span>
+                                    </div>
+                                    <div class="detail-group">
+                                        <span class="label">End Date:</span>
+                                        <span class="value">Mar 30, 2024</span>
+                                    </div>
+                                    <div class="detail-group">
+                                        <span class="label">Target Grades:</span>
+                                        <span class="value">Grade 6</span>
+                                    </div>
+                                    <div class="detail-group">
+                                        <span class="label">Preparation:</span>
+                                        <div class="progress-bar">
+                                            <div class="progress" style="width: 40%;">40%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="campaign-actions">
+                                    <button class="btn secondary">View Details</button>
+                                    <button class="btn primary">Prepare Consent Forms</button>
+                                </div>
+                            </div>
+
+                            <div class="campaign-item">
+                                <div class="campaign-header">
+                                    <h4>Measles Catch-up Campaign</h4>
+                                    <span class="status completed">Completed</span>
+                                </div>
+                                <div class="campaign-details">
+                                    <div class="detail-group">
+                                        <span class="label">Start Date:</span>
+                                        <span class="value">Apr 10, 2023</span>
+                                    </div>
+                                    <div class="detail-group">
+                                        <span class="label">End Date:</span>
+                                        <span class="value">May 20, 2023</span>
+                                    </div>
+                                    <div class="detail-group">
+                                        <span class="label">Target Grades:</span>
+                                        <span class="value">Grades 1-3</span>
+                                    </div>
+                                    <div class="detail-group">
+                                        <span class="label">Completion:</span>
+                                        <div class="progress-bar">
+                                            <div class="progress" style="width: 100%;">100%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="campaign-actions">
+                                    <button class="btn secondary">View Report</button>
+                                    <button class="btn primary">Download Certificates</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Create New Vaccination Campaign</h3>
+                        <form class="form-grid">
+                            <div class="form-group">
+                                <label for="campaign-name">Campaign Name</label>
+                                <input type="text" id="campaign-name" placeholder="Enter campaign name">
+                            </div>
+                            <div class="form-group">
+                                <label for="vaccine-type">Vaccine Type</label>
+                                <select id="vaccine-type">
+                                    <option value="">Select vaccine type</option>
+                                    <option value="mmr">MMR</option>
+                                    <option value="tdap">Tdap</option>
+                                    <option value="hpv">HPV</option>
+                                    <option value="flu">Influenza</option>
+                                    <option value="varicella">Varicella</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="target-grades">Target Grades</label>
+                                <select id="target-grades" multiple>
+                                    <option value="1">Grade 1</option>
+                                    <option value="2">Grade 2</option>
+                                    <option value="3">Grade 3</option>
+                                    <option value="4">Grade 4</option>
+                                    <option value="5">Grade 5</option>
+                                    <option value="6">Grade 6</option>
+                                </select>
+                                <small>Hold Ctrl/Cmd to select multiple</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="start-date">Start Date</label>
+                                <input type="date" id="start-date">
+                            </div>
+                            <div class="form-group">
+                                <label for="end-date">End Date</label>
+                                <input type="date" id="end-date">
+                            </div>
+                            <div class="form-group">
+                                <label for="description">Description</label>
+                                <textarea id="description" rows="4" placeholder="Enter campaign description"></textarea>
+                            </div>
+                            <div class="form-group checkbox-group">
+                                <label>
+                                    <input type="checkbox" id="consent-required">
+                                    Parental Consent Required
+                                </label>
+                            </div>
+                            <div class="form-group checkbox-group">
+                                <label>
+                                    <input type="checkbox" id="notifications">
+                                    Send Notifications to Parents
+                                </label>
+                            </div>
+                            <div class="form-actions">
+                                <button type="reset" class="btn secondary">Cancel</button>
+                                <button type="submit" class="btn primary">Create Campaign</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Vaccine Inventory Tab -->
+                <div class="tab-content" id="inventory">
+                    <div class="card">
+                        <h3>Vaccine Inventory</h3>
+                        <div class="inventory-summary">
+                            <div class="summary-item">
+                                <span class="label">Total Vaccines</span>
+                                <span class="value">528</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Low Stock Items</span>
+                                <span class="value warning">3</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Expired Items</span>
+                                <span class="value danger">2</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Value</span>
+                                <span class="value">$12,450</span>
+                            </div>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Vaccine Name</th>
+                                    <th>Type</th>
+                                    <th>Manufacturer</th>
+                                    <th>Batch Number</th>
+                                    <th>Quantity</th>
+                                    <th>Expiry Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Fluarix Quadrivalent</td>
+                                    <td>Influenza</td>
+                                    <td>GSK</td>
+                                    <td>FLU23-78901</td>
+                                    <td>120</td>
+                                    <td>Jun 30, 2024</td>
+                                    <td><span class="status good">Good</span></td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-edit"></i></button>
+                                        <button class="btn icon"><i class="fas fa-trash-alt"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>M-M-R II</td>
+                                    <td>Measles, Mumps, Rubella</td>
+                                    <td>Merck</td>
+                                    <td>MMR23-12345</td>
+                                    <td>85</td>
+                                    <td>Dec 15, 2023</td>
+                                    <td><span class="status warning">Low</span></td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-edit"></i></button>
+                                        <button class="btn icon"><i class="fas fa-trash-alt"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Gardasil 9</td>
+                                    <td>HPV</td>
+                                    <td>Merck</td>
+                                    <td>HPV23-56789</td>
+                                    <td>42</td>
+                                    <td>Sep 5, 2024</td>
+                                    <td><span class="status good">Good</span></td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-edit"></i></button>
+                                        <button class="btn icon"><i class="fas fa-trash-alt"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Adacel</td>
+                                    <td>Tdap</td>
+                                    <td>Sanofi Pasteur</td>
+                                    <td>TDAP23-34567</td>
+                                    <td>15</td>
+                                    <td>Aug 20, 2023</td>
+                                    <td><span class="status danger">Expiring</span></td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-edit"></i></button>
+                                        <button class="btn icon"><i class="fas fa-trash-alt"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Varivax</td>
+                                    <td>Varicella</td>
+                                    <td>Merck</td>
+                                    <td>VAR23-67890</td>
+                                    <td>60</td>
+                                    <td>Oct 10, 2024</td>
+                                    <td><span class="status good">Good</span></td>
+                                    <td>
+                                        <button class="btn icon"><i class="fas fa-edit"></i></button>
+                                        <button class="btn icon"><i class="fas fa-trash-alt"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="card">
+                        <h3>Add New Vaccine to Inventory</h3>
+                        <form class="form-grid">
+                            <div class="form-group">
+                                <label for="vaccine-name">Vaccine Name</label>
+                                <input type="text" id="vaccine-name" placeholder="Enter vaccine name">
+                            </div>
+                            <div class="form-group">
+                                <label for="vaccine-type-add">Vaccine Type</label>
+                                <select id="vaccine-type-add">
+                                    <option value="">Select vaccine type</option>
+                                    <option value="influenza">Influenza</option>
+                                    <option value="mmr">MMR</option>
+                                    <option value="tdap">Tdap</option>
+                                    <option value="hpv">HPV</option>
+                                    <option value="varicella">Varicella</option>
+                                    <option value="hepb">Hepatitis B</option>
+                                    <option value="hepa">Hepatitis A</option>
+                                    <option value="meningococcal">Meningococcal</option>
+                                    <option value="pneumococcal">Pneumococcal</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="manufacturer">Manufacturer</label>
+                                <input type="text" id="manufacturer" placeholder="Enter manufacturer">
+                            </div>
+                            <div class="form-group">
+                                <label for="batch-number">Batch Number</label>
+                                <input type="text" id="batch-number" placeholder="Enter batch number">
+                            </div>
+                            <div class="form-group">
+                                <label for="quantity">Quantity</label>
+                                <input type="number" id="quantity" min="1" placeholder="Enter quantity">
+                            </div>
+                            <div class="form-group">
+                                <label for="expiry-date">Expiry Date</label>
+                                <input type="date" id="expiry-date">
+                            </div>
+                            <div class="form-group">
+                                <label for="storage-temp">Storage Temperature (°C)</label>
+                                <input type="text" id="storage-temp" placeholder="e.g., 2-8°C">
+                            </div>
+                            <div class="form-group">
+                                <label for="unit-price">Unit Price ($)</label>
+                                <input type="number" id="unit-price" step="0.01" placeholder="Enter unit price">
+                            </div>
+                            <div class="form-group">
+                                <label for="notes">Notes</label>
+                                <textarea id="notes" rows="3" placeholder="Any additional information"></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="reset" class="btn secondary">Cancel</button>
+                                <button type="submit" class="btn primary">Add to Inventory</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Vaccination Modal -->
+    <div class="modal" id="addVaccinationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Vaccination Record</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form class="form-grid">
+                    <div class="form-group">
+                        <label for="student-select">Student</label>
+                        <select id="student-select" required>
+                            <option value="">Select student</option>
+                            <option value="1">John Smith - Grade 4A</option>
+                            <option value="2">Emma Williams - Grade 2B</option>
+                            <option value="3">Michael Brown - Grade 5A</option>
+                            <option value="4">Sophia Garcia - Grade 6B</option>
+                            <option value="5">Noah Johnson - Grade 3C</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="vaccine-select">Vaccine</label>
+                        <select id="vaccine-select" required>
+                            <option value="">Select vaccine</option>
+                            <option value="1">Fluarix Quadrivalent (Influenza)</option>
+                            <option value="2">M-M-R II (Measles, Mumps, Rubella)</option>
+                            <option value="3">Gardasil 9 (HPV)</option>
+                            <option value="4">Adacel (Tdap)</option>
+                            <option value="5">Varivax (Varicella)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="dose-number">Dose Number</label>
+                        <select id="dose-number">
+                            <option value="1">Dose 1</option>
+                            <option value="2">Dose 2</option>
+                            <option value="3">Dose 3</option>
+                            <option value="booster">Booster</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="vaccination-date">Vaccination Date</label>
+                        <input type="date" id="vaccination-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="administered-by">Administered By</label>
+                        <input type="text" id="administered-by" placeholder="Enter name of healthcare provider">
+                    </div>
+                    <div class="form-group">
+                        <label for="administration-site">Administration Site</label>
+                        <select id="administration-site">
+                            <option value="">Select site</option>
+                            <option value="left-arm">Left Arm</option>
+                            <option value="right-arm">Right Arm</option>
+                            <option value="left-thigh">Left Thigh</option>
+                            <option value="right-thigh">Right Thigh</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="vaccine-batch">Batch Number</label>
+                        <select id="vaccine-batch" required>
+                            <option value="">Select batch</option>
+                            <option value="FLU23-78901">FLU23-78901 (Exp: Jun 30, 2024)</option>
+                            <option value="MMR23-12345">MMR23-12345 (Exp: Dec 15, 2023)</option>
+                            <option value="HPV23-56789">HPV23-56789 (Exp: Sep 5, 2024)</option>
+                            <option value="TDAP23-34567">TDAP23-34567 (Exp: Aug 20, 2023)</option>
+                            <option value="VAR23-67890">VAR23-67890 (Exp: Oct 10, 2024)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="consent-verified">Parental Consent</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="consent" value="yes" required> Verified
+                            </label>
+                            <label>
+                                <input type="radio" name="consent" value="no"> Not Required
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reaction">Adverse Reaction</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="reaction" value="none" checked> None
+                            </label>
+                            <label>
+                                <input type="radio" name="reaction" value="mild"> Mild
+                            </label>
+                            <label>
+                                <input type="radio" name="reaction" value="severe"> Severe
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="notes-vaccination">Notes</label>
+                        <textarea id="notes-vaccination" rows="3" placeholder="Any additional information"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" id="cancelVaccinationBtn">Cancel</button>
+                <button class="btn primary" id="saveVaccinationBtn">Save Record</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+    <script src="js/vaccinations.js"></script>
+</body>
+</html>

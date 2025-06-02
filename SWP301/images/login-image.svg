@@ -1,0 +1,48 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="loginGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#loginGradient)"/>
+  
+  <!-- Main illustration container -->
+  <rect x="200" y="100" width="400" height="400" fill="rgba(255,255,255,0.95)" rx="20"/>
+  
+  <!-- Medical cross icon -->
+  <g fill="#4facfe">
+    <rect x="375" y="160" width="20" height="80" />
+    <rect x="350" y="185" width="70" height="20" />
+  </g>
+  
+  <!-- Security shield -->
+  <g fill="none" stroke="#667eea" stroke-width="6">
+    <path d="M 350 280 L 350 350 L 400 380 L 450 350 L 450 280 L 400 260 Z"/>
+  </g>
+  
+  <!-- Lock symbol -->
+  <g fill="#667eea">
+    <rect x="385" y="310" width="30" height="25" rx="3"/>
+    <circle cx="400" cy="305" r="8" fill="none" stroke="#667eea" stroke-width="3"/>
+  </g>
+  
+  <!-- Decorative dots -->
+  <g fill="rgba(255,255,255,0.3)">
+    <circle cx="100" cy="150" r="8"/>
+    <circle cx="150" cy="200" r="6"/>
+    <circle cx="650" cy="180" r="10"/>
+    <circle cx="700" cy="250" r="8"/>
+    <circle cx="120" cy="450" r="12"/>
+    <circle cx="680" cy="420" r="9"/>
+  </g>
+  
+  <!-- Title -->
+  <text x="400" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#667eea">Secure Login</text>
+  <text x="400" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#999">Access Your Health Dashboard</text>
+  
+  <!-- Bottom decorative line -->
+  <line x1="250" y1="520" x2="550" y2="520" stroke="#4facfe" stroke-width="3" opacity="0.5"/>
+</svg>

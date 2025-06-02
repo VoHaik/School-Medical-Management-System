@@ -1,0 +1,502 @@
+/* Reports & Analytics Styles */
+
+.reports-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.date-range {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.date-range label {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.date-range input {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+}
+
+.export-options {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Reports Overview */
+.reports-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.overview-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.card-content h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    color: var(--light-text);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-color);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.metric-change {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.metric-change.positive {
+    color: var(--success-color);
+}
+
+.metric-change.negative {
+    color: var(--danger-color);
+}
+
+.metric-change.neutral {
+    color: var(--light-text);
+}
+
+/* Reports Grid */
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.report-section {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-header h2 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 1.2rem;
+}
+
+.section-controls select {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: white;
+    font-size: 0.9rem;
+}
+
+.chart-container {
+    padding: 1.5rem;
+    height: 300px;
+    position: relative;
+}
+
+.chart-container canvas {
+    max-height: 100%;
+}
+
+/* Medication Statistics */
+.medication-stats {
+    padding: 1.5rem;
+}
+
+.med-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.med-stat-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.med-name {
+    min-width: 120px;
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.med-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.med-progress {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.med-count {
+    min-width: 80px;
+    text-align: right;
+    font-size: 0.9rem;
+    color: var(--light-text);
+}
+
+/* Grade Statistics Table */
+.grade-stats-table {
+    padding: 1.5rem;
+    overflow-x: auto;
+}
+
+.grade-stats-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.grade-stats-table th {
+    background: var(--light-bg);
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+}
+
+.grade-stats-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.grade-stats-table tr:hover {
+    background: var(--light-bg);
+}
+
+/* Vaccination Progress */
+.vaccination-progress {
+    padding: 1.5rem;
+}
+
+.vaccine-item {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.vaccine-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.vaccine-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.vaccine-name {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.vaccine-percentage {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.vaccine-bar {
+    height: 10px;
+    background: var(--border-color);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.vaccine-progress {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success-color), var(--primary-color));
+    border-radius: 5px;
+    transition: width 0.3s ease;
+}
+
+.vaccine-count {
+    font-size: 0.85rem;
+    color: var(--light-text);
+}
+
+/* Health Alerts */
+.health-alerts {
+    padding: 1.5rem;
+}
+
+.alert-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border-left: 4px solid;
+}
+
+.alert-item.warning {
+    background: rgba(251, 188, 5, 0.1);
+    border-left-color: var(--warning-color);
+}
+
+.alert-item.info {
+    background: rgba(66, 133, 244, 0.1);
+    border-left-color: var(--primary-color);
+}
+
+.alert-item.success {
+    background: rgba(52, 168, 83, 0.1);
+    border-left-color: var(--success-color);
+}
+
+.alert-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.alert-item.warning .alert-icon {
+    background: var(--warning-color);
+}
+
+.alert-item.info .alert-icon {
+    background: var(--primary-color);
+}
+
+.alert-item.success .alert-icon {
+    background: var(--success-color);
+}
+
+.alert-content h4 {
+    margin: 0 0 0.25rem 0;
+    color: var(--text-color);
+    font-size: 1rem;
+}
+
+.alert-content p {
+    margin: 0 0 0.25rem 0;
+    color: var(--light-text);
+    font-size: 0.9rem;
+}
+
+.alert-time {
+    font-size: 0.8rem;
+    color: var(--lighter-text);
+}
+
+/* Quick Reports */
+.quick-reports {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-top: 2rem;
+}
+
+.quick-reports h2 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-color);
+    text-align: center;
+}
+
+.quick-report-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.report-btn {
+    background: white;
+    border: 2px solid var(--border-color);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+.report-btn:hover {
+    border-color: var(--primary-color);
+    background: rgba(66, 133, 244, 0.05);
+    color: var(--primary-color);
+}
+
+.report-btn i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .reports-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .date-range {
+        justify-content: center;
+    }
+
+    .export-options {
+        justify-content: center;
+    }
+
+    .reports-overview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .overview-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .reports-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .chart-container {
+        height: 250px;
+    }
+
+    .med-stat-item {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+
+    .med-name {
+        min-width: auto;
+    }
+
+    .med-count {
+        text-align: center;
+        min-width: auto;
+    }
+
+    .vaccine-info {
+        flex-direction: column;
+        gap: 0.25rem;
+        text-align: center;
+    }
+
+    .alert-item {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .quick-report-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .reports-overview {
+        grid-template-columns: 1fr;
+    }
+
+    .overview-card {
+        padding: 1rem;
+    }
+
+    .metric-number {
+        font-size: 1.5rem;
+    }
+
+    .chart-container {
+        height: 200px;
+        padding: 1rem;
+    }
+
+    .grade-stats-table {
+        font-size: 0.8rem;
+    }
+
+    .quick-report-options {
+        grid-template-columns: 1fr;
+    }
+
+    .report-btn {
+        padding: 1rem;
+    }
+
+    .report-btn i {
+        font-size: 1.5rem;
+    }
+}

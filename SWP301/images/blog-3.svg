@@ -1,0 +1,33 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="blog3Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="300" fill="url(#blog3Gradient)"/>
+  
+  <!-- Nutrition illustration -->
+  <g fill="rgba(255,255,255,0.9)">
+    <!-- Apple -->
+    <circle cx="150" cy="120" r="25" fill="#ff4757"/>
+    <ellipse cx="155" cy="100" rx="8" ry="4" fill="#2ed573"/>
+    <path d="M 150 100 Q 155 95 160 100" fill="none" stroke="#2ed573" stroke-width="2"/>
+    
+    <!-- Carrot -->
+    <polygon points="200,100 210,100 215,140 195,140" fill="#ff6348"/>
+    <polygon points="200,100 202,90 208,90 210,100" fill="#2ed573"/>
+    
+    <!-- Water bottle -->
+    <rect x="240" y="110" width="20" height="50" fill="#74b9ff" rx="10"/>
+    <rect x="242" y="105" width="16" height="10" fill="#0984e3" rx="5"/>
+    <rect x="245" y="120" width="10" height="30" fill="rgba(255,255,255,0.5)" rx="5"/>
+  </g>
+  
+  <!-- Title overlay -->
+  <rect x="0" y="220" width="400" height="80" fill="rgba(0,0,0,0.7)"/>
+  <text x="200" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="white">Nutrition</text>
+  <text x="200" y="275" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#ccc">Healthy Eating Habits</text>
+</svg>

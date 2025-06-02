@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointments - School Health Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/appointments.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>School Health MS</h1>
+            </div>            <nav class="nav-menu">
+                <ul>
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="health-records.html">Health Records</a></li>
+                    <li><a href="medications.html">Medications</a></li>
+                    <li><a href="medical-events.html">Medical Events</a></li>
+                    <li><a href="appointments.html" class="active">Appointments</a></li>
+                    <li><a href="emergency-contacts.html">Emergency Contacts</a></li>
+                    <li><a href="medical-supplies.html">Medical Supplies</a></li>
+                    <li><a href="reports.html">Reports</a></li>
+                    <li><a href="settings.html">Settings</a></li>
+                    <li><a href="help.html">Help</a></li>
+                    <li><a href="profile.html">Profile</a></li>
+                    <li><a href="login.html" class="btn-login">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-calendar-check"></i> Appointment Management</h1>
+                <p>Schedule, manage, and track health appointments for students</p>
+            </div>
+
+            <div class="appointments-controls">
+                <div class="view-toggle">
+                    <button class="btn btn-toggle active" data-view="calendar">
+                        <i class="fas fa-calendar"></i> Calendar View
+                    </button>
+                    <button class="btn btn-toggle" data-view="list">
+                        <i class="fas fa-list"></i> List View
+                    </button>
+                </div>
+                <div class="appointment-actions">
+                    <select id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="no-show">No Show</option>
+                    </select>
+                    <button class="btn btn-primary" id="addAppointmentBtn">
+                        <i class="fas fa-plus"></i> New Appointment
+                    </button>
+                </div>
+            </div>
+
+            <div class="appointments-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Today's Appointments</h3>
+                        <span class="stat-number" id="todayAppointments">8</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Pending</h3>
+                        <span class="stat-number" id="pendingAppointments">12</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Completed</h3>
+                        <span class="stat-number" id="completedAppointments">45</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-times"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>No Shows</h3>
+                        <span class="stat-number" id="noShowAppointments">3</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar View -->
+            <div id="calendarView" class="appointments-view active">
+                <div class="calendar-header">
+                    <button class="btn btn-icon" id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+                    <h2 id="currentMonth">May 2025</h2>
+                    <button class="btn btn-icon" id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="calendar-grid">
+                    <div class="calendar-days">
+                        <div class="day-header">Sun</div>
+                        <div class="day-header">Mon</div>
+                        <div class="day-header">Tue</div>
+                        <div class="day-header">Wed</div>
+                        <div class="day-header">Thu</div>
+                        <div class="day-header">Fri</div>
+                        <div class="day-header">Sat</div>
+                    </div>
+                    <div class="calendar-dates" id="calendarDates">
+                        <!-- Calendar dates will be generated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- List View -->
+            <div id="listView" class="appointments-view">
+                <div class="appointments-list">
+                    <div class="appointment-card">
+                        <div class="appointment-time">
+                            <div class="time">9:00 AM</div>
+                            <div class="date">May 29, 2025</div>
+                        </div>
+                        <div class="appointment-info">
+                            <h3>Sarah Johnson</h3>
+                            <p>Grade 5A • Regular Health Checkup</p>
+                            <div class="appointment-tags">
+                                <span class="tag checkup">Checkup</span>
+                                <span class="tag routine">Routine</span>
+                            </div>
+                        </div>
+                        <div class="appointment-status">
+                            <span class="status-badge scheduled">Scheduled</span>
+                        </div>
+                        <div class="appointment-actions">
+                            <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                            <button class="btn-icon" title="Complete"><i class="fas fa-check"></i></button>
+                            <button class="btn-icon" title="Cancel"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="appointment-card">
+                        <div class="appointment-time">
+                            <div class="time">10:30 AM</div>
+                            <div class="date">May 29, 2025</div>
+                        </div>
+                        <div class="appointment-info">
+                            <h3>Michael Chen</h3>
+                            <p>Grade 3B • Follow-up Visit</p>
+                            <div class="appointment-tags">
+                                <span class="tag followup">Follow-up</span>
+                                <span class="tag medication">Medication</span>
+                            </div>
+                        </div>
+                        <div class="appointment-status">
+                            <span class="status-badge scheduled">Scheduled</span>
+                        </div>
+                        <div class="appointment-actions">
+                            <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                            <button class="btn-icon" title="Complete"><i class="fas fa-check"></i></button>
+                            <button class="btn-icon" title="Cancel"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="appointment-card completed">
+                        <div class="appointment-time">
+                            <div class="time">2:15 PM</div>
+                            <div class="date">May 28, 2025</div>
+                        </div>
+                        <div class="appointment-info">
+                            <h3>Emma Wilson</h3>
+                            <p>Grade 7C • Vaccination</p>
+                            <div class="appointment-tags">
+                                <span class="tag vaccination">Vaccination</span>
+                                <span class="tag required">Required</span>
+                            </div>
+                        </div>
+                        <div class="appointment-status">
+                            <span class="status-badge completed">Completed</span>
+                        </div>
+                        <div class="appointment-actions">
+                            <button class="btn-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                            <button class="btn-icon" title="Print Report"><i class="fas fa-print"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Appointment Modal -->
+    <div id="addAppointmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Schedule New Appointment</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="addAppointmentForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="studentName">Student Name</label>
+                        <input type="text" id="studentName" placeholder="Search student..." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="appointmentType">Appointment Type</label>
+                        <select id="appointmentType" required>
+                            <option value="">Select Type</option>
+                            <option value="checkup">Regular Checkup</option>
+                            <option value="vaccination">Vaccination</option>
+                            <option value="followup">Follow-up Visit</option>
+                            <option value="emergency">Emergency</option>
+                            <option value="consultation">Consultation</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="appointmentDate">Date</label>
+                        <input type="date" id="appointmentDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="appointmentTime">Time</label>
+                        <input type="time" id="appointmentTime" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="duration">Duration (minutes)</label>
+                        <select id="duration">
+                            <option value="15">15 minutes</option>
+                            <option value="30" selected>30 minutes</option>
+                            <option value="45">45 minutes</option>
+                            <option value="60">1 hour</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="priority">Priority</label>
+                        <select id="priority">
+                            <option value="low">Low</option>
+                            <option value="normal" selected>Normal</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reason">Reason for Visit</label>
+                    <textarea id="reason" rows="3" placeholder="Brief description of the appointment purpose..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="notes">Additional Notes</label>
+                    <textarea id="notes" rows="2" placeholder="Any special instructions or notes..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelAppointment">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Schedule Appointment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>School Health MS</h3>
+                    <p>A comprehensive solution for school health management.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="dashboard.html">Dashboard</a></li>
+                        <li><a href="health-records.html">Health Records</a></li>
+                        <li><a href="medications.html">Medications</a></li>
+                        <li><a href="appointments.html">Appointments</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact Us</h3>
+                    <p>Email: info@schoolhealthms.com</p>
+                    <p>Phone: +1 (123) 456-7890</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 School Health Management System. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+    <script src="js/appointments.js"></script>
+</body>
+</html>
