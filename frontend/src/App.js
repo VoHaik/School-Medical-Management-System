@@ -1,3 +1,14 @@
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import StudentProfile from './pages/StudentProfile';
+import StudentBlog from './pages/StudentBlog';
+import { AuthProvider } from './context/AuthContext';
+
 // Prevent direct execution with Node.js
 if (typeof window === 'undefined') {
   console.error(
@@ -10,6 +21,7 @@ if (typeof window === 'undefined') {
   process.exit(1);
 }
 
+<<<<<<< HEAD
 import React, { useContext } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
@@ -21,6 +33,8 @@ import StudentProfile from './pages/StudentProfile';
 import StudentBlog from './pages/StudentBlog';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 
+=======
+>>>>>>> 9711c02188ec4f99d6a7ed2271aed1517fcd31d1
 function App() {
   return (
     <AuthProvider>

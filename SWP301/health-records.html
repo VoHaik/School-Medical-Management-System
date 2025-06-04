@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Records - School Health Management System</title>    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/health-records.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>School Health MS</h2>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <div class="sidebar-user">
+                <div class="user-avatar">
+                    <img src="images/avatar.png" alt="User Avatar">
+                </div>
+                <div class="user-info">
+                    <h3>John Doe</h3>
+                    <p class="user-role">Parent</p>
+                </div>
+            </div>            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+                    </li>
+                    <li class="active">
+                        <a href="health-records.html"><i class="fas fa-notes-medical"></i> Health Records</a>
+                    </li>
+                    <li>
+                        <a href="medications.html"><i class="fas fa-pills"></i> Medications</a>
+                    </li>
+                    <li>
+                        <a href="medical-events.html"><i class="fas fa-first-aid"></i> Medical Events</a>
+                    </li>
+                    <li>
+                        <a href="vaccinations.html"><i class="fas fa-syringe"></i> Vaccinations</a>
+                    </li>
+                    <li>
+                        <a href="health-checkups.html"><i class="fas fa-stethoscope"></i> Health Check-ups</a>
+                    </li>
+                    <li>
+                        <a href="appointments.html"><i class="fas fa-calendar-check"></i> Appointments</a>
+                    </li>
+                    <li>
+                        <a href="emergency-contacts.html"><i class="fas fa-phone-alt"></i> Emergency Contacts</a>
+                    </li>
+                    <li>
+                        <a href="medical-supplies.html"><i class="fas fa-box-open"></i> Medical Supplies</a>
+                    </li>
+                    <li>
+                        <a href="reports.html"><i class="fas fa-chart-bar"></i> Reports</a>
+                    </li>
+                    <li>
+                        <a href="settings.html"><i class="fas fa-cog"></i> Settings</a>
+                    </li>
+                    <li>
+                        <a href="help.html"><i class="fas fa-question-circle"></i> Help</a>
+                    </li>
+                    <li>
+                        <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="index.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="header-left">
+                    <h1>Health Records</h1>
+                    <p>Manage your child's health information</p>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Record
+                    </button>
+                </div>
+            </header>
+
+            <div class="health-records-container">
+                <!-- Student Selector -->
+                <div class="student-selector">
+                    <label for="student-select">Select Student:</label>
+                    <div class="select-wrapper">
+                        <select id="student-select">
+                            <option value="student1">Emily Doe - Grade 5</option>
+                            <option value="student2">Michael Doe - Grade 3</option>
+                        </select>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="health-record-tabs">
+                    <button class="tab-btn active" data-tab="general">General Information</button>
+                    <button class="tab-btn" data-tab="allergies">Allergies</button>
+                    <button class="tab-btn" data-tab="conditions">Medical Conditions</button>
+                    <button class="tab-btn" data-tab="immunizations">Immunizations</button>
+                    <button class="tab-btn" data-tab="history">Medical History</button>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- General Information Tab -->
+                    <div class="tab-pane active" id="general">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h2>Personal Information</h2>
+                                <a href="#" class="card-action edit-action"><i class="fas fa-edit"></i> Edit</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="profile-grid">
+                                    <div class="profile-item">
+                                        <span class="profile-label">Full Name</span>
+                                        <span class="profile-value">Emily Doe</span>
+                                    </div>
+                                    <div class="profile-item">
+                                        <span class="profile-label">Date of Birth</span>
+                                        <span class="profile-value">January 15, 2015</span>
+                                    </div>
+                                    <div class="profile-item">
+                                        <span class="profile-label">Gender</span>
+                                        <span class="profile-value">Female</span>
+                                    </div>
+                                    <div class="profile-item">
+                                        <span class="profile-label">Blood Type</span>
+                                        <span class="profile-value">A+</span>
+                                    </div>
+                                    <div class="profile-item">
+                                        <span class="profile-label">Grade</span>
+                                        <span class="profile-value">5</span>
+                                    </div>
+                                    <div class="profile-item">
+                                        <span class="profile-label">Class</span>
+                                        <span class="profile-value">5B</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h2>Emergency Contacts</h2>
+                                <a href="#" class="card-action edit-action"><i class="fas fa-edit"></i> Edit</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="emergency-contacts">
+                                    <div class="contact-card">
+                                        <div class="contact-info">
+                                            <h3>Primary Contact</h3>
+                                            <p><strong>Name:</strong> John Doe (Father)</p>
+                                            <p><strong>Phone:</strong> (555) 123-4567</p>
+                                            <p><strong>Email:</strong> john.doe@example.com</p>
+                                        </div>
+                                        <div class="contact-actions">
+                                            <button class="btn-icon"><i class="fas fa-edit"></i></button>
+                                            <button class="btn-icon"><i class="fas fa-trash-alt"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="contact-card">
+                                        <div class="contact-info">
+                                            <h3>Secondary Contact</h3>
+                                            <p><strong>Name:</strong> Jane Doe (Mother)</p>
+                                            <p><strong>Phone:</strong> (555) 987-6543</p>
+                                            <p><strong>Email:</strong> jane.doe@example.com</p>
+                                        </div>
+                                        <div class="contact-actions">
+                                            <button class="btn-icon"><i class="fas fa-edit"></i></button>
+                                            <button class="btn-icon"><i class="fas fa-trash-alt"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="contact-card">
+                                        <div class="contact-info">
+                                            <h3>Additional Contact</h3>
+                                            <p><strong>Name:</strong> Robert Smith (Uncle)</p>
+                                            <p><strong>Phone:</strong> (555) 456-7890</p>
+                                            <p><strong>Email:</strong> robert.smith@example.com</p>
+                                        </div>
+                                        <div class="contact-actions">
+                                            <button class="btn-icon"><i class="fas fa-edit"></i></button>
+                                            <button class="btn-icon"><i class="fas fa-trash-alt"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="add-contact">
+                                        <button class="btn btn-outline-primary">
+                                            <i class="fas fa-plus"></i> Add Contact
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h2>Insurance Information</h2>
+                                <a href="#" class="card-action edit-action"><i class="fas fa-edit"></i> Edit</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="profile-grid">
+                                    <div class="profile-item">
+                                        <span class="profile-label">Insurance Provider</span>
+                                        <span class="profile-value">BlueCross Health Insurance</span>
+                                    </div>
+                                    <div class="profile-item">
+                                        <span class="profile-label">Policy Number</span>
+                                        <span class="profile-value">BC123456789</span>
+                                    </div>
+                                    <div class="profile-item">
+                                        <span class="profile-label">Group Number</span>
+                                        <span class="profile-value">GRP987654</span>
+                                    </div>
+                                    <div class="profile-item">
+                                        <span class="profile-label">Policy Holder</span>
+                                        <span class="profile-value">John Doe</span>
+                                    </div>
+                                    <div class="profile-item">
+                                        <span class="profile-label">Relationship to Student</span>
+                                        <span class="profile-value">Father</span>
+                                    </div>
+                                    <div class="profile-item">
+                                        <span class="profile-label">Expiration Date</span>
+                                        <span class="profile-value">December 31, 2025</span>
+                                    </div>
+                                </div>
+                                <div class="file-upload">
+                                    <p><strong>Insurance Card:</strong></p>
+                                    <div class="uploaded-file">
+                                        <i class="fas fa-file-pdf"></i> insurance_card.pdf
+                                        <button class="btn-link"><i class="fas fa-download"></i> Download</button>
+                                        <button class="btn-link text-danger"><i class="fas fa-trash-alt"></i> Delete</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Allergies Tab -->
+                    <div class="tab-pane" id="allergies">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h2>Allergies</h2>
+                                <a href="#" class="card-action edit-action"><i class="fas fa-plus"></i> Add New</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Allergy Type</th>
+                                                <th>Specific Allergen</th>
+                                                <th>Severity</th>
+                                                <th>Reaction</th>
+                                                <th>Treatment</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Food</td>
+                                                <td>Peanuts</td>
+                                                <td><span class="badge badge-danger">Severe</span></td>
+                                                <td>Hives, Difficulty Breathing</td>
+                                                <td>Epinephrine Auto-Injector</td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <button class="btn-icon"><i class="fas fa-edit"></i></button>
+                                                        <button class="btn-icon text-danger"><i class="fas fa-trash-alt"></i></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Environmental</td>
+                                                <td>Pollen</td>
+                                                <td><span class="badge badge-warning">Moderate</span></td>
+                                                <td>Sneezing, Itchy Eyes</td>
+                                                <td>Antihistamine</td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <button class="btn-icon"><i class="fas fa-edit"></i></button>
+                                                        <button class="btn-icon text-danger"><i class="fas fa-trash-alt"></i></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Medication</td>
+                                                <td>Penicillin</td>
+                                                <td><span class="badge badge-warning">Moderate</span></td>
+                                                <td>Rash, Hives</td>
+                                                <td>Avoid medication, Antihistamine if exposed</td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <button class="btn-icon"><i class="fas fa-edit"></i></button>
+                                                        <button class="btn-icon text-danger"><i class="fas fa-trash-alt"></i></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h2>Allergy Action Plan</h2>
+                                <a href="#" class="card-action edit-action"><i class="fas fa-edit"></i> Edit</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> This action plan outlines steps to be taken in case of an allergic reaction.
+                                </div>
+                                <div class="action-plan">
+                                    <h3>For Mild to Moderate Allergic Reaction:</h3>
+                                    <ul>
+                                        <li>Notify school nurse immediately</li>
+                                        <li>Stay with the student and monitor symptoms</li>
+                                        <li>Administer antihistamine as prescribed</li>
+                                        <li>Contact parent/guardian</li>
+                                    </ul>
+                                    
+                                    <h3>For Severe Allergic Reaction:</h3>
+                                    <ul>
+                                        <li>Call emergency services (911) immediately</li>
+                                        <li>Administer epinephrine auto-injector as per prescription</li>
+                                        <li>Position student flat with legs elevated</li>
+                                        <li>Notify school nurse and administration</li>
+                                        <li>Contact parent/guardian</li>
+                                    </ul>
+                                    
+                                    <div class="file-upload">
+                                        <p><strong>Attached Documents:</strong></p>
+                                        <div class="uploaded-file">
+                                            <i class="fas fa-file-pdf"></i> allergy_action_plan_signed.pdf
+                                            <button class="btn-link"><i class="fas fa-download"></i> Download</button>
+                                            <button class="btn-link text-danger"><i class="fas fa-trash-alt"></i> Delete</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Medical Conditions Tab -->
+                    <div class="tab-pane" id="conditions">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h2>Medical Conditions</h2>
+                                <a href="#" class="card-action edit-action"><i class="fas fa-plus"></i> Add New</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Condition</th>
+                                                <th>Diagnosed Date</th>
+                                                <th>Status</th>
+                                                <th>Treatment</th>
+                                                <th>Physician</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Asthma</td>
+                                                <td>March 2022</td>
+                                                <td><span class="badge badge-primary">Controlled</span></td>
+                                                <td>Albuterol Inhaler as needed</td>
+                                                <td>Dr. Sarah Johnson</td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <button class="btn-icon"><i class="fas fa-edit"></i></button>
+                                                        <button class="btn-icon text-danger"><i class="fas fa-trash-alt"></i></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Mild Eczema</td>
+                                                <td>January 2023</td>
+                                                <td><span class="badge badge-success">Managed</span></td>
+                                                <td>Topical corticosteroid cream as needed</td>
+                                                <td>Dr. Robert Chen</td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <button class="btn-icon"><i class="fas fa-edit"></i></button>
+                                                        <button class="btn-icon text-danger"><i class="fas fa-trash-alt"></i></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h2>Medical Care Plans</h2>
+                                <a href="#" class="card-action edit-action"><i class="fas fa-plus"></i> Add New</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="care-plans">
+                                    <div class="care-plan-item">
+                                        <div class="care-plan-header">
+                                            <h3>Asthma Management Plan</h3>
+                                            <span class="badge badge-success">Active</span>
+                                        </div>
+                                        <div class="care-plan-details">
+                                            <p><strong>Created:</strong> April 15, 2023</p>
+                                            <p><strong>Last Updated:</strong> January 10, 2025</p>
+                                            <p><strong>Physician:</strong> Dr. Sarah Johnson</p>
+                                            <div class="care-plan-actions">
+                                                <button class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> View</button>
+                                                <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-download"></i> Download</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Immunizations Tab -->
+                    <div class="tab-pane" id="immunizations">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h2>Immunization Records</h2>
+                                <a href="#" class="card-action edit-action"><i class="fas fa-plus"></i> Add New</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Vaccine</th>
+                                                <th>Date</th>
+                                                <th>Dose</th>
+                                                <th>Administrator</th>
+                                                <th>Location</th>
+                                                <th>Next Due</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>DTaP (Diphtheria, Tetanus, Pertussis)</td>
+                                                <td>Jan 15, 2020</td>
+                                                <td>4th dose</td>
+                                                <td>Dr. Chen</td>
+                                                <td>Pediatric Associates</td>
+                                                <td>Jan 2025</td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <button class="btn-icon"><i class="fas fa-edit"></i></button>
+                                                        <button class="btn-icon text-danger"><i class="fas fa-trash-alt"></i></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>MMR (Measles, Mumps, Rubella)</td>
+                                                <td>Mar 20, 2021</td>
+                                                <td>2nd dose</td>
+                                                <td>Dr. Johnson</td>
+                                                <td>Pediatric Associates</td>
+                                                <td>Complete</td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <button class="btn-icon"><i class="fas fa-edit"></i></button>
+                                                        <button class="btn-icon text-danger"><i class="fas fa-trash-alt"></i></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Varicella (Chickenpox)</td>
+                                                <td>Mar 20, 2021</td>
+                                                <td>2nd dose</td>
+                                                <td>Dr. Johnson</td>
+                                                <td>Pediatric Associates</td>
+                                                <td>Complete</td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <button class="btn-icon"><i class="fas fa-edit"></i></button>
+                                                        <button class="btn-icon text-danger"><i class="fas fa-trash-alt"></i></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Influenza (Flu)</td>
+                                                <td>Oct 10, 2024</td>
+                                                <td>Annual</td>
+                                                <td>School Nurse</td>
+                                                <td>School Health Clinic</td>
+                                                <td>Oct 2025</td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <button class="btn-icon"><i class="fas fa-edit"></i></button>
+                                                        <button class="btn-icon text-danger"><i class="fas fa-trash-alt"></i></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="file-upload mt-4">
+                                    <p><strong>Immunization Records:</strong></p>
+                                    <div class="uploaded-file">
+                                        <i class="fas fa-file-pdf"></i> official_immunization_records.pdf
+                                        <button class="btn-link"><i class="fas fa-download"></i> Download</button>
+                                        <button class="btn-link text-danger"><i class="fas fa-trash-alt"></i> Delete</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h2>Immunization Status</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle"></i> This student's immunizations are up to date according to school requirements.
+                                </div>
+                                <div class="health-status-item">
+                                    <div class="status-label">Overall Compliance</div>
+                                    <div class="status-bar">
+                                        <div class="status-progress" style="width: 100%;">100%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Medical History Tab -->
+                    <div class="tab-pane" id="history">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h2>Medical History</h2>
+                                <a href="#" class="card-action edit-action"><i class="fas fa-plus"></i> Add New</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="timeline medical-timeline">
+                                    <div class="timeline-item">
+                                        <div class="timeline-date">March 15, 2024</div>
+                                        <div class="timeline-content">
+                                            <h4>Annual Physical Examination</h4>
+                                            <p><strong>Provider:</strong> Dr. Sarah Johnson</p>
+                                            <p><strong>Location:</strong> Pediatric Associates</p>
+                                            <p>Routine physical examination. All measurements within normal range.</p>
+                                            <div class="timeline-actions">
+                                                <button class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> View Details</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-date">November 10, 2023</div>
+                                        <div class="timeline-content">
+                                            <h4>Vision & Hearing Screening</h4>
+                                            <p><strong>Provider:</strong> School Health Clinic</p>
+                                            <p><strong>Location:</strong> School</p>
+                                            <p>Vision: 20/30 right eye, 20/40 left eye. Recommendation for follow-up with ophthalmologist.</p>
+                                            <p>Hearing: Within normal range.</p>
+                                            <div class="timeline-actions">
+                                                <button class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> View Details</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-date">October 5, 2023</div>
+                                        <div class="timeline-content">
+                                            <h4>Asthma Check-up</h4>
+                                            <p><strong>Provider:</strong> Dr. Sarah Johnson</p>
+                                            <p><strong>Location:</strong> Pediatric Associates</p>
+                                            <p>Routine check-up for asthma. Lung function tests normal. Continued current medication regimen.</p>
+                                            <div class="timeline-actions">
+                                                <button class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> View Details</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-date">August 20, 2023</div>
+                                        <div class="timeline-content">
+                                            <h4>Dental Check-up</h4>
+                                            <p><strong>Provider:</strong> Dr. Michael Wong</p>
+                                            <p><strong>Location:</strong> Bright Smiles Dental</p>
+                                            <p>Routine dental examination. No cavities. Recommended continued regular brushing and flossing.</p>
+                                            <div class="timeline-actions">
+                                                <button class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> View Details</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h2>Growth Charts</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="growth-charts-container">
+                                    <div class="chart-placeholder">
+                                        <i class="fas fa-chart-line"></i>
+                                        <p>Height & Weight Chart</p>
+                                        <span>(Chart visualization will be displayed here)</span>
+                                    </div>
+                                </div>
+                                <div class="growth-data">
+                                    <h3>Latest Measurements (March 15, 2024)</h3>
+                                    <div class="growth-metrics">
+                                        <div class="metric-item">
+                                            <span class="metric-label">Height</span>
+                                            <span class="metric-value">125 cm</span>
+                                            <span class="metric-percentile">75th percentile</span>
+                                        </div>
+                                        <div class="metric-item">
+                                            <span class="metric-label">Weight</span>
+                                            <span class="metric-value">28 kg</span>
+                                            <span class="metric-percentile">60th percentile</span>
+                                        </div>
+                                        <div class="metric-item">
+                                            <span class="metric-label">BMI</span>
+                                            <span class="metric-value">17.9</span>
+                                            <span class="metric-percentile">Normal range</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/script.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/health-records.js"></script>
+</body>
+</html>

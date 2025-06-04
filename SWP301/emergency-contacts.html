@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Contacts - School Health Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/emergency-contacts.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>School Health MS</h1>
+            </div>            <nav class="nav-menu">
+                <ul>
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="health-records.html">Health Records</a></li>
+                    <li><a href="medications.html">Medications</a></li>
+                    <li><a href="medical-events.html">Medical Events</a></li>
+                    <li><a href="emergency-contacts.html" class="active">Emergency Contacts</a></li>
+                    <li><a href="appointments.html">Appointments</a></li>
+                    <li><a href="medical-supplies.html">Medical Supplies</a></li>
+                    <li><a href="reports.html">Reports</a></li>
+                    <li><a href="settings.html">Settings</a></li>
+                    <li><a href="help.html">Help</a></li>
+                    <li><a href="profile.html">Profile</a></li>
+                    <li><a href="login.html" class="btn-login">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-phone-alt"></i> Emergency Contacts</h1>
+                <p>Manage emergency contact information for quick access during health incidents</p>
+            </div>
+
+            <div class="emergency-controls">
+                <div class="search-filter">
+                    <div class="search-box">
+                        <input type="text" id="searchContacts" placeholder="Search students or contacts...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <select id="gradeFilter">
+                        <option value="">All Grades</option>
+                        <option value="K">Kindergarten</option>
+                        <option value="1">Grade 1</option>
+                        <option value="2">Grade 2</option>
+                        <option value="3">Grade 3</option>
+                        <option value="4">Grade 4</option>
+                        <option value="5">Grade 5</option>
+                        <option value="6">Grade 6</option>
+                        <option value="7">Grade 7</option>
+                        <option value="8">Grade 8</option>
+                        <option value="9">Grade 9</option>
+                        <option value="10">Grade 10</option>
+                        <option value="11">Grade 11</option>
+                        <option value="12">Grade 12</option>
+                    </select>
+                </div>
+                <div class="quick-actions">
+                    <button class="btn btn-secondary" id="exportContactsBtn">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <button class="btn btn-primary" id="addContactBtn">
+                        <i class="fas fa-plus"></i> Add Student
+                    </button>
+                </div>
+            </div>
+
+            <div class="emergency-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total Students</h3>
+                        <span class="stat-number" id="totalStudents">542</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Complete Contacts</h3>
+                        <span class="stat-number" id="completeContacts">518</span>
+                    </div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Incomplete</h3>
+                        <span class="stat-number" id="incompleteContacts">24</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Medical Alerts</h3>
+                        <span class="stat-number" id="medicalAlerts">35</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="contacts-grid">
+                <div class="contact-card">
+                    <div class="student-info">                        <div class="student-avatar">
+                            <img src="images/student-avatar-1.svg" alt="Sarah Johnson">
+                        </div>
+                        <div class="student-details">
+                            <h3>Sarah Johnson</h3>
+                            <p>Grade 5A • Student ID: 2025-001</p>
+                            <div class="medical-alerts">
+                                <span class="alert-badge allergy">Peanut Allergy</span>
+                                <span class="alert-badge condition">Asthma</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="emergency-contacts">
+                        <div class="contact-item primary">
+                            <div class="contact-info">
+                                <strong>Primary: Jennifer Johnson (Mother)</strong>
+                                <p><i class="fas fa-phone"></i> (555) 123-4567</p>
+                                <p><i class="fas fa-envelope"></i> jennifer.johnson@email.com</p>
+                            </div>
+                            <div class="contact-actions">
+                                <button class="btn-icon call-btn" title="Call"><i class="fas fa-phone"></i></button>
+                                <button class="btn-icon email-btn" title="Email"><i class="fas fa-envelope"></i></button>
+                            </div>
+                        </div>
+                        <div class="contact-item secondary">
+                            <div class="contact-info">
+                                <strong>Secondary: Robert Johnson (Father)</strong>
+                                <p><i class="fas fa-phone"></i> (555) 987-6543</p>
+                                <p><i class="fas fa-briefcase"></i> (555) 555-0123 (Work)</p>
+                            </div>
+                            <div class="contact-actions">
+                                <button class="btn-icon call-btn" title="Call"><i class="fas fa-phone"></i></button>
+                                <button class="btn-icon email-btn" title="Email"><i class="fas fa-envelope"></i></button>
+                            </div>
+                        </div>
+                        <div class="contact-item emergency">
+                            <div class="contact-info">
+                                <strong>Emergency: Mary Johnson (Grandmother)</strong>
+                                <p><i class="fas fa-phone"></i> (555) 246-8135</p>
+                            </div>
+                            <div class="contact-actions">
+                                <button class="btn-icon call-btn" title="Call"><i class="fas fa-phone"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon" title="View Full Profile"><i class="fas fa-eye"></i></button>
+                        <button class="btn-icon emergency-call" title="Emergency Call"><i class="fas fa-exclamation-circle"></i></button>
+                    </div>
+                </div>
+
+                <div class="contact-card">
+                    <div class="student-info">                        <div class="student-avatar">
+                            <img src="images/student-avatar-2.svg" alt="Michael Chen">
+                        </div>
+                        <div class="student-details">
+                            <h3>Michael Chen</h3>
+                            <p>Grade 3B • Student ID: 2025-002</p>
+                            <div class="medical-alerts">
+                                <span class="alert-badge medication">Daily Medication</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="emergency-contacts">
+                        <div class="contact-item primary">
+                            <div class="contact-info">
+                                <strong>Primary: Lisa Chen (Mother)</strong>
+                                <p><i class="fas fa-phone"></i> (555) 234-5678</p>
+                                <p><i class="fas fa-envelope"></i> lisa.chen@email.com</p>
+                            </div>
+                            <div class="contact-actions">
+                                <button class="btn-icon call-btn" title="Call"><i class="fas fa-phone"></i></button>
+                                <button class="btn-icon email-btn" title="Email"><i class="fas fa-envelope"></i></button>
+                            </div>
+                        </div>
+                        <div class="contact-item secondary">
+                            <div class="contact-info">
+                                <strong>Secondary: David Chen (Father)</strong>
+                                <p><i class="fas fa-phone"></i> (555) 876-5432</p>
+                                <p><i class="fas fa-briefcase"></i> (555) 555-0456 (Work)</p>
+                            </div>
+                            <div class="contact-actions">
+                                <button class="btn-icon call-btn" title="Call"><i class="fas fa-phone"></i></button>
+                                <button class="btn-icon email-btn" title="Email"><i class="fas fa-envelope"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon" title="View Full Profile"><i class="fas fa-eye"></i></button>
+                        <button class="btn-icon emergency-call" title="Emergency Call"><i class="fas fa-exclamation-circle"></i></button>
+                    </div>
+                </div>
+
+                <div class="contact-card incomplete">
+                    <div class="student-info">                        <div class="student-avatar">
+                            <img src="images/student-avatar-1.svg" alt="Emma Wilson">
+                        </div>
+                        <div class="student-details">
+                            <h3>Emma Wilson</h3>
+                            <p>Grade 7C • Student ID: 2025-003</p>
+                            <div class="incomplete-notice">
+                                <i class="fas fa-exclamation-triangle"></i> Incomplete Contact Info
+                            </div>
+                        </div>
+                    </div>
+                    <div class="emergency-contacts">
+                        <div class="contact-item primary">
+                            <div class="contact-info">
+                                <strong>Primary: Amanda Wilson (Mother)</strong>
+                                <p><i class="fas fa-phone"></i> (555) 345-6789</p>
+                                <p class="missing-info"><i class="fas fa-exclamation"></i> Email address missing</p>
+                            </div>
+                            <div class="contact-actions">
+                                <button class="btn-icon call-btn" title="Call"><i class="fas fa-phone"></i></button>
+                            </div>
+                        </div>
+                        <div class="contact-item missing">
+                            <div class="contact-info">
+                                <p class="missing-info"><i class="fas fa-plus"></i> Secondary contact needed</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-icon urgent" title="Update Required"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon" title="View Full Profile"><i class="fas fa-eye"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pagination">
+                <button class="btn btn-icon" id="prevPage"><i class="fas fa-chevron-left"></i></button>
+                <span class="page-info">Page 1 of 18</span>
+                <button class="btn btn-icon" id="nextPage"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add/Edit Contact Modal -->
+    <div id="contactModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2>Student Emergency Contacts</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="contactForm">
+                <div class="form-section">
+                    <h3>Student Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="studentFirstName">First Name</label>
+                            <input type="text" id="studentFirstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="studentLastName">Last Name</label>
+                            <input type="text" id="studentLastName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="studentGrade">Grade</label>
+                            <select id="studentGrade" required>
+                                <option value="">Select Grade</option>
+                                <option value="K">Kindergarten</option>
+                                <option value="1">Grade 1</option>
+                                <option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option>
+                                <option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option>
+                                <option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option>
+                                <option value="8">Grade 8</option>
+                                <option value="9">Grade 9</option>
+                                <option value="10">Grade 10</option>
+                                <option value="11">Grade 11</option>
+                                <option value="12">Grade 12</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Primary Contact</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="primary_name">Full Name</label>
+                            <input type="text" id="primary_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="primary_relationship">Relationship</label>
+                            <select id="primary_relationship" required>
+                                <option value="">Select Relationship</option>
+                                <option value="mother">Mother</option>
+                                <option value="father">Father</option>
+                                <option value="guardian">Guardian</option>
+                                <option value="grandparent">Grandparent</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="primary_phone">Phone Number</label>
+                            <input type="tel" id="primary_phone" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="primary_email">Email Address</label>
+                            <input type="email" id="primary_email">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Secondary Contact</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="secondary_name">Full Name</label>
+                            <input type="text" id="secondary_name">
+                        </div>
+                        <div class="form-group">
+                            <label for="secondary_relationship">Relationship</label>
+                            <select id="secondary_relationship">
+                                <option value="">Select Relationship</option>
+                                <option value="mother">Mother</option>
+                                <option value="father">Father</option>
+                                <option value="guardian">Guardian</option>
+                                <option value="grandparent">Grandparent</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="secondary_phone">Phone Number</label>
+                            <input type="tel" id="secondary_phone">
+                        </div>
+                        <div class="form-group">
+                            <label for="secondary_email">Email Address</label>
+                            <input type="email" id="secondary_email">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Emergency Contact</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="emergency_name">Full Name</label>
+                            <input type="text" id="emergency_name">
+                        </div>
+                        <div class="form-group">
+                            <label for="emergency_relationship">Relationship</label>
+                            <select id="emergency_relationship">
+                                <option value="">Select Relationship</option>
+                                <option value="grandparent">Grandparent</option>
+                                <option value="aunt_uncle">Aunt/Uncle</option>
+                                <option value="family_friend">Family Friend</option>
+                                <option value="neighbor">Neighbor</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="emergency_phone">Phone Number</label>
+                            <input type="tel" id="emergency_phone">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelContact">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Contacts</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>School Health MS</h3>
+                    <p>A comprehensive solution for school health management.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="dashboard.html">Dashboard</a></li>
+                        <li><a href="health-records.html">Health Records</a></li>
+                        <li><a href="emergency-contacts.html">Emergency Contacts</a></li>
+                        <li><a href="appointments.html">Appointments</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact Us</h3>
+                    <p>Email: info@schoolhealthms.com</p>
+                    <p>Phone: +1 (123) 456-7890</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 School Health Management System. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+    <script src="js/emergency-contacts.js"></script>
+</body>
+</html>
