@@ -8,11 +8,13 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    fullName: ''
+    fullName: '',
+    phone: '',
+    role: 'Student' // Đặt giá trị mặc định thành 'Student'
   });
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
-  
+
   const { register, currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -33,33 +35,33 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate form
     if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword || !formData.fullName) {
       setMessage('Please fill in all fields.');
       setMessageType('error');
       return;
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       setMessage('Passwords do not match.');
       setMessageType('error');
       return;
     }
-    
+
     if (formData.password.length < 6) {
       setMessage('Password must be at least 6 characters long.');
       setMessageType('error');
       return;
     }
-    
+
     try {
-      const result = await register(formData.username, formData.email, formData.password, formData.fullName);
-      
+      const result = await register(formData.username, formData.email, formData.password, formData.fullName, formData.phone, formData.role);
+
       if (result.success) {
         setMessage(result.message || 'Registration successful! Please login.');
         setMessageType('success');
-        
+
         // Redirect to login page after a short delay
         setTimeout(() => {
           navigate('/login');
@@ -142,6 +144,21 @@ const Register = () => {
             </div>
 
             <div className="mb-6">
+              <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="phone">
+                <i className="fas fa-phone text-indigo-500 mr-2"></i>Phone Number
+              </label>
+              <input 
+                type="tel" 
+                id="phone" 
+                name="phone"
+                className="form-input w-full p-3 border border-gray-300 rounded-lg focus:outline-none" 
+                placeholder="Enter your phone number (optional)" 
+                value={formData.phone}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="mb-6">
               <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="password">
                 <i className="fas fa-lock text-indigo-500 mr-2"></i>Password
               </label>
@@ -172,6 +189,26 @@ const Register = () => {
                 onChange={handleChange}
                 required 
               />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="role">
+                <i className="fas fa-user-tag text-indigo-500 mr-2"></i>Role
+              </label>
+              <select
+                id="role"
+                name="role"
+                className="form-select w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500"
+                value={formData.role}
+                onChange={handleChange}
+                required
+              >
+                <option value="Student">Student</option>
+                <option value="Parent">Parent</option>
+                <option value="SchoolNurse">School Nurse</option>
+                <option value="Manager">Manager</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">Select your role in the system</p>
             </div>
 
             <button 

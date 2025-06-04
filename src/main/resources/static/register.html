@@ -218,13 +218,46 @@
                 },
                 body: JSON.stringify(data),
             })
-            .then(response => response.json())
+            .then(response => {
+                // Store status code to handle different types of errors
+                const statusCode = response.status;
+                return response.json().then(data => {
+                    return { ...data, statusCode };
+                });
+            })
             .then(data => {
                 const messageDiv = document.getElementById('message');
+
+                // Clear any existing content
+                messageDiv.innerHTML = '';
+
                 if (data.success) {
-                    // Success message with Tailwind styling
-                    messageDiv.className = 'bg-green-100 text-green-700 p-4 rounded-lg';
-                    messageDiv.textContent = data.message + ' Redirecting to login page...';
+                    // Success message with Tailwind styling and icon
+                    messageDiv.className = 'bg-green-100 text-green-700 p-4 rounded-lg flex items-start';
+
+                    // Create success icon
+                    const iconDiv = document.createElement('div');
+                    iconDiv.className = 'mr-3 flex-shrink-0';
+                    iconDiv.innerHTML = '<i class="fas fa-check-circle text-green-500 text-xl"></i>';
+                    messageDiv.appendChild(iconDiv);
+
+                    // Create message content
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'flex-grow';
+
+                    // Success title
+                    const title = document.createElement('h4');
+                    title.className = 'font-semibold text-lg';
+                    title.textContent = 'Registration Successful!';
+                    contentDiv.appendChild(title);
+
+                    // Success message
+                    const message = document.createElement('p');
+                    message.className = 'mt-1';
+                    message.textContent = data.message;
+                    contentDiv.appendChild(message);
+
+                    messageDiv.appendChild(contentDiv);
                     document.getElementById('registrationForm').reset();
 
                     // Add countdown timer
@@ -234,13 +267,13 @@
                     const countdownEl = document.createElement('div');
                     countdownEl.className = 'mt-3 font-medium';
                     countdownEl.innerHTML = `Redirecting in <span id="countdown-timer" class="font-bold">${countdown}</span> seconds`;
-                    messageDiv.appendChild(countdownEl);
+                    contentDiv.appendChild(countdownEl);
 
                     // Create progress bar
                     const progressBar = document.createElement('div');
                     progressBar.className = 'mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden';
                     progressBar.innerHTML = '<div class="progress-bar-inner h-full bg-green-500 rounded-full" style="width: 100%; transition: width ' + countdown + 's linear;"></div>';
-                    messageDiv.appendChild(progressBar);
+                    contentDiv.appendChild(progressBar);
 
                     // Set width to 0% to create animation effect
                     setTimeout(() => {
@@ -261,15 +294,103 @@
                         window.location.href = '/';
                     }, countdown * 1000);
                 } else {
-                    // Error message with Tailwind styling
-                    messageDiv.className = 'bg-red-100 text-red-700 p-4 rounded-lg';
-                    messageDiv.textContent = data.message;
+                    // Error message with Tailwind styling and icon
+                    messageDiv.className = 'bg-red-100 text-red-700 p-4 rounded-lg flex items-start';
+
+                    // Create error icon
+                    const iconDiv = document.createElement('div');
+                    iconDiv.className = 'mr-3 flex-shrink-0';
+                    iconDiv.innerHTML = '<i class="fas fa-exclamation-circle text-red-500 text-xl"></i>';
+                    messageDiv.appendChild(iconDiv);
+
+                    // Create message content
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'flex-grow';
+
+                    // Error title based on status code
+                    const title = document.createElement('h4');
+                    title.className = 'font-semibold text-lg';
+
+                    if (data.statusCode === 400) {
+                        title.textContent = 'Registration Error';
+                    } else if (data.statusCode === 500) {
+                        title.textContent = 'Server Error';
+                    } else {
+                        title.textContent = 'Error';
+                    }
+
+                    contentDiv.appendChild(title);
+
+                    // Error message
+                    const message = document.createElement('p');
+                    message.className = 'mt-1';
+                    message.textContent = data.message;
+                    contentDiv.appendChild(message);
+
+                    // Show field-specific errors
+                    if (data.message.includes("Username") || data.message.includes("username")) {
+                        document.getElementById('username').classList.add('border-red-500');
+                        const usernameHelp = document.createElement('p');
+                        usernameHelp.className = 'text-red-500 text-sm mt-2';
+                        usernameHelp.textContent = 'Try a different username';
+                        contentDiv.appendChild(usernameHelp);
+                    }
+
+                    if (data.message.includes("Email") || data.message.includes("email")) {
+                        document.getElementById('email').classList.add('border-red-500');
+                        const emailHelp = document.createElement('p');
+                        emailHelp.className = 'text-red-500 text-sm mt-2';
+                        emailHelp.textContent = 'Try a different email address';
+                        contentDiv.appendChild(emailHelp);
+                    }
+
+                    if (data.message.includes("Password") || data.message.includes("password")) {
+                        document.getElementById('password').classList.add('border-red-500');
+                        const passwordHelp = document.createElement('p');
+                        passwordHelp.className = 'text-red-500 text-sm mt-2';
+                        passwordHelp.textContent = 'Password must be at least 6 characters';
+                        contentDiv.appendChild(passwordHelp);
+                    }
+
+                    messageDiv.appendChild(contentDiv);
+
+                    // Add shake animation to message div for attention
+                    messageDiv.classList.add('animate-shake');
+                    setTimeout(() => {
+                        messageDiv.classList.remove('animate-shake');
+                    }, 500);
                 }
+
+                // Scroll to message
+                messageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
             })
             .catch((error) => {
                 const messageDiv = document.getElementById('message');
-                messageDiv.className = 'bg-red-100 text-red-700 p-4 rounded-lg';
-                messageDiv.textContent = 'Error: ' + error;
+                messageDiv.className = 'bg-red-100 text-red-700 p-4 rounded-lg flex items-start';
+
+                // Create error icon
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'mr-3 flex-shrink-0';
+                iconDiv.innerHTML = '<i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>';
+                messageDiv.appendChild(iconDiv);
+
+                // Create message content
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'flex-grow';
+
+                // Error title
+                const title = document.createElement('h4');
+                title.className = 'font-semibold text-lg';
+                title.textContent = 'Connection Error';
+                contentDiv.appendChild(title);
+
+                // Error message
+                const message = document.createElement('p');
+                message.className = 'mt-1';
+                message.textContent = 'Unable to connect to the server. Please check your connection and try again.';
+                contentDiv.appendChild(message);
+
+                messageDiv.appendChild(contentDiv);
             });
         });
     </script>

@@ -9,23 +9,57 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check if user is already logged in on component mount
+  // Check if user is already logged in on component mount and validate token
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userJson = localStorage.getItem('user');
-    
-    if (token && userJson) {
-      try {
-        const user = JSON.parse(userJson);
-        setCurrentUser(user);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+    const validateToken = async () => {
+      const token = localStorage.getItem('token');
+      const userJson = localStorage.getItem('user');
+
+      if (token && userJson) {
+        try {
+          const user = JSON.parse(userJson);
+
+          // Create an axios instance with the token
+          const instance = axios.create({
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          // Make a request to the auth/me endpoint to validate the token
+          try {
+            const response = await instance.get('/api/auth/me');
+            // If the request succeeds, the token is valid
+            // Update user data with the latest from the server
+            const { id, username, email, fullName, roles } = response.data;
+            const updatedUser = {
+              id,
+              username,
+              email,
+              fullName,
+              roles
+            };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            setCurrentUser(updatedUser);
+          } catch (error) {
+            console.error('Token validation failed:', error);
+            // If the request fails with 401, the token is invalid or expired
+            if (error.response && error.response.status === 401) {
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+            }
+          }
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
       }
-    }
-    
-    setLoading(false);
+
+      setLoading(false);
+    };
+
+    validateToken();
   }, []);
 
   // Login function
@@ -33,17 +67,17 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.post('/api/auth/signin', {
         username,
         password
       });
-      
+
       const { token, id, username: userName, email, fullName, roles } = response.data;
-      
+
       // Store token and user info
       localStorage.setItem('token', token);
-      
+
       const user = {
         id,
         username: userName,
@@ -51,10 +85,10 @@ export const AuthProvider = ({ children }) => {
         fullName,
         roles
       };
-      
+
       localStorage.setItem('user', JSON.stringify(user));
       setCurrentUser(user);
-      
+
       return { success: true };
     } catch (error) {
       setError(error.response?.data?.message || 'Login failed. Please check your credentials.');
@@ -68,18 +102,20 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Register function
-  const register = async (username, email, password, fullName) => {
+  const register = async (username, email, password, fullName, phone, role) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.post('/api/auth/signup', {
         username,
         email,
         password,
-        fullName
+        fullName,
+        phone: phone || '', // Default to empty string if not provided
+        role: role || 'Student' // Default to Student if not provided
       });
-      
+
       return { 
         success: true, 
         message: response.data.message 
@@ -110,14 +146,14 @@ export const AuthProvider = ({ children }) => {
   // Get authenticated axios instance
   const getAuthAxios = () => {
     const token = localStorage.getItem('token');
-    
+
     const instance = axios.create({
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       }
     });
-    
+
     // Add response interceptor to handle 401 errors
     instance.interceptors.response.use(
       response => response,
@@ -129,7 +165,7 @@ export const AuthProvider = ({ children }) => {
         return Promise.reject(error);
       }
     );
-    
+
     return instance;
   };
 

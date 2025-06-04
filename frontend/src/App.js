@@ -10,9 +10,8 @@ if (typeof window === 'undefined') {
   process.exit(1);
 }
 
-import React from 'react';
+import React, { useContext } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -20,7 +19,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import StudentProfile from './pages/StudentProfile';
 import StudentBlog from './pages/StudentBlog';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, AuthContext } from './context/AuthContext';
 
 function App() {
   return (
@@ -36,8 +35,7 @@ function App() {
               <ProtectedRoute>
                 <StudentProfile />
               </ProtectedRoute>
-            } />
-            <Route path="/student-blog" element={
+            } />            <Route path="/student-blog" element={
               <ProtectedRoute>
                 <StudentBlog />
               </ProtectedRoute>
@@ -52,9 +50,13 @@ function App() {
 
 // Protected route component to handle authentication
 function ProtectedRoute({ children }) {
-  const isAuthenticated = localStorage.getItem('token') !== null;
+  const { currentUser, loading } = useContext(AuthContext);
 
-  if (!isAuthenticated) {
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
 

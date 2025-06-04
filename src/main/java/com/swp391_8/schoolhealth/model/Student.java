@@ -41,9 +41,7 @@ public class Student {
     private HealthRecord healthRecord;
 
     @Column(length = 20)
-    private String className;
-
-    @Column(name = "created_at")
+    private String className;    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
@@ -58,5 +56,25 @@ public class Student {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
+    }    // Additional manual getters/setters for missing fields if Lombok fails
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+    
+    public LocalDate getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+    
+    public String getClassName() { return className; }
+    public void setClassName(String className) { this.className = className; }
+    
+    public User getParent() { return parent; }
+    public void setParent(User parent) { this.parent = parent; }
+    
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 }

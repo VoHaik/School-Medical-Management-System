@@ -42,6 +42,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                     // Check if user is enabled
                     if (!userDetails.isEnabled()) {
                         logger.error("User account is disabled: {}", username);
+                        // Do not set authentication for disabled accounts
                     } else {
                         UsernamePasswordAuthenticationToken authentication =
                                 new UsernamePasswordAuthenticationToken(
@@ -58,9 +59,12 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 }
             } else {
                 logger.debug("No JWT token found in request: {}", request.getRequestURI());
-            }
-        } catch (Exception e) {
+            }        } catch (Exception e) {
             logger.error("Cannot set user authentication: {}", e.getMessage(), e);
+            // Clear any partial authentication
+            SecurityContextHolder.clearContext();
+            // Don't set error response here - let the request continue
+            // The AuthEntryPointJwt will handle unauthorized access
         }
 
         filterChain.doFilter(request, response);

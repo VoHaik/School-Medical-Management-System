@@ -106,4 +106,5 @@ public class StudentProfileController {
 
         return ResponseEntity.ok(new MessageResponse("Profile updated successfully", true));
     }
+
 }

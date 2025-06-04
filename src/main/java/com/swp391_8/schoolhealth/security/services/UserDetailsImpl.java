@@ -6,9 +6,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class UserDetailsImpl implements UserDetails {
@@ -35,18 +33,20 @@ public class UserDetailsImpl implements UserDetails {
         this.password = password;
         this.authorities = authorities;
         this.isActive = isActive;
-    }
-
-    public static UserDetailsImpl build(User user) {
-        List<GrantedAuthority> authorities = new java.util.ArrayList<>();
+    }    public static UserDetailsImpl build(User user) {
+        // Use a Set to ensure unique authorities
+        Set<GrantedAuthority> authoritySet = new HashSet<>();
 
         // Add authority from the new role field
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+        authoritySet.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().toString()));
 
         // Also add authorities from the roles collection for backward compatibility
-        authorities.addAll(user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName().name()))
-                .collect(Collectors.toList()));
+        user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.getEnumName().toString()))
+                .forEach(authoritySet::add);
+
+        // Convert to List for compatibility with Spring Security
+        List<GrantedAuthority> authorities = new ArrayList<>(authoritySet);
 
         return new UserDetailsImpl(
                 user.getId(),
@@ -69,10 +69,12 @@ public class UserDetailsImpl implements UserDetails {
 
     public String getEmail() {
         return email;
+    }    public String getFullName() {
+        return fullName;
     }
 
-    public String getFullName() {
-        return fullName;
+    public boolean getIsActive() {
+        return isActive;
     }
 
     @Override
