@@ -26,12 +26,11 @@ public class TestController {
         List<Role> roles = roleRepository.findAll();
         
         Map<String, Object> response = new HashMap<>();
-        response.put("totalRoles", roles.size());
-        response.put("roles", roles.stream().map(role -> {
+        response.put("totalRoles", roles.size());        response.put("roles", roles.stream().map(role -> {
             Map<String, Object> roleInfo = new HashMap<>();
             roleInfo.put("id", role.getId());
             roleInfo.put("name", role.getName());
-            roleInfo.put("enumName", role.getEnumName().toString());
+            roleInfo.put("roleName", role.getRoleName());
             return roleInfo;
         }).toList());
         

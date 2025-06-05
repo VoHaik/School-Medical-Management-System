@@ -1,5 +1,6 @@
 package com.swp391_8.schoolhealth.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "blog_posts")
+@Table(name = "BlogPosts")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,7 +17,7 @@ public class BlogPost {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "post_id")
-    private Long id;
+    private Integer id;
 
     @Column(nullable = false, length = 200)
     private String title;    @Column(nullable = false, columnDefinition = "TEXT")
@@ -35,6 +36,7 @@ public class BlogPost {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
     private User author;
 
     @Column(name = "created_at")
@@ -51,11 +53,11 @@ public class BlogPost {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }    // Manual getters and setters
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

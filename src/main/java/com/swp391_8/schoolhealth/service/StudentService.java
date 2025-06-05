@@ -15,14 +15,12 @@ public class StudentService {
 
     public List<Student> getAllStudents() {
         return studentRepository.findAll();
-    }
-
-    public Student getStudentById(Long id) {
+    }    public Student getStudentById(Integer id) {
         return studentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
     }
 
-    public List<Student> getStudentsByParentId(Long parentId) {
+    public List<Student> getStudentsByParentId(Integer parentId) {
         return studentRepository.findByParentId(parentId);
     }
 
@@ -30,7 +28,7 @@ public class StudentService {
         return studentRepository.save(student);
     }
 
-    public Student updateStudent(Long id, Student studentDetails) {
+    public Student updateStudent(Integer id, Student studentDetails) {
         Student student = getStudentById(id);
         student.setFullName(studentDetails.getFullName());
         student.setDateOfBirth(studentDetails.getDateOfBirth());
@@ -39,7 +37,7 @@ public class StudentService {
         return studentRepository.save(student);
     }
 
-    public void deleteStudent(Long id) {
+    public void deleteStudent(Integer id) {
         Student student = getStudentById(id);
         studentRepository.delete(student);
     }

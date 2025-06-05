@@ -24,9 +24,7 @@ export const AuthProvider = ({ children }) => {
             headers: {
               'Authorization': `Bearer ${token}`
             }
-          });
-
-          // Make a request to the auth/me endpoint to validate the token
+          });          // Make a request to the auth/me endpoint to validate the token
           try {
             const response = await instance.get('/api/auth/me');
             // If the request succeeds, the token is valid
@@ -39,14 +37,17 @@ export const AuthProvider = ({ children }) => {
               fullName,
               roles
             };
+            console.log('Token validation successful, user data:', updatedUser);
             localStorage.setItem('user', JSON.stringify(updatedUser));
             setCurrentUser(updatedUser);
           } catch (error) {
             console.error('Token validation failed:', error);
             // If the request fails with 401, the token is invalid or expired
             if (error.response && error.response.status === 401) {
+              console.log('Token expired or invalid, clearing storage');
               localStorage.removeItem('token');
               localStorage.removeItem('user');
+              setCurrentUser(null);
             }
           }
         } catch (error) {
@@ -76,9 +77,7 @@ export const AuthProvider = ({ children }) => {
       const { token, id, username: userName, email, fullName, roles } = response.data;
 
       // Store token and user info
-      localStorage.setItem('token', token);
-
-      const user = {
+      localStorage.setItem('token', token);      const user = {
         id,
         username: userName,
         email,
@@ -86,6 +85,7 @@ export const AuthProvider = ({ children }) => {
         roles
       };
 
+      console.log('Login successful, user data:', user);
       localStorage.setItem('user', JSON.stringify(user));
       setCurrentUser(user);
 

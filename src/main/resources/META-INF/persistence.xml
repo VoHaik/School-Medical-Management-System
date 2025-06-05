@@ -23,7 +23,7 @@
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
             <!-- Ví dụ URL kết nối. Hãy thay đổi tên máy chủ, cổng và tên DB của bạn -->
-            <property name="jakarta.persistence.jdbc.url" value="jdbc:sqlserver://localhost:1433;databaseName=SchoolHealthDB;encrypt=true;trustServerCertificate=true"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:sqlserver://localhost:1433;databaseName=HealthSchoolDB;encrypt=true;trustServerCertificate=true"/>
             <property name="jakarta.persistence.jdbc.user" value="sa"/>
             <property name="jakarta.persistence.jdbc.password" value="123456"/>
 

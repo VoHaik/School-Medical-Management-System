@@ -14,10 +14,9 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class VaccinationEvent {
-    @Id
+public class VaccinationEvent {    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @Column(nullable = false)
     private String vaccineName;

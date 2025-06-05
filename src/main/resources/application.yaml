@@ -1,8 +1,9 @@
 spring:
   application:
     name: school-health
+  
   datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=SchoolHealthDB;encrypt=true;trustServerCertificate=true
+    url: jdbc:sqlserver://localhost:1433;databaseName=HealthSchoolDB;encrypt=true;trustServerCertificate=true
     username: sa
     password: 123456
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver

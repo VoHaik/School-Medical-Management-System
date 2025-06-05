@@ -13,11 +13,10 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class HealthCheckup {
-    @Id
+public class HealthCheckup {    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "checkup_id")
-    private Long id;
+    private Integer id;
 
     @ManyToOne
     @JoinColumn(name = "student_id", nullable = false)

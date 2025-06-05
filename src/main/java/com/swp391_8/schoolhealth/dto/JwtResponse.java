@@ -16,9 +16,8 @@ public class JwtResponse {
     
     @JsonProperty("type")
     private String type = "Bearer";
-    
-    @JsonProperty("id")
-    private Long id;
+      @JsonProperty("id")
+    private Integer id;
     
     @JsonProperty("username")
     private String username;
@@ -32,7 +31,7 @@ public class JwtResponse {
     @JsonProperty("roles")
     private List<String> roles;
 
-    public JwtResponse(String token, Long id, String username, String email, String fullName, List<String> roles) {
+    public JwtResponse(String token, Integer id, String username, String email, String fullName, List<String> roles) {
         this.token = token;
         this.type = "Bearer";
         this.id = id;

@@ -12,11 +12,10 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class MedicalSupply {
-    @Id
+public class MedicalSupply {    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "supply_id")
-    private Long id;
+    private Integer id;
 
     @ManyToOne
     @JoinColumn(name = "event_id", nullable = false)

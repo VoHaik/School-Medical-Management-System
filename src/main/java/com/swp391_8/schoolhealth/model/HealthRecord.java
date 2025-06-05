@@ -13,10 +13,9 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class HealthRecord {
-    @Id
+public class HealthRecord {    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     private String allergies;
 
@@ -29,8 +28,7 @@ public class HealthRecord {
     private String hearing;
 
     @OneToMany(mappedBy = "healthRecord", cascade = CascadeType.ALL)
-    private Set<Vaccination> vaccinations = new HashSet<>();
-
-    @OneToOne(mappedBy = "healthRecord")
+    private Set<Vaccination> vaccinations = new HashSet<>();    @OneToOne
+    @JoinColumn(name = "student_id")
     private Student student;
 }

@@ -35,7 +35,9 @@ const StudentBlog = () => {
 
     const isStudent = currentUser && currentUser.roles && (
         currentUser.roles.includes('ROLE_STUDENT') ||
-        currentUser.roles.includes('ROLE_PARENT')
+        currentUser.roles.includes('ROLE_Student') ||
+        currentUser.roles.includes('ROLE_PARENT') ||
+        currentUser.roles.includes('ROLE_Parent')
     );
 
     // Utility functions
@@ -51,7 +53,8 @@ const StudentBlog = () => {
     const validatePost = (post) => {
         if (!post || typeof post !== 'object') return false;
         if (!post.title || typeof post.title !== 'string') return false;
-        if (post.id === null || post.id === undefined || typeof post.id === 'object') return false;
+        if (post.id === null || post.id === undefined) return false;
+        if (typeof post.id !== 'number' && isNaN(Number(post.id))) return false;
         return true;
     };
 
@@ -83,11 +86,21 @@ const StudentBlog = () => {
         try {
             setLoading(true);
             const response = await axios.get('/api/blog');
+            console.log('Raw API response:', response); // Debug log
+            console.log('Response data:', response.data); // Debug log
+            console.log('Response data type:', typeof response.data); // Debug log
+            console.log('Response data length:', Array.isArray(response.data) ? response.data.length : 'Not an array'); // Debug log
+            
             const postsData = response.data || [];
+            console.log('Posts data before cleaning:', postsData); // Debug log
+            
             const cleanedPosts = cleanPostsData(postsData);
+            console.log('Posts after cleaning:', cleanedPosts); // Debug log
+            
             setAllPosts(cleanedPosts);
         } catch (error) {
             console.error('Error loading all posts:', error);
+            console.error('Error response:', error.response); // Debug log
             setAllPosts([]);
             showMessage('Failed to load blog posts', 'error');
         } finally {
@@ -97,10 +110,10 @@ const StudentBlog = () => {
 
     const loadMyPosts = async () => {
         if (!isStudent) return;
-
         try {
             const authAxios = getAuthAxios();
             const response = await authAxios.get('/api/blog/my-posts');
+            console.log('My posts response:', response.data); // Debug log
             const postsData = response.data || [];
             const cleanedPosts = cleanPostsData(postsData);
             setPosts(cleanedPosts);
@@ -196,6 +209,39 @@ const StudentBlog = () => {
         }
     };
 
+    const testBackendConnection = async () => {
+        try {
+            console.log('Testing backend connection...');
+            const response = await axios.get('/api/blog');
+            console.log('Backend connection successful:', response.status);
+            console.log('Current blog posts in database:', response.data);
+            if (Array.isArray(response.data) && response.data.length > 0) {
+                showMessage(`Backend is running correctly. Found ${response.data.length} blog posts.`, 'success');
+            } else {
+                showMessage('Backend is running correctly. No blog posts found in database.', 'info');
+            }
+        } catch (error) {
+            console.error('Backend connection failed:', error);
+            if (error.code === 'ERR_NETWORK') {
+                showMessage('Backend server is not running on port 8080', 'error');
+            } else {
+                showMessage(`Backend error: ${error.response?.status || error.message}`, 'error');
+            }
+        }
+    };
+
+    const createTestPost = async () => {
+        try {
+            const response = await axios.post('/api/blog/test-create');
+            console.log('Test post created:', response.data);
+            showMessage('Test post created successfully!', 'success');
+            loadAllPosts();
+        } catch (error) {
+            console.error('Error creating test post:', error);
+            showMessage('Failed to create test post', 'error');
+        }
+    };
+
     // Load data on component mount
     useEffect(() => {
         loadAllPosts();
@@ -275,12 +321,43 @@ const StudentBlog = () => {
                                 onMouseLeave={(e) => {
                                     e.target.style.transform = 'translateY(0)';
                                     e.target.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-                                }}
-                            >
+                                }}                            >
                                 <i className="fas fa-plus me-2 text-primary"></i>
                                 <span className="fw-semibold">Start Writing</span>
                             </button>
                         )}
+                          {/* Test buttons for debugging */}
+                        <button
+                            type="button"
+                            className="btn btn-outline-info btn-sm ms-3"
+                            onClick={testBackendConnection}
+                            style={{
+                                borderRadius: '30px',
+                                padding: '12px 24px',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                transition: 'all 0.3s ease'
+                            }}
+                        >
+                            <i className="fas fa-wifi me-2"></i>
+                            Test Backend
+                        </button>
+                        
+                        <button
+                            type="button"
+                            className="btn btn-outline-secondary btn-sm ms-2"
+                            onClick={createTestPost}
+                            style={{
+                                borderRadius: '30px',
+                                padding: '12px 24px',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                transition: 'all 0.3s ease'
+                            }}
+                        >
+                            <i className="fas fa-vial me-2"></i>
+                            Create Test Post
+                        </button>
                     </div>
                 </div>
 
@@ -847,7 +924,7 @@ const StudentBlog = () => {
                                     left: 0,
                                     right: 0,
                                     bottom: 0,
-                                    background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat',
+                                    background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM36 0V4h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat',
                                     opacity: 0.1
                                 }} />
                                 <div style={{position: 'relative', zIndex: 1}}>

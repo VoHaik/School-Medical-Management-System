@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import StudentProfile from './pages/StudentProfile';
 import StudentBlog from './pages/StudentBlog';
+import AuthDebug from './pages/AuthDebug';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 
 // Prevent direct execution with Node.js
@@ -40,6 +41,7 @@ function App() {
                 <StudentBlog />
               </ProtectedRoute>
             } />
+            <Route path="/auth-debug" element={<AuthDebug />} />
           </Routes>
         </main>
         <Footer />

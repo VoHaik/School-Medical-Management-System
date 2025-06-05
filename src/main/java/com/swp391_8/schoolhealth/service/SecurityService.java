@@ -1,9 +1,8 @@
 package com.swp391_8.schoolhealth.service;
 
 import com.swp391_8.schoolhealth.model.BlogPost;
-import com.swp391_8.schoolhealth.model.Student;
 import com.swp391_8.schoolhealth.repository.BlogPostRepository;
-import com.swp391_8.schoolhealth.repository.StudentRepository;
+import com.swp391_8.schoolhealth.repository.ParentStudentRelationshipRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -14,38 +13,37 @@ import java.util.Optional;
 public class SecurityService {
 
     @Autowired
-    private StudentRepository studentRepository;
-
-    @Autowired
     private BlogPostRepository blogPostRepository;
 
-    public boolean isParentOfStudent(Authentication authentication, Long studentId) {
+    @Autowired
+    private ParentStudentRelationshipRepository parentStudentRelationshipRepository;
+
+    public boolean isParentOfStudent(Authentication authentication, Integer studentId) {
         if (authentication == null || studentId == null) {
             return false;
         }
 
         // Get the authenticated user's ID
-        Long parentId = null;
+        Integer parentId = null;
         try {
-            parentId = (Long) authentication.getPrincipal().getClass().getMethod("getId").invoke(authentication.getPrincipal());
+            parentId = (Integer) authentication.getPrincipal().getClass().getMethod("getId").invoke(authentication.getPrincipal());
         } catch (Exception e) {
             return false;
         }
 
-        // Check if the student belongs to this parent
-        Optional<Student> student = studentRepository.findById(studentId);
-        return student.isPresent() && student.get().getParent() != null && student.get().getParent().getId().equals(parentId);
+        // Check if there exists a parent-student relationship
+        return parentStudentRelationshipRepository.existsByParentUserIdAndStudentStudentId(parentId, studentId);
     }
 
-    public boolean isPostAuthor(Authentication authentication, Long postId) {
+    public boolean isPostAuthor(Authentication authentication, Integer postId) {
         if (authentication == null || postId == null) {
             return false;
         }
 
         // Get the authenticated user's ID
-        Long userId = null;
+        Integer userId = null;
         try {
-            userId = (Long) authentication.getPrincipal().getClass().getMethod("getId").invoke(authentication.getPrincipal());
+            userId = (Integer) authentication.getPrincipal().getClass().getMethod("getId").invoke(authentication.getPrincipal());
         } catch (Exception e) {
             return false;
         }

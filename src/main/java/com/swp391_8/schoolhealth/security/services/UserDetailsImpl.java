@@ -7,12 +7,11 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class UserDetailsImpl implements UserDetails {
     private static final long serialVersionUID = 1L;
-
-    private Long id;
+    
+    private Integer id;
     private String username;
     private String email;
     private String fullName;
@@ -24,7 +23,7 @@ public class UserDetailsImpl implements UserDetails {
 
     private boolean isActive;
 
-    public UserDetailsImpl(Long id, String username, String email, String fullName, String password,
+    public UserDetailsImpl(Integer id, String username, String email, String fullName, String password,
                            Collection<? extends GrantedAuthority> authorities, boolean isActive) {
         this.id = id;
         this.username = username;
@@ -34,19 +33,13 @@ public class UserDetailsImpl implements UserDetails {
         this.authorities = authorities;
         this.isActive = isActive;
     }    public static UserDetailsImpl build(User user) {
-        // Use a Set to ensure unique authorities
-        Set<GrantedAuthority> authoritySet = new HashSet<>();
-
-        // Add authority from the new role field
-        authoritySet.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().toString()));
-
-        // Also add authorities from the roles collection for backward compatibility
-        user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.getEnumName().toString()))
-                .forEach(authoritySet::add);
-
-        // Convert to List for compatibility with Spring Security
-        List<GrantedAuthority> authorities = new ArrayList<>(authoritySet);
+        // Create authorities based on the user's role
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        
+        // Add authority from the role field (ManyToOne relationship)
+        if (user.getRole() != null) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName().toUpperCase()));
+        }
 
         return new UserDetailsImpl(
                 user.getId(),
@@ -61,9 +54,7 @@ public class UserDetailsImpl implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
-    }
-
-    public Long getId() {
+    }    public Integer getId() {
         return id;
     }
 

@@ -1,18 +1,16 @@
 package com.swp391_8.schoolhealth.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.hibernate.annotations.Nationalized;
 
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "users")
+@Table(name = "Users")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,42 +18,40 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
-    private Long id;
+    private Integer userId;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Nationalized
+    @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
 
-    @Column(nullable = false, length = 255)
+    @Nationalized
+    @Column(name = "password", nullable = false, length = 255)
     private String password;
 
-    @Column(nullable = false, unique = true, length = 100)
-    private String email;    @Nationalized
-    @Column(nullable = false, name = "full_name", length = 100, columnDefinition = "NVARCHAR(100)")
+    @Nationalized
+    @Column(name = "email", length = 100)
+    private String email;
+
+    @Nationalized
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
+
+    @Nationalized
+    @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserRole role;
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
 
-    public enum UserRole {
-        Parent,
-        SchoolNurse,
-        Admin,
-        Manager,
-        Student
-    }
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "user_roles", 
-               joinColumns = @JoinColumn(name = "user_id"),
-               inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Set<Role> roles = new HashSet<>();
-
+    @Nationalized
     @Column(name = "google_id", length = 100)
     private String googleId;
 
-    @Column(length = 20)
-    private String phone;
+    @Nationalized
+    @Column(name = "avatar_url", length = 255)
+    private String avatarUrl;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -75,9 +71,16 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }    // Additional manual getters/setters for missing fields if Lombok fails
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    }    // Additional getters/setters for compatibility
+    public Integer getId() { return userId; }
+    public void setId(Integer id) { this.userId = id; }
+    
+    public String getPhone() { return phoneNumber; }
+    public void setPhone(String phone) { this.phoneNumber = phone; }
+    
+    // Explicit getters/setters to fix compilation issues
+    public Integer getUserId() { return userId; }
+    public void setUserId(Integer userId) { this.userId = userId; }
     
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
@@ -88,16 +91,26 @@ public class User {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
     
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
     
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
     
-    public UserRole getRole() { return role; }
-    public void setRole(UserRole role) { this.role = role; }
-      public Set<Role> getRoles() { return roles; }
-    public void setRoles(Set<Role> roles) { this.roles = roles; }
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
+    
+    public String getGoogleId() { return googleId; }
+    public void setGoogleId(String googleId) { this.googleId = googleId; }
+    
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }

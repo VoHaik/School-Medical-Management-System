@@ -4,11 +4,12 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "health_profiles")
+@Table(name = "HealthProfiles")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,32 +17,38 @@ public class HealthProfile {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "profile_id")
-    private Long id;
+    private Integer id;
 
-    @ManyToOne
-    @JoinColumn(name = "student_id", nullable = false)
+    @OneToOne
+    @JoinColumn(name = "student_id", nullable = false, unique = true)
     private Student student;
 
-    @Column(columnDefinition = "TEXT")
+    @Nationalized
+    @Column(name = "allergies", columnDefinition = "NVARCHAR(MAX)")
     private String allergies;
 
-    @Column(name = "chronic_conditions", columnDefinition = "TEXT")
+    @Nationalized
+    @Column(name = "chronic_conditions", columnDefinition = "NVARCHAR(MAX)")
     private String chronicConditions;
 
-    @Column(name = "treatment_history", columnDefinition = "TEXT")
+    @Nationalized
+    @Column(name = "treatment_history", columnDefinition = "NVARCHAR(MAX)")
     private String treatmentHistory;
 
-    @Column(length = 50)
+    @Nationalized
+    @Column(name = "vision", length = 50)
     private String vision;
 
-    @Column(length = 50)
+    @Nationalized
+    @Column(name = "hearing", length = 50)
     private String hearing;
 
-    @Column(name = "vaccination_history", columnDefinition = "TEXT")
-    private String vaccinationHistory;
+    @Nationalized
+    @Column(name = "vaccination_history_notes", columnDefinition = "NVARCHAR(MAX)")
+    private String vaccinationHistoryNotes;
 
     @ManyToOne
-    @JoinColumn(name = "updated_by")
+    @JoinColumn(name = "updated_by_user_id")
     private User updatedBy;
 
     @Column(name = "updated_at")

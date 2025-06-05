@@ -14,11 +14,10 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class MedicalEvent {
-    @Id
+public class MedicalEvent {    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "event_id")
-    private Long id;
+    private Integer id;
 
     @ManyToOne
     @JoinColumn(name = "student_id", nullable = false)

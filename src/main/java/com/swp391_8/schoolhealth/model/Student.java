@@ -4,14 +4,13 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.Nationalized;
-
 @Entity
-@Table(name = "students")
+@Table(name = "Students")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,32 +18,30 @@ public class Student {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "student_id")
-    private Long id;
+    private Integer studentId;
 
-    @Nationalized
-    @Column(nullable = false, name = "full_name", length = 100, columnDefinition = "NVARCHAR(100)")
-    private String fullName;
-
-    @Column(nullable = false, name = "date_of_birth")
-    private LocalDate dateOfBirth;
-
-    @Column(length = 10)
-    private String gender;
-
-    @ManyToOne
-    @JoinColumn(name = "parent_id")
-    private User parent;
-
-    @OneToOne
-    @JoinColumn(name = "user_id")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true)
     private User user;
 
-    @OneToOne
-    @JoinColumn(name = "health_record_id")
-    private HealthRecord healthRecord;
+    @Nationalized
+    @Column(name = "student_code", nullable = false, unique = true, length = 20)
+    private String studentCode;
 
-    @Column(length = 20)
-    private String className;    @Column(name = "created_at")
+    @Nationalized
+    @Column(name = "full_name", nullable = false, length = 100)
+    private String fullName;    @Column(name = "date_of_birth", nullable = false)
+    private LocalDate dateOfBirth;
+
+    @Nationalized
+    @Column(name = "gender", length = 10)
+    private String gender;
+
+    @Nationalized
+    @Column(name = "class_name", length = 20)
+    private String className;
+
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
@@ -59,9 +56,19 @@ public class Student {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }    // Additional manual getters/setters for missing fields if Lombok fails
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    }    // Additional getters/setters for compatibility
+    public Integer getId() { return studentId; }
+    public void setId(Integer id) { this.studentId = id; }
+    
+    // Explicit getters/setters to fix compilation issues
+    public Integer getStudentId() { return studentId; }
+    public void setStudentId(Integer studentId) { this.studentId = studentId; }
+    
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+    
+    public String getStudentCode() { return studentCode; }
+    public void setStudentCode(String studentCode) { this.studentCode = studentCode; }
     
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
@@ -75,9 +82,9 @@ public class Student {
     public String getClassName() { return className; }
     public void setClassName(String className) { this.className = className; }
     
-    public User getParent() { return parent; }
-    public void setParent(User parent) { this.parent = parent; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

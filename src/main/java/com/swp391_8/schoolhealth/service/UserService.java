@@ -1,9 +1,7 @@
 package com.swp391_8.schoolhealth.service;
 
 import com.swp391_8.schoolhealth.model.Role;
-import com.swp391_8.schoolhealth.model.Role.ERole;
 import com.swp391_8.schoolhealth.model.User;
-import com.swp391_8.schoolhealth.model.User.UserRole;
 import com.swp391_8.schoolhealth.repository.RoleRepository;
 import com.swp391_8.schoolhealth.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,10 +9,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.HashSet;
+
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +27,11 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    // Enum for user roles to maintain API compatibility
+    public enum UserRole {
+        Parent, SchoolNurse, Admin, Manager, Student
+    }
+
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
     }
@@ -38,56 +40,56 @@ public class UserService {
         return userRepository.existsByEmail(email);
     }
 
-    public User registerUser(String username, String password, String fullName, String email, String phone, UserRole role) {
+    public User registerUser(String username, String password, String fullName, String email, String phone, UserRole userRole) {
         // Create new user
         User user = new User();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
         user.setFullName(fullName);
         user.setEmail(email);
-        user.setPhone(phone);
-        user.setRole(role);
+        user.setPhoneNumber(phone);
 
-        // Set corresponding role in roles collection for backward compatibility
-        Set<Role> roles = new HashSet<>();
-        ERole eRole;
-        switch (role) {
+        // Map UserRole enum to database role names
+        String roleName;
+        switch (userRole) {
             case Parent:
-                eRole = ERole.ROLE_PARENT;
+                roleName = "PARENT";
                 break;
             case SchoolNurse:
-                eRole = ERole.ROLE_MEDICAL_STAFF;
+                roleName = "MEDICAL_STAFF";
                 break;
             case Admin:
-                eRole = ERole.ROLE_ADMIN;
+                roleName = "ADMIN";
                 break;
             case Manager:
-                eRole = ERole.ROLE_TEACHER;
-                break;            case Student:
-                eRole = ERole.ROLE_STUDENT;
+                roleName = "TEACHER";
+                break;
+            case Student:
+                roleName = "STUDENT";
                 break;
             default:
-                eRole = ERole.ROLE_PARENT;
-        }        // Find the role in the database
-        Optional<Role> roleOptional = roleRepository.findByName(eRole);
+                roleName = "PARENT";
+        }
+
+        // Find the role in the database by role name
+        Optional<Role> roleOptional = roleRepository.findByRoleName(roleName);
         if (roleOptional.isEmpty()) {
-            logger.error("Critical Error: Role {} not found in database. This indicates a database initialization problem.", eRole);
-              // List all available roles for debugging
+            logger.error("Critical Error: Role {} not found in database. This indicates a database initialization problem.", roleName);
+            // List all available roles for debugging
             List<Role> availableRoles = roleRepository.findAll();
             if (!availableRoles.isEmpty()) {
                 logger.info("Available roles in database: {}", 
                     availableRoles.stream()
-                        .map(r -> r.getEnumName().toString())
+                        .map(Role::getRoleName)
                         .collect(Collectors.joining(", ")));
             }
             
-            throw new RuntimeException("Role " + eRole + " not found in database. Please ensure database is properly initialized with all required roles.");
+            throw new RuntimeException("Role " + roleName + " not found in database. Please ensure database is properly initialized with all required roles.");
         }
         
-        roles.add(roleOptional.get());
-        logger.info("User '{}' assigned role: {} (mapped to {})", username, role, eRole);
-
-        user.setRoles(roles);
+        // Set the single role (ManyToOne relationship)
+        user.setRole(roleOptional.get());
+        logger.info("User '{}' assigned role: {} (mapped to {})", username, userRole, roleName);
 
         // Save user
         return userRepository.save(user);

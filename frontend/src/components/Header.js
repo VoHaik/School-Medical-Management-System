@@ -6,6 +6,15 @@ const Header = () => {
   const { currentUser, logout, isAuthenticated } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  // Debug authentication state
+  console.log('Header render - Authentication state:', {
+    isAuthenticated: isAuthenticated(),
+    currentUser,
+    userRoles: currentUser?.roles,
+    hasStudentRole: currentUser?.roles?.includes('ROLE_STUDENT'),
+    hasParentRole: currentUser?.roles?.includes('ROLE_PARENT')
+  });
+
   const handleLogout = (e) => {
     e.preventDefault();
     logout();
@@ -26,8 +35,12 @@ const Header = () => {
           
           {isAuthenticated() ? (
             // Authenticated user navigation
-            <>
-              {currentUser && (currentUser.roles.includes('ROLE_STUDENT') || currentUser.roles.includes('ROLE_PARENT')) && (
+            <>              {currentUser && (
+                currentUser.roles.includes('ROLE_STUDENT') || 
+                currentUser.roles.includes('ROLE_Student') || 
+                currentUser.roles.includes('ROLE_PARENT') || 
+                currentUser.roles.includes('ROLE_Parent')
+              ) && (
                 <>
                   <Link to="/student-profile" className="nav-link px-3 py-2 rounded flex items-center">
                     <i className="fas fa-user mr-1"></i> My Profile
