@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.Nationalized;
+
 @Entity
 @Table(name = "students")
 @Data
@@ -19,7 +21,8 @@ public class Student {
     @Column(name = "student_id")
     private Long id;
 
-    @Column(nullable = false, name = "full_name", length = 100)
+    @Nationalized
+    @Column(nullable = false, name = "full_name", length = 100, columnDefinition = "NVARCHAR(100)")
     private String fullName;
 
     @Column(nullable = false, name = "date_of_birth")

@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.annotations.Nationalized;
+
 @Entity
 @Table(name = "users")
 @Data
@@ -27,9 +29,8 @@ public class User {
     private String password;
 
     @Column(nullable = false, unique = true, length = 100)
-    private String email;
-
-    @Column(nullable = false, name = "full_name", length = 100, columnDefinition = "VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+    private String email;    @Nationalized
+    @Column(nullable = false, name = "full_name", length = 100, columnDefinition = "NVARCHAR(100)")
     private String fullName;
 
     @Enumerated(EnumType.STRING)
