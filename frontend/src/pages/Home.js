@@ -1,173 +1,536 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Container,
+  Typography,
+  Grid,
+  Card,
+  CardContent,
+  Button,
+  Box,
+  Paper,
+  Chip,
+  Avatar
+} from '@mui/material';
+import {
+  LocalHospital as MedicalIcon,
+  School as SchoolIcon,
+  Security as SecurityIcon,
+  TrendingUp as TrendingIcon,
+  People as PeopleIcon,
+  Assignment as AssignmentIcon,
+  NotificationsActive as NotificationIcon,
+  CheckCircle as CheckIcon,
+  Description as DocumentIcon,
+  Vaccines as VaccineIcon,
+  Emergency as EmergencyIcon
+} from '@mui/icons-material';
+import { AuthContext } from '../context/AuthContext';
 
 const Home = () => {
+  const { currentUser } = useContext(AuthContext);
+
+  const features = [
+    {
+      icon: <MedicalIcon sx={{ color: '#1976d2', fontSize: 40 }} />,
+      title: "Health Management",
+      description: "Comprehensive health tracking, medical records, and vaccination management for all students."
+    },
+    {
+      icon: <SecurityIcon sx={{ color: '#2e7d32', fontSize: 40 }} />,
+      title: "Secure & Private",
+      description: "HIPAA-compliant platform ensuring student health information remains secure and confidential."
+    },
+    {
+      icon: <PeopleIcon sx={{ color: '#7b1fa2', fontSize: 40 }} />,
+      title: "Multi-Role Access",
+      description: "Tailored interfaces for parents, students, medical staff, and administrators."
+    },
+    {
+      icon: <NotificationIcon sx={{ color: '#f57c00', fontSize: 40 }} />,
+      title: "Real-Time Alerts",
+      description: "Instant notifications for health emergencies, medication reminders, and checkup schedules."
+    },
+    {
+      icon: <TrendingIcon sx={{ color: '#d32f2f', fontSize: 40 }} />,
+      title: "Health Analytics",
+      description: "Advanced reporting and analytics to track health trends and improve student wellness."
+    },
+    {
+      icon: <AssignmentIcon sx={{ color: '#303f9f', fontSize: 40 }} />,
+      title: "Digital Records",
+      description: "Paperless health record management with easy access and sharing capabilities."
+    }
+  ];
+
+  const healthBlogPosts = [
+    {
+      title: "Importance of Regular Health Checkups for Students",
+      excerpt: "Regular health screenings help identify potential health issues early and ensure students stay healthy throughout the academic year.",
+      date: "2024-01-15",
+      author: "Dr. Sarah Johnson",
+      readTime: "5 min read",
+      category: "Prevention"
+    },
+    {
+      title: "Managing Food Allergies in School Environment",
+      excerpt: "A comprehensive guide for parents and school staff on creating a safe environment for students with food allergies.",
+      date: "2024-01-10",
+      author: "Nurse Lisa Chen",
+      readTime: "7 min read",
+      category: "Safety"
+    },
+    {
+      title: "Mental Health Awareness for Students",
+      excerpt: "Understanding the signs of mental health challenges and providing appropriate support for student wellbeing.",
+      date: "2024-01-05",
+      author: "Dr. Michael Brown",
+      readTime: "6 min read",
+      category: "Mental Health"
+    }
+  ];
+
+  const healthDocuments = [
+    {
+      title: "Health Policy",
+      description: "Comprehensive school health policies and procedures for students and staff.",
+      icon: <DocumentIcon sx={{ color: '#1976d2', fontSize: 40 }} />,
+      downloadUrl: "#"
+    },
+    {
+      title: "Vaccination Guidelines",
+      description: "Essential guidelines and schedules for required and recommended student vaccinations.",
+      icon: <VaccineIcon sx={{ color: '#2e7d32', fontSize: 40 }} />,
+      downloadUrl: "#"
+    },
+    {
+      title: "Emergency Procedures",
+      description: "Critical procedures and protocols for handling various medical emergencies at school.",
+      icon: <EmergencyIcon sx={{ color: '#d32f2f', fontSize: 40 }} />,
+      downloadUrl: "#"
+    }
+  ];
+
+  const schoolInfo = {
+    name: "Springfield Elementary School",
+    address: "123 Education Street, Springfield, ST 12345",
+    phone: "(555) 123-4567",
+    email: "health@springfield-elem.edu",
+    healthOfficeHours: "Monday - Friday: 8:00 AM - 4:00 PM",
+    nurseOnDuty: "Nurse Sarah Williams, RN"
+  };
+
+  const getQuickActions = () => {
+    if (!currentUser) return [];
+    
+    const allActions = [
+      {
+        title: "Health Dashboard",
+        description: "View your personalized health dashboard",
+        link: "/dashboard",
+        icon: <TrendingIcon />,
+        color: "primary",
+        roles: ['parent', 'student', 'medical_staff', 'admin']
+      },
+      {
+        title: "Health Declaration",
+        description: "Submit daily health declaration",
+        link: "/parent/health-declaration",
+        icon: <AssignmentIcon />,
+        color: "secondary",
+        roles: ['parent']
+      },
+      {
+        title: "Medical Records",
+        description: "Access your medical history",
+        link: "/student/medical-history",
+        icon: <MedicalIcon />,
+        color: "info",
+        roles: ['student']
+      },
+      {
+        title: "Student Management",
+        description: "Manage student health records",
+        link: "/medical/student-management",
+        icon: <PeopleIcon />,
+        color: "success",
+        roles: ['medical_staff']
+      },
+      {
+        title: "System Administration",
+        description: "Manage system settings",
+        link: "/admin/dashboard",
+        icon: <SecurityIcon />,
+        color: "warning",
+        roles: ['admin']
+      }
+    ];
+
+    return allActions.filter(action => action.roles.includes(currentUser.role));
+  };
+
+  const quickActions = getQuickActions();
+
   return (
-    <div>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
       {/* Hero Section */}
-      <section id="home" className="hero-section py-20">
-        <div className="container mx-auto text-center px-4">
-          <div className="hero-content max-w-3xl mx-auto">
-            <h2 className="text-5xl font-bold mb-6 text-gradient">Welcome to Our School Health System</h2>
-            <p className="text-xl mb-8 text-gray-700">Manage student health records, track medical events, and stay informed about health policies.</p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <a href="#learn-more" className="hero-btn text-white px-8 py-4 rounded-lg font-medium flex items-center">
-                <i className="fas fa-info-circle mr-2"></i> Learn More
-              </a>
-              <a href="#docs" className="bg-white border-2 border-indigo-500 text-indigo-600 px-8 py-4 rounded-lg font-medium hover:bg-indigo-50 transition-all flex items-center">
-                <i className="fas fa-file-medical mr-2"></i> Health Documents
-              </a>
-            </div>
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-lg shadow-md hover-scale">
-                <div className="text-indigo-500 text-3xl mb-4">
-                  <i className="fas fa-user-md"></i>
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Professional Care</h3>
-                <p className="text-gray-600">Expert healthcare professionals dedicated to student wellbeing.</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-md hover-scale">
-                <div className="text-indigo-500 text-3xl mb-4">
-                  <i className="fas fa-clipboard-check"></i>
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Health Tracking</h3>
-                <p className="text-gray-600">Comprehensive health monitoring and record keeping.</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-md hover-scale">
-                <div className="text-indigo-500 text-3xl mb-4">
-                  <i className="fas fa-shield-virus"></i>
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Preventive Measures</h3>
-                <p className="text-gray-600">Proactive health initiatives to prevent illness.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #1976d2 0%, #7b1fa2 100%)',
+          color: 'white',
+          py: 10
+        }}
+      >
+        <Container maxWidth="lg">
+          <Grid container spacing={4} alignItems="center">
+            <Grid item xs={12} md={8}>
+              <Typography variant="h2" sx={{ fontWeight: 'bold', mb: 2 }}>
+                School Health Management System
+              </Typography>
+              <Typography variant="h5" sx={{ mb: 3, opacity: 0.9 }}>
+                Comprehensive health tracking and management for {schoolInfo.name}
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 4, opacity: 0.8 }}>
+                Our advanced platform ensures the health and safety of all students through 
+                digital health records, real-time monitoring, and seamless communication 
+                between parents, students, and healthcare providers.
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                {currentUser ? (
+                  <Button
+                    component={Link}
+                    to="/dashboard"
+                    variant="contained"
+                    size="large"
+                    sx={{ 
+                      bgcolor: 'white', 
+                      color: 'primary.main',
+                      '&:hover': { bgcolor: 'grey.100' }
+                    }}
+                  >
+                    Go to Dashboard
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      component={Link}
+                      to="/login"
+                      variant="contained"
+                      size="large"
+                      sx={{ 
+                        bgcolor: 'white', 
+                        color: 'primary.main',
+                        '&:hover': { bgcolor: 'grey.100' }
+                      }}
+                    >
+                      Login
+                    </Button>
+                    <Button
+                      component={Link}
+                      to="/register"
+                      variant="outlined"
+                      size="large"
+                      sx={{ 
+                        borderColor: 'white',
+                        color: 'white',
+                        '&:hover': { 
+                          bgcolor: 'white',
+                          color: 'primary.main'
+                        }
+                      }}
+                    >
+                      Register
+                    </Button>
+                  </>
+                )}
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Box sx={{ textAlign: 'center' }}>
+                <SchoolIcon sx={{ fontSize: 200, opacity: 0.2 }} />
+              </Box>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
 
-      {/* Health Documentation Section */}
-      <section id="docs" className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12 animate-fadeIn">
-            <h3 className="text-4xl font-bold mb-4">Health Documentation</h3>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">Access important health documents and guidelines for students and parents.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="docs-card bg-white p-8 rounded-lg shadow-md">
-              <div className="text-indigo-500 text-4xl mb-6">
-                <i className="fas fa-book-medical"></i>
-              </div>
-              <h4 className="text-2xl font-semibold mb-3">Health Policy</h4>
-              <p className="text-gray-600 mb-6">Comprehensive school health policies and procedures for students and staff.</p>
-              <a href="#" className="flex items-center text-indigo-600 font-medium hover:text-indigo-800 transition-all">
-                <i className="fas fa-file-pdf mr-2"></i> Download PDF
-                <i className="fas fa-arrow-right ml-2 text-sm"></i>
-              </a>
-            </div>
-            <div className="docs-card bg-white p-8 rounded-lg shadow-md">
-              <div className="text-indigo-500 text-4xl mb-6">
-                <i className="fas fa-syringe"></i>
-              </div>
-              <h4 className="text-2xl font-semibold mb-3">Vaccination Guidelines</h4>
-              <p className="text-gray-600 mb-6">Essential guidelines and schedules for required and recommended student vaccinations.</p>
-              <a href="#" className="flex items-center text-indigo-600 font-medium hover:text-indigo-800 transition-all">
-                <i className="fas fa-file-pdf mr-2"></i> Download PDF
-                <i className="fas fa-arrow-right ml-2 text-sm"></i>
-              </a>
-            </div>
-            <div className="docs-card bg-white p-8 rounded-lg shadow-md">
-              <div className="text-indigo-500 text-4xl mb-6">
-                <i className="fas fa-first-aid"></i>
-              </div>
-              <h4 className="text-2xl font-semibold mb-3">Emergency Procedures</h4>
-              <p className="text-gray-600 mb-6">Critical procedures and protocols for handling various medical emergencies at school.</p>
-              <a href="#" className="flex items-center text-indigo-600 font-medium hover:text-indigo-800 transition-all">
-                <i className="fas fa-file-pdf mr-2"></i> Download PDF
-                <i className="fas fa-arrow-right ml-2 text-sm"></i>
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Container maxWidth="lg" sx={{ py: 6 }}>
+        {/* School Information */}
+        <Paper 
+          sx={{ 
+            p: 4, 
+            mb: 6, 
+            bgcolor: 'primary.light',
+            borderLeft: 4,
+            borderColor: 'primary.main',
+            color: 'primary.contrastText'
+          }}
+        >
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={8}>
+              <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, color: 'primary.dark' }}>
+                {schoolInfo.name} - Health Office Information
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Address:</strong> {schoolInfo.address}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Phone:</strong> {schoolInfo.phone}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Email:</strong> {schoolInfo.email}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Health Office Hours:</strong> {schoolInfo.healthOfficeHours}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Nurse on Duty:</strong> {schoolInfo.nurseOnDuty}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Button
+                  variant="contained"
+                  color="error"
+                  size="large"
+                  fullWidth
+                  sx={{ mb: 2 }}
+                >
+                  Emergency: Call 911
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  fullWidth
+                >
+                  Contact Health Office
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
 
-      {/* Blog Section */}
-      <section id="blog" className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12 animate-fadeIn">
-            <h3 className="text-4xl font-bold mb-4">Health Blog</h3>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">Stay informed with the latest health news, tips, and updates for school-aged children.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="blog-card rounded-xl overflow-hidden shadow-lg">
-              <div className="relative h-48 overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
-                     alt="Wellness" className="w-full h-full object-cover" />
-                <div className="absolute top-4 right-4 bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                  WELLNESS
-                </div>
-              </div>
-              <div className="p-6">
-                <h4 className="text-xl font-semibold mb-3">Tips for Student Wellness</h4>
-                <p className="text-gray-600 mb-4">Learn how to keep your child healthy and thriving at school with these expert wellness tips.</p>
-                <div className="flex items-center justify-between">
-                  <a href="#" className="flex items-center text-indigo-600 font-medium hover:text-indigo-800 transition-all">
-                    Read More <i className="fas fa-arrow-right ml-2 text-sm"></i>
-                  </a>
-                  <span className="text-gray-500 text-sm"><i className="far fa-calendar-alt mr-1"></i> May 15, 2023</span>
-                </div>
-              </div>
-            </div>
+        {/* Quick Actions for Logged-in Users */}
+        {currentUser && quickActions.length > 0 && (
+          <Box sx={{ mb: 6 }}>
+            <Typography variant="h4" sx={{ fontWeight: 600, mb: 3, color: 'text.primary' }}>
+              Quick Actions
+            </Typography>
+            <Grid container spacing={3}>
+              {quickActions.map((action, index) => (
+                <Grid item xs={12} sm={6} md={3} key={index}>
+                  <Card sx={{ height: '100%', '&:hover': { boxShadow: 6 }, transition: 'box-shadow 0.3s' }}>
+                    <CardContent sx={{ textAlign: 'center' }}>
+                      <Avatar 
+                        sx={{ 
+                          mx: 'auto', 
+                          mb: 2,
+                          bgcolor: `${action.color}.light`,
+                          color: `${action.color}.main`,
+                          width: 56,
+                          height: 56
+                        }}
+                      >
+                        {action.icon}
+                      </Avatar>
+                      <Typography variant="h6" sx={{ mb: 1 }}>
+                        {action.title}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                        {action.description}
+                      </Typography>
+                      <Button
+                        component={Link}
+                        to={action.link}
+                        variant="contained"
+                        color={action.color}
+                        size="small"
+                        fullWidth
+                      >
+                        Access
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        )}
 
-            <div className="blog-card rounded-xl overflow-hidden shadow-lg">
-              <div className="relative h-48 overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1584634731339-252c581abfc5?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
-                     alt="Vaccination" className="w-full h-full object-cover" />
-                <div className="absolute top-4 right-4 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                  VACCINATION
-                </div>
-              </div>
-              <div className="p-6">
-                <h4 className="text-xl font-semibold mb-3">Vaccination Updates</h4>
-                <p className="text-gray-600 mb-4">Stay current with the latest updates and information on school vaccination programs and requirements.</p>
-                <div className="flex items-center justify-between">
-                  <a href="#" className="flex items-center text-indigo-600 font-medium hover:text-indigo-800 transition-all">
-                    Read More <i className="fas fa-arrow-right ml-2 text-sm"></i>
-                  </a>
-                  <span className="text-gray-500 text-sm"><i className="far fa-calendar-alt mr-1"></i> June 2, 2023</span>
-                </div>
-              </div>
-            </div>
+        {/* Features Section */}
+        <Box sx={{ mb: 6 }}>
+          <Typography variant="h4" sx={{ fontWeight: 600, mb: 3, textAlign: 'center', color: 'text.primary' }}>
+            Platform Features
+          </Typography>
+          <Grid container spacing={4}>
+            {features.map((feature, index) => (
+              <Grid item xs={12} md={6} lg={4} key={index}>
+                <Card sx={{ height: '100%', '&:hover': { boxShadow: 6 }, transition: 'box-shadow 0.3s' }}>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Box sx={{ mb: 2 }}>
+                      {feature.icon}
+                    </Box>
+                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+                      {feature.title}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      {feature.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
 
-            <div className="blog-card rounded-xl overflow-hidden shadow-lg">
-              <div className="relative h-48 overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1505751172876-fa1923c5c528?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
-                     alt="Allergies" className="w-full h-full object-cover" />
-                <div className="absolute top-4 right-4 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                  ALLERGIES
-                </div>
-              </div>
-              <div className="p-6">
-                <h4 className="text-xl font-semibold mb-3">Managing Allergies</h4>
-                <p className="text-gray-600 mb-4">Comprehensive guide to understanding and managing various allergies in the school environment.</p>
-                <div className="flex items-center justify-between">
-                  <a href="#" className="flex items-center text-indigo-600 font-medium hover:text-indigo-800 transition-all">
-                    Read More <i className="fas fa-arrow-right ml-2 text-sm"></i>
-                  </a>
-                  <span className="text-gray-500 text-sm"><i className="far fa-calendar-alt mr-1"></i> June 18, 2023</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Health Documentation Section */}
+        <Box sx={{ mb: 6 }}>
+          <Typography variant="h4" sx={{ fontWeight: 600, mb: 3, textAlign: 'center', color: 'text.primary' }}>
+            Health Documentation
+          </Typography>
+          <Typography variant="body1" sx={{ textAlign: 'center', mb: 4, color: 'text.secondary' }}>
+            Access important health documents and guidelines for students and parents.
+          </Typography>
+          <Grid container spacing={4}>
+            {healthDocuments.map((doc, index) => (
+              <Grid item xs={12} md={4} key={index}>
+                <Card sx={{ height: '100%', '&:hover': { boxShadow: 6 }, transition: 'box-shadow 0.3s' }}>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Box sx={{ mb: 2 }}>
+                      {doc.icon}
+                    </Box>
+                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+                      {doc.title}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
+                      {doc.description}
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      fullWidth
+                      startIcon={<DocumentIcon />}
+                    >
+                      Download PDF
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
 
-          <div className="text-center mt-12">
-            <a href="#" className="inline-flex items-center px-6 py-3 border-2 border-indigo-500 text-indigo-600 rounded-lg font-medium hover:bg-indigo-50 transition-all">
-              <i className="fas fa-book-reader mr-2"></i> View All Articles
-            </a>
-          </div>
-        </div>
-      </section>
-    </div>
+        {/* Health Blog Section */}
+        <Box sx={{ mb: 6 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h4" sx={{ fontWeight: 600, color: 'text.primary' }}>
+              Health Blog & Resources
+            </Typography>
+            <Button variant="outlined" color="primary">
+              View All Posts
+            </Button>
+          </Box>
+          <Grid container spacing={4}>
+            {healthBlogPosts.map((post, index) => (
+              <Grid item xs={12} md={4} key={index}>
+                <Card sx={{ height: '100%', '&:hover': { boxShadow: 6 }, transition: 'box-shadow 0.3s' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Chip
+                        label={post.category}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        {post.readTime}
+                      </Typography>
+                    </Box>
+                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+                      {post.title}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                      {post.excerpt}
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        By {post.author}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        {new Date(post.date).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+
+        {/* Health Tips Section */}
+        <Paper 
+          sx={{ 
+            p: 4, 
+            bgcolor: 'success.light',
+            borderLeft: 4,
+            borderColor: 'success.main'
+          }}
+        >
+          <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, color: 'success.dark' }}>
+            Daily Health Tips
+          </Typography>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={4}>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                <CheckIcon sx={{ color: 'success.main', mt: 0.5 }} />
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 500, mb: 0.5 }}>
+                    Stay Hydrated
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    Drink plenty of water throughout the day to maintain good health and concentration.
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                <CheckIcon sx={{ color: 'success.main', mt: 0.5 }} />
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 500, mb: 0.5 }}>
+                    Wash Your Hands
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    Regular hand washing with soap and water helps prevent the spread of germs.
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                <CheckIcon sx={{ color: 'success.main', mt: 0.5 }} />
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 500, mb: 0.5 }}>
+                    Get Enough Sleep
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    Adequate sleep is essential for learning, growth, and immune system function.
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      </Container>
+    </Box>
   );
 };
 
 export default Home;
+
