@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@tinymce/miniature": "^6.0.0",
+    "@tinymce/tinymce-react": "^6.2.0",
+    "tinymce": "^7.9.1"
+  }
+}

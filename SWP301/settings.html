@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - School Health Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/settings.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>School Health MS</h1>
+            </div>            <nav class="nav-menu">
+                <ul>
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="health-records.html">Health Records</a></li>
+                    <li><a href="medications.html">Medications</a></li>
+                    <li><a href="medical-events.html">Medical Events</a></li>
+                    <li><a href="appointments.html">Appointments</a></li>
+                    <li><a href="emergency-contacts.html">Emergency Contacts</a></li>
+                    <li><a href="medical-supplies.html">Medical Supplies</a></li>
+                    <li><a href="reports.html">Reports</a></li>
+                    <li><a href="settings.html" class="active">Settings</a></li>
+                    <li><a href="help.html">Help</a></li>
+                    <li><a href="profile.html">Profile</a></li>
+                    <li><a href="login.html" class="btn-login">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-cog"></i> System Settings</h1>
+                <p>Configure system preferences, notifications, and administrative settings</p>
+            </div>
+
+            <div class="settings-layout">
+                <div class="settings-sidebar">
+                    <nav class="settings-nav">
+                        <ul>
+                            <li><a href="#general" class="settings-tab active" data-tab="general">
+                                <i class="fas fa-cog"></i> General Settings
+                            </a></li>
+                            <li><a href="#notifications" class="settings-tab" data-tab="notifications">
+                                <i class="fas fa-bell"></i> Notifications
+                            </a></li>
+                            <li><a href="#users" class="settings-tab" data-tab="users">
+                                <i class="fas fa-users"></i> User Management
+                            </a></li>
+                            <li><a href="#health-policies" class="settings-tab" data-tab="health-policies">
+                                <i class="fas fa-file-medical"></i> Health Policies
+                            </a></li>
+                            <li><a href="#data-backup" class="settings-tab" data-tab="data-backup">
+                                <i class="fas fa-database"></i> Data & Backup
+                            </a></li>
+                            <li><a href="#security" class="settings-tab" data-tab="security">
+                                <i class="fas fa-shield-alt"></i> Security
+                            </a></li>
+                        </ul>
+                    </nav>
+                </div>
+
+                <div class="settings-content">
+                    <!-- General Settings -->
+                    <div id="general" class="settings-panel active">
+                        <h2>General Settings</h2>
+                        
+                        <div class="settings-section">
+                            <h3>School Information</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="schoolName">School Name</label>
+                                    <input type="text" id="schoolName" value="Lincoln Elementary School">
+                                </div>
+                                <div class="form-group">
+                                    <label for="schoolDistrict">School District</label>
+                                    <input type="text" id="schoolDistrict" value="Metropolitan School District">
+                                </div>
+                                <div class="form-group">
+                                    <label for="schoolAddress">Address</label>
+                                    <textarea id="schoolAddress" rows="3">123 Education Lane
+Lincoln City, LC 12345</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="schoolPhone">Phone Number</label>
+                                    <input type="tel" id="schoolPhone" value="(555) 123-4567">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>System Preferences</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="timezone">Timezone</label>
+                                    <select id="timezone">
+                                        <option value="EST">Eastern Standard Time (EST)</option>
+                                        <option value="CST">Central Standard Time (CST)</option>
+                                        <option value="MST">Mountain Standard Time (MST)</option>
+                                        <option value="PST">Pacific Standard Time (PST)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="dateFormat">Date Format</label>
+                                    <select id="dateFormat">
+                                        <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                        <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                        <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="timeFormat">Time Format</label>
+                                    <select id="timeFormat">
+                                        <option value="12">12-hour (AM/PM)</option>
+                                        <option value="24">24-hour</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="language">Language</label>
+                                    <select id="language">
+                                        <option value="en">English</option>
+                                        <option value="es">Spanish</option>
+                                        <option value="fr">French</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Health Office Hours</h3>
+                            <div class="office-hours">
+                                <div class="hours-grid">
+                                    <div class="day-hours">
+                                        <label>Monday</label>
+                                        <input type="time" value="08:00"> - <input type="time" value="16:00">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="day-hours">
+                                        <label>Tuesday</label>
+                                        <input type="time" value="08:00"> - <input type="time" value="16:00">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="day-hours">
+                                        <label>Wednesday</label>
+                                        <input type="time" value="08:00"> - <input type="time" value="16:00">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="day-hours">
+                                        <label>Thursday</label>
+                                        <input type="time" value="08:00"> - <input type="time" value="16:00">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="day-hours">
+                                        <label>Friday</label>
+                                        <input type="time" value="08:00"> - <input type="time" value="16:00">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div id="notifications" class="settings-panel">
+                        <h2>Notification Settings</h2>
+                        
+                        <div class="settings-section">
+                            <h3>Email Notifications</h3>
+                            <div class="notification-options">
+                                <div class="notification-item">
+                                    <div class="notification-info">
+                                        <h4>Medication Reminders</h4>
+                                        <p>Send email reminders for scheduled medications</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="notification-item">
+                                    <div class="notification-info">
+                                        <h4>Appointment Confirmations</h4>
+                                        <p>Send confirmation emails for appointments</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="notification-item">
+                                    <div class="notification-info">
+                                        <h4>Emergency Contact Alerts</h4>
+                                        <p>Notify emergency contacts of health incidents</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="notification-item">
+                                    <div class="notification-info">
+                                        <h4>Vaccination Reminders</h4>
+                                        <p>Send reminders for upcoming vaccinations</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>SMS Notifications</h3>
+                            <div class="notification-options">
+                                <div class="notification-item">
+                                    <div class="notification-info">
+                                        <h4>Emergency Alerts</h4>
+                                        <p>Send SMS for urgent health situations</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="notification-item">
+                                    <div class="notification-info">
+                                        <h4>Appointment Reminders</h4>
+                                        <p>Send SMS reminders 24 hours before appointments</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Management -->
+                    <div id="users" class="settings-panel">
+                        <h2>User Management</h2>
+                        
+                        <div class="settings-section">
+                            <div class="section-header">
+                                <h3>System Users</h3>
+                                <button class="btn btn-primary" id="addUserBtn">
+                                    <i class="fas fa-plus"></i> Add User
+                                </button>
+                            </div>
+                            <div class="users-table">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>Status</th>
+                                            <th>Last Login</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Sarah Johnson</td>
+                                            <td>sarah.johnson@school.edu</td>
+                                            <td><span class="role-badge admin">Administrator</span></td>
+                                            <td><span class="status-badge active">Active</span></td>
+                                            <td>2025-05-29 09:15 AM</td>
+                                            <td>
+                                                <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                                                <button class="btn-icon" title="Reset Password"><i class="fas fa-key"></i></button>
+                                                <button class="btn-icon" title="Disable"><i class="fas fa-ban"></i></button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Michael Chen</td>
+                                            <td>michael.chen@school.edu</td>
+                                            <td><span class="role-badge nurse">Nurse</span></td>
+                                            <td><span class="status-badge active">Active</span></td>
+                                            <td>2025-05-29 08:30 AM</td>
+                                            <td>
+                                                <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                                                <button class="btn-icon" title="Reset Password"><i class="fas fa-key"></i></button>
+                                                <button class="btn-icon" title="Disable"><i class="fas fa-ban"></i></button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Emily Davis</td>
+                                            <td>emily.davis@school.edu</td>
+                                            <td><span class="role-badge staff">Health Staff</span></td>
+                                            <td><span class="status-badge inactive">Inactive</span></td>
+                                            <td>2025-05-27 02:45 PM</td>
+                                            <td>
+                                                <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                                                <button class="btn-icon" title="Reset Password"><i class="fas fa-key"></i></button>
+                                                <button class="btn-icon" title="Enable"><i class="fas fa-check"></i></button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Health Policies -->
+                    <div id="health-policies" class="settings-panel">
+                        <h2>Health Policies & Procedures</h2>
+                        
+                        <div class="settings-section">
+                            <h3>Medication Administration</h3>
+                            <div class="policy-options">
+                                <div class="form-group">
+                                    <label for="medicationApproval">Medication Approval Required</label>
+                                    <select id="medicationApproval">
+                                        <option value="nurse">Nurse Approval</option>
+                                        <option value="doctor">Doctor Prescription</option>
+                                        <option value="parent">Parent Consent</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="medicationStorage">Medication Storage Period (days)</label>
+                                    <input type="number" id="medicationStorage" value="90" min="1" max="365">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Emergency Procedures</h3>
+                            <div class="policy-options">
+                                <div class="form-group">
+                                    <label for="emergencyProtocol">Emergency Contact Protocol</label>
+                                    <select id="emergencyProtocol">
+                                        <option value="immediate">Immediate Contact</option>
+                                        <option value="assessment">After Assessment</option>
+                                        <option value="severity">Based on Severity</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Emergency Services</label>
+                                    <div class="emergency-contacts">
+                                        <input type="tel" placeholder="911" value="911">
+                                        <input type="tel" placeholder="Poison Control" value="1-800-222-1222">
+                                        <input type="tel" placeholder="Local Hospital" value="(555) 123-HELP">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data & Backup -->
+                    <div id="data-backup" class="settings-panel">
+                        <h2>Data Management & Backup</h2>
+                        
+                        <div class="settings-section">
+                            <h3>Automatic Backups</h3>
+                            <div class="backup-options">
+                                <div class="form-group">
+                                    <label for="backupFrequency">Backup Frequency</label>
+                                    <select id="backupFrequency">
+                                        <option value="daily">Daily</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="backupTime">Backup Time</label>
+                                    <input type="time" id="backupTime" value="02:00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="backupRetention">Retention Period (days)</label>
+                                    <input type="number" id="backupRetention" value="30" min="7" max="365">
+                                </div>
+                            </div>
+                            <div class="backup-actions">
+                                <button class="btn btn-secondary">
+                                    <i class="fas fa-download"></i> Download Backup
+                                </button>
+                                <button class="btn btn-primary">
+                                    <i class="fas fa-sync-alt"></i> Create Backup Now
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Data Retention</h3>
+                            <div class="retention-options">
+                                <div class="form-group">
+                                    <label for="studentRecords">Student Health Records (years)</label>
+                                    <input type="number" id="studentRecords" value="7" min="1" max="20">
+                                </div>
+                                <div class="form-group">
+                                    <label for="medicationLogs">Medication Logs (years)</label>
+                                    <input type="number" id="medicationLogs" value="3" min="1" max="10">
+                                </div>
+                                <div class="form-group">
+                                    <label for="visitLogs">Visit Logs (years)</label>
+                                    <input type="number" id="visitLogs" value="5" min="1" max="15">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security -->
+                    <div id="security" class="settings-panel">
+                        <h2>Security Settings</h2>
+                        
+                        <div class="settings-section">
+                            <h3>Password Policy</h3>
+                            <div class="security-options">
+                                <div class="form-group">
+                                    <label for="passwordLength">Minimum Password Length</label>
+                                    <input type="number" id="passwordLength" value="8" min="6" max="20">
+                                </div>
+                                <div class="form-group">
+                                    <label for="passwordExpiry">Password Expiry (days)</label>
+                                    <input type="number" id="passwordExpiry" value="90" min="30" max="365">
+                                </div>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" checked>
+                                        <span class="checkmark"></span>
+                                        Require uppercase letters
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" checked>
+                                        <span class="checkmark"></span>
+                                        Require numbers
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox">
+                                        <span class="checkmark"></span>
+                                        Require special characters
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Access Control</h3>
+                            <div class="security-options">
+                                <div class="form-group">
+                                    <label for="sessionTimeout">Session Timeout (minutes)</label>
+                                    <input type="number" id="sessionTimeout" value="30" min="5" max="120">
+                                </div>
+                                <div class="form-group">
+                                    <label for="loginAttempts">Max Login Attempts</label>
+                                    <input type="number" id="loginAttempts" value="3" min="1" max="10">
+                                </div>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" checked>
+                                        <span class="checkmark"></span>
+                                        Enable two-factor authentication
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" checked>
+                                        <span class="checkmark"></span>
+                                        Log all user activities
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-actions">
+                <button class="btn btn-secondary" id="resetSettings">Reset to Defaults</button>
+                <button class="btn btn-primary" id="saveSettings">Save All Changes</button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>School Health MS</h3>
+                    <p>A comprehensive solution for school health management.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="dashboard.html">Dashboard</a></li>
+                        <li><a href="health-records.html">Health Records</a></li>
+                        <li><a href="settings.html">Settings</a></li>
+                        <li><a href="appointments.html">Appointments</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact Us</h3>
+                    <p>Email: info@schoolhealthms.com</p>
+                    <p>Phone: +1 (123) 456-7890</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 School Health Management System. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+    <script src="js/settings.js"></script>
+</body>
+</html>
