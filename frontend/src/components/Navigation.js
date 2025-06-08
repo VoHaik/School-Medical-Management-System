@@ -3,51 +3,64 @@ import { Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
 const Navigation = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { currentUser, logout } = useContext(AuthContext); // Changed user to currentUser to match AuthContext
   const location = useLocation();
 
   const getNavigationItems = () => {
-    if (!user) return [];
+    if (!currentUser) return []; // Changed user to currentUser
 
     const commonItems = [
       { path: '/dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
       { path: '/profile', label: 'Profile', icon: 'fas fa-user' },
     ];
 
-    switch (user.role) {
-      case 'PARENT':
+    // Determine the primary role for navigation. 
+    // Assumes roles are like ['ROLE_PARENT'], takes the first one.
+    // You might need more sophisticated logic if users can have multiple primary roles.
+    const primaryRole = currentUser.roles && currentUser.roles.length > 0 ? currentUser.roles[0] : null;
+
+    switch (primaryRole) { // Switched to use primaryRole based on currentUser.roles
+      case 'ROLE_PARENT':
         return [
           ...commonItems,
-          { path: '/health-declaration', label: 'Health Declaration', icon: 'fas fa-file-medical-alt' },
-          { path: '/medication-submission', label: 'Submit Medication', icon: 'fas fa-pills' },
-          { path: '/vaccination-consent', label: 'Vaccination Consent', icon: 'fas fa-syringe' },
-          { path: '/checkup-history', label: 'Checkup History', icon: 'fas fa-history' },
-          { path: '/notifications', label: 'Notifications', icon: 'fas fa-bell' },
+          { path: '/parent/dashboard', label: 'Parent Dashboard', icon: 'fas fa-tachometer-alt' },
+          { path: '/parent/health-declaration', label: 'Health Declaration', icon: 'fas fa-file-medical-alt' },
+          { path: '/parent/medication-submission', label: 'Submit Medication', icon: 'fas fa-pills' },
+          { path: '/parent/vaccination-consent', label: 'Vaccination Consent', icon: 'fas fa-syringe' },
+          { path: '/parent/checkup-history', label: 'Checkup History', icon: 'fas fa-history' },
+          { path: '/parent/notifications', label: 'Notifications', icon: 'fas fa-bell' },
+          { path: '/parent/emergency-contacts', label: 'Emergency Contacts', icon: 'fas fa-phone' },
+          { path: '/student-blog', label: 'Blog/News', icon: 'fas fa-blog' }, // Added Blog/News link
         ];
-      
-      case 'MEDICAL_STAFF':
+      case 'ROLE_SCHOOLNURSE': // Changed from MEDICAL_STAFF to ROLE_SCHOOLNURSE
         return [
           ...commonItems,
-          { path: '/medical-events', label: 'Medical Events', icon: 'fas fa-ambulance' },
-          { path: '/medication-management', label: 'Medication Management', icon: 'fas fa-capsules' },
-          { path: '/vaccination-management', label: 'Vaccination Management', icon: 'fas fa-syringe' },
-          { path: '/health-checkups', label: 'Health Checkups', icon: 'fas fa-stethoscope' },
-          { path: '/student-management', label: 'Student Management', icon: 'fas fa-users' },
-          { path: '/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
+          { path: '/medical/events', label: 'Medical Events', icon: 'fas fa-ambulance' }, // Corrected path
+          { path: '/medical/medication-management', label: 'Medication Management', icon: 'fas fa-capsules' }, // Corrected path
+          { path: '/medical/vaccination-management', label: 'Vaccination Management', icon: 'fas fa-syringe' }, // Corrected path
+          { path: '/medical/health-checkups', label: 'Health Checkups', icon: 'fas fa-stethoscope' }, // Corrected path
+          { path: '/medical/student-management', label: 'Student Management', icon: 'fas fa-users' }, // Corrected path
+          { path: '/medical/reports', label: 'Reports', icon: 'fas fa-chart-bar' }, // Corrected path
         ];
-      
-      case 'ADMIN':
+      case 'ROLE_TEACHER': // Changed from MANAGER to ROLE_TEACHER
         return [
           ...commonItems,
-          { path: '/user-management', label: 'User Management', icon: 'fas fa-users-cog' },
-          { path: '/system-config', label: 'System Configuration', icon: 'fas fa-cogs' },
-          { path: '/medical-events', label: 'Medical Events', icon: 'fas fa-ambulance' },
-          { path: '/vaccination-management', label: 'Vaccination Management', icon: 'fas fa-syringe' },
-          { path: '/health-checkups', label: 'Health Checkups', icon: 'fas fa-stethoscope' },
-          { path: '/reports', label: 'Reports & Analytics', icon: 'fas fa-analytics' },
+          { path: '/manager/dashboard', label: 'Manager Dashboard', icon: 'fas fa-tachometer-alt' },
+          { path: '/manager/reports', label: 'Reports & Analytics', icon: 'fas fa-chart-bar' },
+          { path: '/manager/user-management', label: 'User Management', icon: 'fas fa-users-cog' },
+          { path: '/manager/health-programs', label: 'Health Programs', icon: 'fas fa-heartbeat' },
+          { path: '/manager/content', label: 'Content Management', icon: 'fas fa-file-alt' },
         ];
-      
-      case 'STUDENT':
+      case 'ROLE_ADMIN': // Changed from ADMIN to ROLE_ADMIN
+        return [
+          ...commonItems,
+          { path: '/admin/user-management', label: 'User Management', icon: 'fas fa-users-cog' },
+          { path: '/admin/system-configuration', label: 'System Configuration', icon: 'fas fa-cogs' },
+          { path: '/admin/analytics-reports', label: 'Reports & Analytics', icon: 'fas fa-chart-line' },
+          { path: '/admin/health-programs', label: 'Health Programs', icon: 'fas fa-heartbeat' },
+          { path: '/admin/data-export', label: 'Data Export', icon: 'fas fa-file-export' },
+        ];
+      case 'ROLE_STUDENT': // Changed from STUDENT to ROLE_STUDENT
         return [
           ...commonItems,
           { path: '/health-profile', label: 'Health Profile', icon: 'fas fa-heart' },
@@ -55,13 +68,16 @@ const Navigation = () => {
           { path: '/vaccination-record', label: 'Vaccination Record', icon: 'fas fa-syringe' },
           { path: '/blog', label: 'Health Blog', icon: 'fas fa-blog' },
         ];
-      
       default:
         return commonItems;
     }
   };
 
   const navigationItems = getNavigationItems();
+
+  // Debugging: Log user and determined navigation items
+  console.log('Navigation User:', currentUser);
+  console.log('Navigation Items:', navigationItems);
 
   return (
     <nav className="bg-white shadow-lg">
@@ -74,7 +90,7 @@ const Navigation = () => {
             </Link>
           </div>
 
-          {user && (
+          {currentUser && (
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-4">
                 {navigationItems.map((item) => (
@@ -95,7 +111,7 @@ const Navigation = () => {
 
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">
-                  Welcome, {user.fullName || user.username}
+                  Welcome, {currentUser.fullName || currentUser.username}
                 </span>
                 <button
                   onClick={logout}

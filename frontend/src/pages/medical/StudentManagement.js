@@ -37,17 +37,18 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemIcon,
-  Accordion,
+  ListItemIcon,  Accordion,
   AccordionSummary,
-  AccordionDetails,
+  AccordionDetails
+} from '@mui/material';
+import {
   Timeline,
   TimelineItem,
   TimelineSeparator,
   TimelineConnector,
   TimelineContent,
   TimelineDot
-} from '@mui/material';
+} from '@mui/lab';
 import {
   Search as SearchIcon,
   FilterList as FilterIcon,

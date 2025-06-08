@@ -24,7 +24,8 @@ export const AuthProvider = ({ children }) => {
             headers: {
               'Authorization': `Bearer ${token}`
             }
-          });          // Make a request to the auth/me endpoint to validate the token
+          });
+          // Make a request to the auth/me endpoint to validate the token
           try {
             const response = await instance.get('/api/auth/me');
             // If the request succeeds, the token is valid
@@ -77,7 +78,8 @@ export const AuthProvider = ({ children }) => {
       const { token, id, username: userName, email, fullName, roles } = response.data;
 
       // Store token and user info
-      localStorage.setItem('token', token);      const user = {
+      localStorage.setItem('token', token);
+      const user = {
         id,
         username: userName,
         email,
@@ -178,7 +180,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     isAuthenticated,
-    getAuthAxios
+    getAuthAxios,
   };
 
   return (

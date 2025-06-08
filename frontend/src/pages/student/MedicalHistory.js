@@ -14,21 +14,23 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-  Chip,
-  Divider,
+  Chip,  Divider,
   Alert,
-  Timeline,
-  TimelineItem,
-  TimelineSeparator,
-  TimelineConnector,
-  TimelineContent,
-  TimelineDot,
   Avatar,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton,
+  IconButton
+} from '@mui/material';
+import {
+  Timeline,
+  TimelineItem,
+  TimelineSeparator,
+  TimelineConnector,  TimelineContent,
+  TimelineDot
+} from '@mui/lab';
+import {
   Tooltip,
   Accordion,
   AccordionSummary,
@@ -47,7 +49,7 @@ import {
   Print as PrintIcon,
   Download as DownloadIcon,
   ExpandMore as ExpandMoreIcon,
-  Emergency as EmergencyIcon,
+  Warning as EmergencyIcon,
   Healing as HealingIcon,
   Psychology as PsychologyIcon,
   Visibility as EyeIcon,

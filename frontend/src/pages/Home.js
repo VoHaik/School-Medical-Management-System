@@ -23,7 +23,7 @@ import {
   CheckCircle as CheckIcon,
   Description as DocumentIcon,
   Vaccines as VaccineIcon,
-  Emergency as EmergencyIcon
+  Warning as EmergencyIcon
 } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
 

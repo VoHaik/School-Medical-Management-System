@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
+import { handleApiError } from '../utils/errorHandler'; // Import our utility
 
 const StudentBlog = () => {
     const { getAuthAxios, currentUser } = useContext(AuthContext);
@@ -86,23 +87,16 @@ const StudentBlog = () => {
         try {
             setLoading(true);
             const response = await axios.get('/api/blog');
-            console.log('Raw API response:', response); // Debug log
-            console.log('Response data:', response.data); // Debug log
-            console.log('Response data type:', typeof response.data); // Debug log
-            console.log('Response data length:', Array.isArray(response.data) ? response.data.length : 'Not an array'); // Debug log
             
             const postsData = response.data || [];
-            console.log('Posts data before cleaning:', postsData); // Debug log
-            
             const cleanedPosts = cleanPostsData(postsData);
-            console.log('Posts after cleaning:', cleanedPosts); // Debug log
-            
             setAllPosts(cleanedPosts);
         } catch (error) {
-            console.error('Error loading all posts:', error);
-            console.error('Error response:', error.response); // Debug log
+            // Use our error handler
+            const errorDetails = handleApiError(error, 'Failed to load blog posts');
+            console.error('Error loading all posts:', errorDetails);
             setAllPosts([]);
-            showMessage('Failed to load blog posts', 'error');
+            showMessage(errorDetails.message, errorDetails.type);
         } finally {
             setLoading(false);
         }
@@ -113,18 +107,15 @@ const StudentBlog = () => {
         try {
             const authAxios = getAuthAxios();
             const response = await authAxios.get('/api/blog/my-posts');
-            console.log('My posts response:', response.data); // Debug log
             const postsData = response.data || [];
             const cleanedPosts = cleanPostsData(postsData);
             setPosts(cleanedPosts);
         } catch (error) {
-            console.error('Error loading my posts:', error);
-            if (error.response?.status === 404) {
-                setPosts([]);
-            } else {
-                showMessage('Failed to load your posts', 'error');
-                setPosts([]);
-            }
+            // Use our error handler
+            const errorDetails = handleApiError(error, 'Failed to load your posts');
+            console.error('Error loading my posts:', errorDetails);
+            setPosts([]);
+            showMessage(errorDetails.message, errorDetails.type);
         }
     };
 
@@ -177,8 +168,10 @@ const StudentBlog = () => {
             loadMyPosts();
             loadAllPosts();
         } catch (error) {
-            console.error('Error saving post:', error);
-            showMessage('Failed to save post. Please try again.', 'error');
+            // Use our error handler
+            const errorDetails = handleApiError(error, 'Failed to save post');
+            console.error('Error saving post:', errorDetails);
+            showMessage(errorDetails.message, 'error');
         }
     };
 
@@ -204,8 +197,10 @@ const StudentBlog = () => {
             loadMyPosts();
             loadAllPosts();
         } catch (error) {
-            console.error('Error deleting post:', error);
-            showMessage('Failed to delete post', 'error');
+            // Use our error handler
+            const errorDetails = handleApiError(error, 'Failed to delete post');
+            console.error('Error deleting post:', errorDetails);
+            showMessage(errorDetails.message, 'error');
         }
     };
 
@@ -221,12 +216,10 @@ const StudentBlog = () => {
                 showMessage('Backend is running correctly. No blog posts found in database.', 'info');
             }
         } catch (error) {
-            console.error('Backend connection failed:', error);
-            if (error.code === 'ERR_NETWORK') {
-                showMessage('Backend server is not running on port 8080', 'error');
-            } else {
-                showMessage(`Backend error: ${error.response?.status || error.message}`, 'error');
-            }
+            // Use our error handler
+            const errorDetails = handleApiError(error, 'Backend connection failed');
+            console.error('Backend connection failed:', errorDetails);
+            showMessage(errorDetails.message, 'error');
         }
     };
 
@@ -237,8 +230,10 @@ const StudentBlog = () => {
             showMessage('Test post created successfully!', 'success');
             loadAllPosts();
         } catch (error) {
-            console.error('Error creating test post:', error);
-            showMessage('Failed to create test post', 'error');
+            // Use our error handler
+            const errorDetails = handleApiError(error, 'Failed to create test post');
+            console.error('Error creating test post:', errorDetails);
+            showMessage(errorDetails.message, 'error');
         }
     };
 

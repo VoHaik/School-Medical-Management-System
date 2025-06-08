@@ -42,7 +42,7 @@ import {
   Edit as EditIcon,
   Print as PrintIcon,
   Share as ShareIcon,
-  Emergency as EmergencyIcon,
+  Warning as EmergencyIcon,
   Phone as PhoneIcon,
   Email as EmailIcon,
   Home as HomeIcon,

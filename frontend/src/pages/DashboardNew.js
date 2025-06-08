@@ -35,56 +35,14 @@ const Dashboard = () => {
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     return `${greeting}, ${user?.fullName || user?.username}!`;
-  };
-
-  const getRoleSpecificContent = () => {
+  };  const getRoleSpecificContent = () => {
     switch (user?.role) {
       case 'PARENT':
+        // Redirect parent users to the dedicated parent dashboard
+        window.location.href = '/parent/dashboard';
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <DashboardCard
-              title="Health Declaration"
-              description="Update your child's health information"
-              icon="fas fa-file-medical-alt"
-              link="/health-declaration"
-              color="blue"
-            />
-            <DashboardCard
-              title="Submit Medication"
-              description="Send medication requests to school"
-              icon="fas fa-pills"
-              link="/medication-submission"
-              color="green"
-            />
-            <DashboardCard
-              title="Vaccination Records"
-              description="View vaccination history and consent forms"
-              icon="fas fa-syringe"
-              link="/vaccination-consent"
-              color="purple"
-            />
-            <DashboardCard
-              title="Health Checkups"
-              description="Schedule and view checkup results"
-              icon="fas fa-stethoscope"
-              link="/checkup-history"
-              color="orange"
-            />
-            <DashboardCard
-              title="Notifications"
-              description="Important health notifications"
-              icon="fas fa-bell"
-              link="/notifications"
-              color="red"
-              badge={dashboardData.notifications?.length || 0}
-            />
-            <DashboardCard
-              title="Emergency Contacts"
-              description="Manage emergency contact information"
-              icon="fas fa-phone"
-              link="/emergency-contacts"
-              color="indigo"
-            />
+          <div className="text-center py-8">
+            <p className="text-gray-600">Redirecting to Parent Dashboard...</p>
           </div>
         );
 

@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import DarkModeToggle from './DarkModeToggle'; // Add this import
 
 const Header = () => {
   const { currentUser, logout, isAuthenticated } = useContext(AuthContext);
@@ -28,7 +29,8 @@ const Header = () => {
           <i className="fas fa-heartbeat text-2xl mr-2 animate-pulse"></i>
           <h1 className="text-2xl font-bold">School Health Management System</h1>
         </div>
-        <nav className="flex space-x-2">
+        <nav className="flex space-x-2 items-center"> {/* Add items-center */}
+          <DarkModeToggle /> {/* Add the dark mode toggle */}
           <Link to="/" className="nav-link px-3 py-2 rounded flex items-center">
             <i className="fas fa-home mr-1"></i> Home
           </Link>
@@ -50,9 +52,9 @@ const Header = () => {
                   </Link>
                 </>
               )}
-              <a href="#" onClick={handleLogout} className="nav-link px-3 py-2 rounded flex items-center">
+              <button onClick={handleLogout} className="nav-link px-3 py-2 rounded flex items-center">
                 <i className="fas fa-sign-out-alt mr-1"></i> Logout
-              </a>
+              </button>
             </>
           ) : (
             // Non-authenticated user navigation

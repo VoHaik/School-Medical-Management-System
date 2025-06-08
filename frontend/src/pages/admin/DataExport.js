@@ -28,16 +28,9 @@ import {
   Switch,
   FormControlLabel,
   Chip,
-  LinearProgress,
-  Alert,
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider,
   Tooltip,
   RadioGroup,
   Radio,
@@ -54,7 +47,6 @@ import {
   Description as FileIcon,
   TableChart as TableIcon,
   PictureAsPdf as PdfIcon,
-  InsertChart as ChartIcon,
   ExpandMore as ExpandMoreIcon,
   CheckCircle as CheckIcon,
   Error as ErrorIcon,
@@ -62,7 +54,6 @@ import {
   Info as InfoIcon,
   Storage as StorageIcon,
   Security as SecurityIcon,
-  Event as EventIcon,
   People as PeopleIcon,
   LocalHospital as MedicalIcon,
   Assessment as AssessmentIcon
@@ -236,8 +227,6 @@ const DataExport = () => {
   const [tabValue, setTabValue] = useState(0);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
-  const [selectedExportType, setSelectedExportType] = useState('');
-  const [selectedFields, setSelectedFields] = useState([]);
 
   const { control, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm({
     resolver: yupResolver(exportSchema),

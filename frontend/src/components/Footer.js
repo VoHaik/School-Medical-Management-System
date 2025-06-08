@@ -13,16 +13,16 @@ const Footer = () => {
             </div>
             <p className="text-gray-200 mb-4">Providing comprehensive health management solutions for schools and educational institutions.</p>
             <div className="flex space-x-4">
-              <a href="#" className="text-white hover:text-gray-200 transition-all">
+              <a href="https://facebook.com" className="text-white hover:text-gray-200 transition-all" aria-label="Facebook">
                 <i className="fab fa-facebook-f text-lg"></i>
               </a>
-              <a href="#" className="text-white hover:text-gray-200 transition-all">
+              <a href="https://twitter.com" className="text-white hover:text-gray-200 transition-all" aria-label="Twitter">
                 <i className="fab fa-twitter text-lg"></i>
               </a>
-              <a href="#" className="text-white hover:text-gray-200 transition-all">
+              <a href="https://instagram.com" className="text-white hover:text-gray-200 transition-all" aria-label="Instagram">
                 <i className="fab fa-instagram text-lg"></i>
               </a>
-              <a href="#" className="text-white hover:text-gray-200 transition-all">
+              <a href="https://linkedin.com" className="text-white hover:text-gray-200 transition-all" aria-label="LinkedIn">
                 <i className="fab fa-linkedin-in text-lg"></i>
               </a>
             </div>
@@ -41,10 +41,10 @@ const Footer = () => {
           <div>
             <h5 className="text-lg font-semibold mb-4">Resources</h5>
             <ul className="space-y-2">
-              <li><a href="#" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> Health Policies</a></li>
-              <li><a href="#" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> Vaccination Info</a></li>
-              <li><a href="#" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> Emergency Procedures</a></li>
-              <li><a href="#" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> FAQ</a></li>
+              <li><Link to="/resources/health-policies" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> Health Policies</Link></li>
+              <li><Link to="/resources/vaccination-info" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> Vaccination Info</Link></li>
+              <li><Link to="/resources/emergency-procedures" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> Emergency Procedures</Link></li>
+              <li><Link to="/resources/faq" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> FAQ</Link></li>
             </ul>
           </div>
 

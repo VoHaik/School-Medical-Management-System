@@ -1,6 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { Snackbar, Alert } from '@mui/material';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -8,6 +9,10 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('error');
   
   const { login, currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -19,6 +24,28 @@ const Login = () => {
     }
   }, [currentUser, navigate]);
 
+  // Check if there are stored failed attempts
+  useEffect(() => {
+    const storedAttempts = localStorage.getItem('failedLoginAttempts');
+    if (storedAttempts) {
+      const attempts = parseInt(storedAttempts, 10);
+      setFailedAttempts(attempts);
+      
+      // If there are recent failed attempts, show a notification
+      if (attempts > 0) {
+        const lastAttemptTime = localStorage.getItem('lastFailedLoginTime');
+        const now = new Date().getTime();
+        
+        // Only show notification if the last attempt was within the past hour
+        if (lastAttemptTime && now - parseInt(lastAttemptTime, 10) < 60 * 60 * 1000) {
+          setSnackbarMessage(`Warning: ${attempts} failed login attempt${attempts > 1 ? 's' : ''} detected`);
+          setSnackbarSeverity('warning');
+          setSnackbarOpen(true);
+        }
+      }
+    }
+  }, []);
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -32,20 +59,57 @@ const Login = () => {
       const result = await login(username, password);
       
       if (result.success) {
+        // Reset failed attempts if login is successful
+        setFailedAttempts(0);
+        localStorage.removeItem('failedLoginAttempts');
+        localStorage.removeItem('lastFailedLoginTime');
+        
         setMessage('Login successful! Redirecting...');
         setMessageType('success');
+        
+        setSnackbarMessage('Login successful! Welcome back.');
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
         
         // Redirect to home page after a short delay
         setTimeout(() => {
           navigate('/');
         }, 1500);
       } else {
+        // Increment and store failed attempts
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+        localStorage.setItem('failedLoginAttempts', newAttempts);
+        localStorage.setItem('lastFailedLoginTime', new Date().getTime().toString());
+        
         setMessage(result.message);
         setMessageType('error');
+        
+        // Display different messages depending on the number of failed attempts
+        if (newAttempts >= 5) {
+          setSnackbarMessage('Security Alert: Multiple failed login attempts detected! Account may be temporarily locked for security.');
+          setSnackbarSeverity('error');
+        } else if (newAttempts >= 3) {
+          setSnackbarMessage(`Warning: ${newAttempts} failed login attempts. Please verify your credentials carefully.`);
+          setSnackbarSeverity('warning');
+        } else {
+          setSnackbarMessage('Login failed. Please check your credentials and try again.');
+          setSnackbarSeverity('error');
+        }
+        setSnackbarOpen(true);
       }
     } catch (error) {
+      // Also count system errors as failed attempts
+      const newAttempts = failedAttempts + 1;
+      setFailedAttempts(newAttempts);
+      localStorage.setItem('failedLoginAttempts', newAttempts);
+      localStorage.setItem('lastFailedLoginTime', new Date().getTime().toString());
+      
       setMessage('An error occurred during login. Please try again.');
       setMessageType('error');
+      setSnackbarMessage('Login failed due to a system error. Please try again later.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
       console.error('Login error:', error);
     }
   };
@@ -109,7 +173,7 @@ const Login = () => {
                 />
                 <label htmlFor="remember" className="ml-2 text-sm text-gray-600">Remember me</label>
               </div>
-              <a href="#" className="text-sm text-indigo-600 hover:text-indigo-800 transition-all">Forgot Password?</a>
+              <Link to="/forgot-password" className="text-sm text-indigo-600 hover:text-indigo-800 transition-all">Forgot Password?</Link>
             </div>
 
             <button 
@@ -140,6 +204,21 @@ const Login = () => {
           </form>
         </div>
       </div>
+      
+      {/* Notification Snackbar for failed login attempts */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+      >
+        <Alert 
+          onClose={() => setSnackbarOpen(false)} 
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </section>
   );
 };
