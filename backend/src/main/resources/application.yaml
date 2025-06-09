@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: school-health
+  
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=HealthSchoolDB;encrypt=true;trustServerCertificate=true
+    username: sa
+    password: 123456
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.SQLServerDialect
+        format_sql: true
+
+server:
+  port: 8080
+
+# JWT Configuration
+schoolhealth:
+  app:
+    jwtSecret: schoolHealthSecretKeyForJwtTokenGenerationAndValidationProcess
+    jwtExpirationMs: 86400000  # 24 hours
