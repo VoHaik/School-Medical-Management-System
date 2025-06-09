@@ -2,9 +2,10 @@ package com.swp391_8.schoolhealth.dto;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 public class HealthDeclarationDTO {
+    private Integer declarationId; // Added
+    private boolean isDraft; // Added
     private Integer studentId;
     private String emergencyContactName;
     private String emergencyContactPhone;
@@ -12,7 +13,7 @@ public class HealthDeclarationDTO {
     private String physicianPhone;
     private List<String> allergies;
     private List<String> medicalConditions;
-    private List<VaccinationDTO> vaccinations;
+    private List<VaccinationRecordDTO> vaccinations; // Changed from VaccinationDTO
     private String visionScreeningResult;
     private LocalDate visionScreeningDate;
     private String hearingScreeningResult;
@@ -24,9 +25,30 @@ public class HealthDeclarationDTO {
     private String notes;
     private Boolean consentSignature; // Representing the checkbox
     private LocalDate declarationDate;
+    private String symptoms;
+    private boolean hasSymptoms;
+    private boolean closeContact;
+    private boolean travelHistory;
+    private String additionalInfo;
     // Add other fields as necessary from HealthDeclaration.js
 
     // Getters and Setters
+
+    public Integer getDeclarationId() { // Added
+        return declarationId;
+    }
+
+    public void setDeclarationId(Integer declarationId) { // Added
+        this.declarationId = declarationId;
+    }
+
+    public boolean isDraft() { // Added
+        return isDraft;
+    }
+
+    public void setDraft(boolean isDraft) { // Added
+        this.isDraft = isDraft;
+    }
 
     public Integer getStudentId() {
         return studentId;
@@ -84,11 +106,11 @@ public class HealthDeclarationDTO {
         this.medicalConditions = medicalConditions;
     }
 
-    public List<VaccinationDTO> getVaccinations() {
+    public List<VaccinationRecordDTO> getVaccinations() { // Changed from VaccinationDTO
         return vaccinations;
     }
 
-    public void setVaccinations(List<VaccinationDTO> vaccinations) {
+    public void setVaccinations(List<VaccinationRecordDTO> vaccinations) { // Changed from VaccinationDTO
         this.vaccinations = vaccinations;
     }
 
@@ -180,25 +202,45 @@ public class HealthDeclarationDTO {
         this.declarationDate = declarationDate;
     }
 
-    // Inner DTO for Vaccinations to match the structure in HealthDeclaration.js
-    public static class VaccinationDTO {
-        private String vaccineName;
-        private List<String> doses; // Assuming doses are represented as a list of dates or descriptions
-
-        public String getVaccineName() {
-            return vaccineName;
-        }
-
-        public void setVaccineName(String vaccineName) {
-            this.vaccineName = vaccineName;
-        }
-
-        public List<String> getDoses() {
-            return doses;
-        }
-
-        public void setDoses(List<String> doses) {
-            this.doses = doses;
-        }
+    public String getSymptoms() {
+        return symptoms;
     }
+
+    public void setSymptoms(String symptoms) {
+        this.symptoms = symptoms;
+    }
+
+    public boolean isHasSymptoms() {
+        return hasSymptoms;
+    }
+
+    public void setHasSymptoms(boolean hasSymptoms) {
+        this.hasSymptoms = hasSymptoms;
+    }
+
+    public boolean isCloseContact() {
+        return closeContact;
+    }
+
+    public void setCloseContact(boolean closeContact) {
+        this.closeContact = closeContact;
+    }
+
+    public boolean isTravelHistory() {
+        return travelHistory;
+    }
+
+    public void setTravelHistory(boolean travelHistory) {
+        this.travelHistory = travelHistory;
+    }
+
+    public String getAdditionalInfo() {
+        return additionalInfo;
+    }
+
+    public void setAdditionalInfo(String additionalInfo) {
+        this.additionalInfo = additionalInfo;
+    }
+
+    // Removed Inner DTO for Vaccinations - It should be a top-level class com.swp391_8.schoolhealth.dto.VaccinationRecordDTO
 }

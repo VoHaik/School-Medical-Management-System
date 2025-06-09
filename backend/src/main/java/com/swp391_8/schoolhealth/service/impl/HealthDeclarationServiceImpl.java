@@ -2,6 +2,7 @@ package com.swp391_8.schoolhealth.service.impl;
 
 import com.swp391_8.schoolhealth.dto.HealthDeclarationDTO;
 import com.swp391_8.schoolhealth.dto.VaccinationRecordDTO;
+import com.swp391_8.schoolhealth.exception.ResourceNotFoundException;
 import com.swp391_8.schoolhealth.model.HealthDeclaration;
 import com.swp391_8.schoolhealth.model.Student;
 import com.swp391_8.schoolhealth.model.User;
@@ -14,9 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.List; // Required for List
 
 @Service
 public class HealthDeclarationServiceImpl implements HealthDeclarationService {
@@ -33,86 +34,54 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
     @Override
     @Transactional
     public HealthDeclarationDTO saveHealthDeclaration(HealthDeclarationDTO dto, String username) {
-        User parent = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Parent user not found: " + username));
-
         Student student = studentRepository.findById(dto.getStudentId())
-                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + dto.getStudentId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Student", "id", dto.getStudentId())); // Corrected
+        User parentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username)); // Corrected
 
-        // Check if this student belongs to the parent (important for authorization)
-        if (!student.getParentUser().equals(parent)) {
-            throw new RuntimeException("Student does not belong to the authenticated parent.");
+        // Ensure student's parent matches the logged-in user
+        if (student.getParentUser() == null || !student.getParentUser().getUserId().equals(parentUser.getUserId())) {
+            throw new SecurityException("User " + username + " is not authorized to submit health declarations for student " + dto.getStudentId());
         }
 
-        // If it's a draft, check if one already exists for this student by this parent.
-        // If it's a final submission, it might overwrite a draft or create a new record.
-        // This logic might need refinement based on how drafts vs. final submissions are handled (e.g., one draft per student).
-        Optional<HealthDeclaration> existingDeclarationOpt;
-        if (dto.isDraft()) {
-            existingDeclarationOpt = healthDeclarationRepository.findByStudent_StudentIdAndIsDraft(dto.getStudentId(), true);
-        } else {
-            // If submitting a final version, it might supersede an existing draft.
-            // Or, if multiple final versions are allowed, this logic changes.
-            // For now, let's assume a new final submission, or it updates an existing one if ID is present.
-            // If an ID is provided in DTO, it means we are updating an existing one.
-            if (dto.getDeclarationId() != null) {
-                 existingDeclarationOpt = healthDeclarationRepository.findById(dto.getDeclarationId());
-            } else {
-                // If it is a new final submission, check if there is an existing non-draft one to update or if it's a new one.
-                // This part of logic depends on business rules: can a student have multiple final declarations?
-                // For simplicity, let's assume we are creating a new one if no ID, or updating if ID exists.
-                // If a draft is being finalized, the frontend should ideally pass the draft's ID.
-                existingDeclarationOpt = Optional.empty(); 
+        HealthDeclaration declaration;
+        if (dto.getDeclarationId() != null) {
+            declaration = healthDeclarationRepository.findById(dto.getDeclarationId())
+                    .orElseThrow(() -> new ResourceNotFoundException("HealthDeclaration", "id", dto.getDeclarationId())); // Corrected
+            // Ensure the existing declaration belongs to the student and parent
+            if (!declaration.getStudent().getStudentId().equals(dto.getStudentId()) || 
+                !declaration.getParent().getUserId().equals(parentUser.getUserId())) {
+                throw new SecurityException("User " + username + " is not authorized to update this health declaration.");
             }
+        } else {
+            declaration = new HealthDeclaration();
+            declaration.setStudent(student);
+            declaration.setParent(parentUser); // Set parent from authenticated user
         }
+        
+        // Update fields from DTO
+        declaration.setSymptoms(dto.getSymptoms());
+        declaration.setHasSymptoms(dto.isHasSymptoms());
+        declaration.setCloseContact(dto.isCloseContact());
+        declaration.setTravelHistory(dto.isTravelHistory());
+        declaration.setDeclarationDate(dto.getDeclarationDate());
+        declaration.setAdditionalInfo(dto.getAdditionalInfo());
+        declaration.setIsDraft(dto.isDraft()); // Corrected: use dto.isDraft()
 
-        HealthDeclaration declaration = existingDeclarationOpt.orElseGet(HealthDeclaration::new);
-
-        // Map DTO to Entity
-        declaration.setStudent(student);
-        declaration.setParent(parent); // Set the parent user
-        declaration.setDraft(dto.isDraft());
-        declaration.setAllergies(dto.getAllergies());
-        declaration.setChronicIllnesses(dto.getChronicIllnesses());
-        // ... map other simple fields ...
-        declaration.setVisionStatus(dto.getVisionStatus());
-        declaration.setHearingStatus(dto.getHearingStatus());
-        declaration.setSpecialNeeds(dto.getSpecialNeeds());
-        declaration.setPhysicalLimitations(dto.getPhysicalLimitations());
-        declaration.setMentalHealthConcerns(dto.getMentalHealthConcerns());
-        declaration.setDietaryRestrictions(dto.getDietaryRestrictions());
-        declaration.setMedicalHistory(dto.getMedicalHistory());
-        declaration.setHasFever(dto.isHasFever());
-        declaration.setHasCough(dto.isHasCough());
-        declaration.setHasSoreThroat(dto.isHasSoreThroat());
-        declaration.setHasRunnyNose(dto.isHasRunnyNose());
-        declaration.setHasShortnessOfBreath(dto.isHasShortnessOfBreath());
-        declaration.setHasLossOfTasteOrSmell(dto.isHasLossOfTasteOrSmell());
-        declaration.setHasNauseaOrVomiting(dto.isHasNauseaOrVomiting());
-        declaration.setHasDiarrhea(dto.isHasDiarrhea());
-        declaration.setHasFatigue(dto.isHasFatigue());
-        declaration.setHasHeadache(dto.isHasHeadache());
-        declaration.setHasMuscleOrBodyAches(dto.isHasMuscleOrBodyAches());
-        declaration.setCloseContactWithCovidPositive(dto.isCloseContactWithCovidPositive());
-        declaration.setTravelledToHighRiskArea(dto.isTravelledToHighRiskArea());
-        declaration.setAdditionalNotes(dto.getAdditionalNotes());
-
-        // Map medications (assuming MedicationRecord is an entity and DTO exists)
-        // This part needs MedicationRecord entity and DTO to be defined and mapped.
-        // For now, skipping if not fully defined in DTO/Entity.
-
-        // Map emergency contacts (assuming EmergencyContact is an entity and DTO exists)
-        // Skipping for now if not fully defined.
-
-        // Map vaccinations
         if (dto.getVaccinations() != null) {
-            List<VaccinationRecord> vaccinationRecords = dto.getVaccinations().stream()
-                .map(this::convertToVaccinationEntity)
-                .collect(Collectors.toList());
-            declaration.setVaccinations(vaccinationRecords);
-            vaccinationRecords.forEach(vr -> vr.setHealthDeclaration(declaration)); // Set bidirectional relationship
+            List<VaccinationRecord> vaccinationEntities = dto.getVaccinations().stream()
+                    .map(this::convertToVaccinationEntity)
+                    .collect(Collectors.toList());
+            // Clear existing vaccinations and add new ones to handle updates correctly
+            declaration.getVaccinations().clear();
+            for (VaccinationRecord vr : vaccinationEntities) {
+                vr.setHealthDeclaration(declaration); // Set bidirectional relationship
+                declaration.getVaccinations().add(vr);
+            }
+        } else {
+            declaration.getVaccinations().clear();
         }
-
+        
         HealthDeclaration savedDeclaration = healthDeclarationRepository.save(declaration);
         return convertToDTO(savedDeclaration);
     }
@@ -137,71 +106,42 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
     private HealthDeclarationDTO convertToDTO(HealthDeclaration entity) {
         HealthDeclarationDTO dto = new HealthDeclarationDTO();
         dto.setDeclarationId(entity.getDeclarationId());
-        if (entity.getStudent() != null) {
-            dto.setStudentId(entity.getStudent().getStudentId());
-            // dto.setStudentName(entity.getStudent().getFullName()); // If needed
-        }
-        // if (entity.getParent() != null) {
-        //     dto.setParentUsername(entity.getParent().getUsername()); // If needed
-        // }
-        dto.setDraft(entity.isDraft());
-        dto.setAllergies(entity.getAllergies());
-        dto.setChronicIllnesses(entity.getChronicIllnesses());
-        // ... map other simple fields ...
-        dto.setVisionStatus(entity.getVisionStatus());
-        dto.setHearingStatus(entity.getHearingStatus());
-        dto.setSpecialNeeds(entity.getSpecialNeeds());
-        dto.setPhysicalLimitations(entity.getPhysicalLimitations());
-        dto.setMentalHealthConcerns(entity.getMentalHealthConcerns());
-        dto.setDietaryRestrictions(entity.getDietaryRestrictions());
-        dto.setMedicalHistory(entity.getMedicalHistory());
-        dto.setHasFever(entity.isHasFever());
-        dto.setHasCough(entity.isHasCough());
-        dto.setHasSoreThroat(entity.isHasSoreThroat());
-        dto.setHasRunnyNose(entity.isHasRunnyNose());
-        dto.setHasShortnessOfBreath(entity.isHasShortnessOfBreath());
-        dto.setHasLossOfTasteOrSmell(entity.isHasLossOfTasteOrSmell());
-        dto.setHasNauseaOrVomiting(entity.isHasNauseaOrVomiting());
-        dto.setHasDiarrhea(entity.isHasDiarrhea());
-        dto.setHasFatigue(entity.isHasFatigue());
-        dto.setHasHeadache(entity.isHasHeadache());
-        dto.setHasMuscleOrBodyAches(entity.isHasMuscleOrBodyAches());
-        dto.setCloseContactWithCovidPositive(entity.isCloseContactWithCovidPositive());
-        dto.setTravelledToHighRiskArea(entity.isTravelledToHighRiskArea());
-        dto.setAdditionalNotes(entity.getAdditionalNotes());
-        dto.setSubmissionDate(entity.getSubmissionDate());
+        dto.setStudentId(entity.getStudent().getStudentId());
+        // dto.setParentUsername(entity.getParent() != null ? entity.getParent().getUsername() : null); // Example if you add parentUsername to DTO
+        dto.setSymptoms(entity.getSymptoms());
+        dto.setHasSymptoms(entity.isHasSymptoms());
+        dto.setCloseContact(entity.isCloseContact());
+        dto.setTravelHistory(entity.isTravelHistory());
+        dto.setDeclarationDate(entity.getDeclarationDate());
+        dto.setAdditionalInfo(entity.getAdditionalInfo());
+        dto.setDraft(entity.getIsDraft()); // Corrected: use entity.getIsDraft()
 
         if (entity.getVaccinations() != null) {
-            dto.setVaccinations(entity.getVaccinations().stream()
-                .map(this::convertToVaccinationDTO)
-                .collect(Collectors.toList()));
+            List<VaccinationRecordDTO> vaccinationDTOs = entity.getVaccinations().stream()
+                    .map(this::convertToVaccinationDTO)
+                    .collect(Collectors.toList());
+            dto.setVaccinations(vaccinationDTOs);
         }
-        // Map medications and emergency contacts DTOs if they exist
         return dto;
     }
 
-    // Helper to convert DTO to VaccinationRecord Entity
-    private VaccinationRecord convertToVaccinationEntity(VaccinationRecordDTO dto) {
-        VaccinationRecord entity = new VaccinationRecord();
-        // Assuming VaccinationRecord has an ID that might be set if updating
-        // entity.setId(dto.getId()); 
-        entity.setVaccineName(dto.getVaccine());
-        entity.setDateAdministered(dto.getDateAdministered());
-        entity.setNextDueDate(dto.getNextDue());
-        // entity.setAdministeredBy(dto.getAdministeredBy()); // If this field exists
-        // entity.setLotNumber(dto.getLotNumber()); // If this field exists
-        return entity;
+    // Method to convert VaccinationRecordDTO to VaccinationRecord entity
+    private VaccinationRecord convertToVaccinationEntity(VaccinationRecordDTO vaccinationDto) {
+        VaccinationRecord vaccinationEntity = new VaccinationRecord();
+        vaccinationEntity.setVaccineName(vaccinationDto.getVaccineName());
+        vaccinationEntity.setVaccinationDate(vaccinationDto.getVaccinationDate());
+        vaccinationEntity.setDosage(vaccinationDto.getDosage());
+        // The HealthDeclaration reference will be set when adding to the HealthDeclaration's list
+        return vaccinationEntity;
     }
 
-    // Helper to convert VaccinationRecord Entity to DTO
-    private VaccinationRecordDTO convertToVaccinationDTO(VaccinationRecord entity) {
-        VaccinationRecordDTO dto = new VaccinationRecordDTO();
-        // dto.setId(entity.getId()); // If ID is part of DTO
-        dto.setVaccine(entity.getVaccineName());
-        dto.setDateAdministered(entity.getDateAdministered());
-        dto.setNextDue(entity.getNextDueDate());
-        // dto.setAdministeredBy(entity.getAdministeredBy());
-        // dto.setLotNumber(entity.getLotNumber());
-        return dto;
+    // Method to convert VaccinationRecord entity to VaccinationRecordDTO
+    private VaccinationRecordDTO convertToVaccinationDTO(VaccinationRecord vaccinationEntity) {
+        VaccinationRecordDTO vaccinationDto = new VaccinationRecordDTO(); // Use top-level DTO
+        vaccinationDto.setRecordId(vaccinationEntity.getRecordId());
+        vaccinationDto.setVaccineName(vaccinationEntity.getVaccineName());
+        vaccinationDto.setVaccinationDate(vaccinationEntity.getVaccinationDate());
+        vaccinationDto.setDosage(vaccinationEntity.getDosage());
+        return vaccinationDto;
     }
 }

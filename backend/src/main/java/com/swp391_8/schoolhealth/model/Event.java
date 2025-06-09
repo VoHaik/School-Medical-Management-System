@@ -54,4 +54,14 @@ public class Event {
     @Column(name = "created_at", updatable = false)
     @org.hibernate.annotations.CreationTimestamp
     private Date createdAt;
+
+    // Add getters if not already present.
+    // Assuming fields: Date eventDate, String category
+    public Date getEventDate() {
+        return startDate;
+    }
+
+    public String getCategory() {
+        return type;
+    }
 }

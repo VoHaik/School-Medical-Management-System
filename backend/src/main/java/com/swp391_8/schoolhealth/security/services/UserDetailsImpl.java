@@ -33,12 +33,17 @@ public class UserDetailsImpl implements UserDetails {
         this.authorities = authorities;
         this.isActive = isActive;
     }    public static UserDetailsImpl build(User user) {
-        // Create authorities based on the user's role
+        // Create authorities based on the user\'s role
         List<GrantedAuthority> authorities = new ArrayList<>();
         
         // Add authority from the role field (ManyToOne relationship)
-        if (user.getRole() != null) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName().toUpperCase()));
+        if (user.getRole() != null && user.getRole().getName() != null) {
+            String roleName = user.getRole().getName().toUpperCase();
+            if (roleName.startsWith("ROLE_")) {
+                authorities.add(new SimpleGrantedAuthority(roleName));
+            } else {
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + roleName));
+            }
         }
 
         return new UserDetailsImpl(

@@ -57,4 +57,10 @@ public class HealthCheckup {    @Id
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
+
+    // Add getter if not already present.
+    // Assuming field: Integer checkupId
+    public Integer getCheckupId() {
+        return id;
+    }
 }

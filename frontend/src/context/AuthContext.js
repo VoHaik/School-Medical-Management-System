@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(user));
       setCurrentUser(user);
 
-      return { success: true };
+      return { success: true, user: user }; // MODIFIED: return user object
     } catch (error) {
       setError(error.response?.data?.message || 'Login failed. Please check your credentials.');
       return { 

@@ -22,6 +22,45 @@ public class MedicationSubmissionDTO {
     private String status; // e.g., PENDING_APPROVAL, APPROVED, REJECTED
     private String parentUsername; // To associate with the parent who submitted
 
+    // Assuming fields: String frequency, Date startDate, Date endDate, String doctorNotePath
+    // Add getters and setters if not already present via Lombok or if specific logic is needed.
+    private String frequency;
+    private Date startDate;
+    private Date endDate;
+    private String doctorNotePath;
+
+    public String getFrequency() {
+        return frequency;
+    }
+
+    public void setFrequency(String frequency) {
+        this.frequency = frequency;
+    }
+
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    public Date getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
+    }
+
+    // public String getDoctorNotePath() { // Getter might already exist if using Lombok @Data or @Getter
+    //     return doctorNotePath;
+    // }
+
+    public void setDoctorNotePath(String doctorNotePath) {
+        this.doctorNotePath = doctorNotePath;
+    }
+
     // If you need to handle file uploads directly as part of this DTO (less common for REST APIs)
     // you might include a field for MultipartFile, but it's usually handled as a separate parameter in the controller.
 }

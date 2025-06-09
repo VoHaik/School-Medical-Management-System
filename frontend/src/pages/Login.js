@@ -20,7 +20,12 @@ const Login = () => {
   // If user is already logged in, redirect to home
   React.useEffect(() => {
     if (currentUser) {
-      navigate('/');
+      // Redirect based on role if currentUser is available
+      if (currentUser.roles && currentUser.roles.includes('ROLE_PARENT')) {
+        navigate('/parent/dashboard');
+      } else {
+        navigate('/'); // Default redirect for other roles or if role is not yet defined
+      }
     }
   }, [currentUser, navigate]);
 
@@ -58,7 +63,7 @@ const Login = () => {
     try {
       const result = await login(username, password);
       
-      if (result.success) {
+      if (result.success && result.user) { // MODIFIED: check for result.user
         // Reset failed attempts if login is successful
         setFailedAttempts(0);
         localStorage.removeItem('failedLoginAttempts');
@@ -71,10 +76,14 @@ const Login = () => {
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
         
-        // Redirect to home page after a short delay
-        setTimeout(() => {
-          navigate('/');
-        }, 1500);
+        // Redirect based on role
+        // setTimeout(() => { // MODIFIED: Removed setTimeout for immediate redirection based on role
+          if (result.user.roles && result.user.roles.includes('ROLE_PARENT')) {
+            navigate('/parent/dashboard');
+          } else {
+            navigate('/'); // Default redirect for other roles
+          }
+        // }, 1500); // MODIFIED: Removed setTimeout
       } else {
         // Increment and store failed attempts
         const newAttempts = failedAttempts + 1;

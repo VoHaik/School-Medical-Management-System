@@ -2,6 +2,7 @@ package com.swp391_8.schoolhealth.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -16,6 +17,10 @@ public class HealthDeclaration {
     @ManyToOne
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_user_id") // Foreign key to User table
+    private User parent;
 
     @Column(name = "emergency_contact_name")
     private String emergencyContactName;
@@ -39,11 +44,8 @@ public class HealthDeclaration {
     @Column(name = "medical_condition")
     private List<String> medicalConditions;
 
-    // For vaccinations, a separate entity might be better if doses have specific dates and types
-    // For simplicity here, using a list of Vaccination entities (assuming Vaccination is an embeddable or separate entity)
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "declaration_id") // This assumes Vaccination entity has a declaration_id FK
-    private List<VaccinationRecord> vaccinations; // Assuming VaccinationRecord entity
+    @OneToMany(mappedBy = "healthDeclaration", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<VaccinationRecord> vaccinations = new ArrayList<>(); // Assuming VaccinationRecord entity
 
     @Column(name = "vision_screening_result")
     private String visionScreeningResult;
@@ -82,6 +84,21 @@ public class HealthDeclaration {
     @Column(name = "is_draft")
     private Boolean isDraft = false; // For save as draft functionality
 
+    @Column(name = "symptoms")
+    private String symptoms;
+
+    @Column(name = "has_symptoms")
+    private boolean hasSymptoms;
+
+    @Column(name = "close_contact")
+    private boolean closeContact;
+
+    @Column(name = "travel_history")
+    private boolean travelHistory;
+
+    @Column(name = "additional_info")
+    private String additionalInfo;
+
     // Getters and Setters
 
     public Integer getDeclarationId() {
@@ -98,6 +115,14 @@ public class HealthDeclaration {
 
     public void setStudent(Student student) {
         this.student = student;
+    }
+
+    public User getParent() {
+        return parent;
+    }
+
+    public void setParent(User parent) {
+        this.parent = parent;
     }
 
     public String getEmergencyContactName() {
@@ -154,6 +179,11 @@ public class HealthDeclaration {
 
     public void setVaccinations(List<VaccinationRecord> vaccinations) {
         this.vaccinations = vaccinations;
+        if (vaccinations != null) {
+            for (VaccinationRecord vr : vaccinations) {
+                vr.setHealthDeclaration(this);
+            }
+        }
     }
 
     public String getVisionScreeningResult() {
@@ -250,5 +280,45 @@ public class HealthDeclaration {
 
     public void setIsDraft(Boolean isDraft) {
         this.isDraft = isDraft;
+    }
+
+    public String getSymptoms() {
+        return symptoms;
+    }
+
+    public void setSymptoms(String symptoms) {
+        this.symptoms = symptoms;
+    }
+
+    public boolean isHasSymptoms() { // Changed from getHasSymptoms to isHasSymptoms for boolean
+        return hasSymptoms;
+    }
+
+    public void setHasSymptoms(boolean hasSymptoms) {
+        this.hasSymptoms = hasSymptoms;
+    }
+
+    public boolean isCloseContact() { // Changed from getCloseContact to isCloseContact for boolean
+        return closeContact;
+    }
+
+    public void setCloseContact(boolean closeContact) {
+        this.closeContact = closeContact;
+    }
+
+    public boolean isTravelHistory() { // Changed from getTravelHistory to isTravelHistory for boolean
+        return travelHistory;
+    }
+
+    public void setTravelHistory(boolean travelHistory) {
+        this.travelHistory = travelHistory;
+    }
+
+    public String getAdditionalInfo() {
+        return additionalInfo;
+    }
+
+    public void setAdditionalInfo(String additionalInfo) {
+        this.additionalInfo = additionalInfo;
     }
 }

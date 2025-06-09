@@ -15,6 +15,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     // For example, if Notification is directly linked to a Parent entity which then links to User:
     // List<Notification> findByParentUserId(Long userId);
     // Or if Notification has a direct userId field for the recipient:
-    List<Notification> findByUserIdAndIsReadFalseOrderByCreatedAtDesc(Long userId); // Example: find unread for a user
-    List<Notification> findByUserIdOrderByCreatedAtDesc(Long userId); // Example: find all for a user
+    List<Notification> findByUser_UserIdAndIsReadFalseOrderByCreatedAtDesc(Long userId); // Example: find unread for a user
+    List<Notification> findByUser_UserIdOrderByCreatedAtDesc(Long userId); // Example: find all for a user
 }

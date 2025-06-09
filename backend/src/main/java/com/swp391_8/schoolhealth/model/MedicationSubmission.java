@@ -61,5 +61,16 @@ public class MedicationSubmission {
     @Column(name = "nurse_notes")
     private String nurseNotes; // Notes from the nurse regarding the submission
 
+    @Column(name = "frequency")
+    private String frequency;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "start_date")
+    private Date startDate;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "end_date")
+    private Date endDate;
+
     // Constructors, getters, and setters are handled by Lombok
 }

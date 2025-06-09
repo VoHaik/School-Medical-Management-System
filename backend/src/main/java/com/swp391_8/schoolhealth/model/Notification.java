@@ -41,4 +41,18 @@ public class Notification {
 
     @Column(name = "link_to", length = 255) // Optional: A URL or path to navigate to
     private String linkTo;
+
+    // Add getters if not already present due to Lombok or other reasons.
+    // Assuming fields: Integer userId, String title, String notificationType
+    public Integer getUserId() {
+        return user.getUserId();
+    }
+
+    public String getTitle() {
+        return message; // Assuming title is the same as message, adjust if necessary
+    }
+
+    public String getNotificationType() {
+        return type;
+    }
 }

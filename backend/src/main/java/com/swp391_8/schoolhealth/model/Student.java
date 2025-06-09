@@ -30,7 +30,9 @@ public class Student {
 
     @Nationalized
     @Column(name = "full_name", nullable = false, length = 100)
-    private String fullName;    @Column(name = "date_of_birth", nullable = false)
+    private String fullName;
+
+    @Column(name = "date_of_birth", nullable = false)
     private LocalDate dateOfBirth;
 
     @Nationalized
@@ -47,6 +49,12 @@ public class Student {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "first_name")
+    private String firstName;
+
+    @Column(name = "last_name")
+    private String lastName;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -56,35 +64,111 @@ public class Student {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }    // Additional getters/setters for compatibility
-    public Integer getId() { return studentId; }
-    public void setId(Integer id) { this.studentId = id; }
-    
+    }
+
+    // Add relation to parent User
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_user_id") // Name of the foreign key column in Students table
+    private User parentUser;
+
+    // Getters and setters for parentUser
+    public User getParentUser() {
+        return parentUser;
+    }
+
+    public void setParentUser(User parentUser) {
+        this.parentUser = parentUser;
+    }
+
+    // Additional getters/setters for compatibility
+    public Integer getId() {
+        return studentId;
+    }
+
+    public void setId(Integer id) {
+        this.studentId = id;
+    }
+
     // Explicit getters/setters to fix compilation issues
-    public Integer getStudentId() { return studentId; }
-    public void setStudentId(Integer studentId) { this.studentId = studentId; }
-    
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-    
-    public String getStudentCode() { return studentCode; }
-    public void setStudentCode(String studentCode) { this.studentCode = studentCode; }
-    
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
-    
-    public LocalDate getDateOfBirth() { return dateOfBirth; }
-    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
-    
-    public String getGender() { return gender; }
-    public void setGender(String gender) { this.gender = gender; }
-    
-    public String getClassName() { return className; }
-    public void setClassName(String className) { this.className = className; }
-    
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public Integer getStudentId() {
+        return studentId;
+    }
+
+    public void setStudentId(Integer studentId) {
+        this.studentId = studentId;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public String getStudentCode() {
+        return studentCode;
+    }
+
+    public void setStudentCode(String studentCode) {
+        this.studentCode = studentCode;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    // Add getters if not already present.
+    // Assuming fields: String firstName, String lastName
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
 }

@@ -20,7 +20,7 @@ public class NotificationServiceImpl implements NotificationService {
     public List<NotificationDTO> getNotificationsByUserId(Long userId) {
         // Assuming User entity is linked and has a getUsername() or similar for createdBy
         // And Notification entity has a direct userId field for the recipient
-        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+        return notificationRepository.findByUser_UserIdOrderByCreatedAtDesc(userId).stream() //MODIFIED HERE
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }

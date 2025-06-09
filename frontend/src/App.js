@@ -2,7 +2,6 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import Navigation from './components/Navigation';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -75,7 +74,6 @@ function App() {
         <ThemeProvider>
           <div className="app-container">
             <Header />
-            <Navigation />
             <main className="main-content">
               <Routes>
                 {/* Public Routes */}

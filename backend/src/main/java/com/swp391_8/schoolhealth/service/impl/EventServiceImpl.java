@@ -20,7 +20,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventDTO> getUpcomingEvents() {
         // Fetch events from today onwards
-        return eventRepository.findByEventDateGreaterThanEqualOrderByEventDateAsc(new Date()).stream()
+        return eventRepository.findByStartDateGreaterThanEqualOrderByStartDateAsc(new Date()).stream() // MODIFIED HERE
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -34,7 +34,7 @@ public class EventServiceImpl implements EventService {
         dto.setEventId(event.getEventId());
         dto.setTitle(event.getTitle());
         dto.setDescription(event.getDescription());
-        dto.setEventDate(event.getEventDate());
+        dto.setEventDate(event.getStartDate()); // Also ensure DTO mapping uses the correct getter if it was relying on getEventDate() which returned startDate
         dto.setLocation(event.getLocation());
         dto.setCategory(event.getCategory());
         return dto;
