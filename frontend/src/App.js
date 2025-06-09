@@ -55,6 +55,9 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
+console.log('--- App.js MODULE LOADED - V3 ---');
+console.log('[App.js] ProtectedRoute module imported:', ProtectedRoute); // New log
+
 // Prevent direct execution with Node.js
 if (typeof window === 'undefined') {
   console.error(
@@ -68,6 +71,7 @@ if (typeof window === 'undefined') {
 }
 
 function App() {
+  console.log('[App.js] App function component rendering'); // New log
   return (
     <ErrorBoundary>
       <AuthProvider>
