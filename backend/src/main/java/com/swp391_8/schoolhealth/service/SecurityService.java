@@ -36,7 +36,7 @@ public class SecurityService {
         }
 
         // Check if there exists a parent-student relationship
-        return parentStudentRelationshipRepository.existsByParentUserIdAndStudentStudentId(parentId, studentId);
+        return parentStudentRelationshipRepository.existsByParentUserUserIdAndStudentStudentId(parentId, studentId); // Corrected method name
     }
 
     public boolean isPostAuthor(Authentication authentication, Integer postId) {
@@ -57,6 +57,6 @@ public class SecurityService {
 
         // Check if the post belongs to this user
         Optional<BlogPost> blogPost = blogPostRepository.findById(postId);
-        return blogPost.isPresent() && blogPost.get().getAuthor() != null && blogPost.get().getAuthor().getId().equals(userId);
+        return blogPost.isPresent() && blogPost.get().getCreatedByUser() != null && blogPost.get().getCreatedByUser().getUserId().equals(userId); // Changed getAuthor() to getCreatedByUser() and getId() to getUserId()
     }
 }

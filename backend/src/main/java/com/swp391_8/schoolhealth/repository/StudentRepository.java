@@ -12,9 +12,9 @@ import java.util.Optional;
 @Repository
 public interface StudentRepository extends JpaRepository<Student, Integer> {
     List<Student> findByClassName(String className);
-    Optional<Student> findByUser_Id(Integer userId);
+    Optional<Student> findByUser_UserId(Integer userId);
     
     // Find students by parent ID using the relationship table
-    @Query("SELECT s FROM Student s JOIN ParentStudentRelationship psr ON s.studentId = psr.student.studentId WHERE psr.parent.userId = :parentId")
+    @Query("SELECT s FROM Student s JOIN ParentStudentRelationship psr ON s.studentId = psr.student.studentId WHERE psr.parentUser.userId = :parentId")
     List<Student> findByParentId(@Param("parentId") Integer parentId);
 }

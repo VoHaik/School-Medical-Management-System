@@ -29,13 +29,13 @@ public class BlogPostService {
     }
 
     public List<BlogPost> getPostsByAuthorId(Integer authorId) {
-        return blogPostRepository.findByAuthorId(authorId);
+        return blogPostRepository.findByCreatedByUserUserId(authorId); // Changed from findByCreatedByUser_Id to findByCreatedByUserUserId
     }
 
     public BlogPost createPost(BlogPost blogPost, Integer authorId) {
         User author = userRepository.findById(authorId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", authorId));
-        blogPost.setAuthor(author);
+        blogPost.setCreatedByUser(author); // Changed from setAuthor to setCreatedByUser
         return blogPostRepository.save(blogPost);
     }
 
@@ -47,17 +47,17 @@ public class BlogPostService {
     public BlogPost updatePost(Integer id, BlogPost blogPostDetails) {
         BlogPost blogPost = getPostById(id);
         blogPost.setTitle(blogPostDetails.getTitle());
-        blogPost.setContent(blogPostDetails.getContent());
+        blogPost.setContentText(blogPostDetails.getContentText()); // Changed from setContent and getContent to setContentText and getContentText
         
-        // Update additional fields if they exist
-        if (blogPostDetails.getSummary() != null) {
-            blogPost.setSummary(blogPostDetails.getSummary());
+        // Update additional fields if they exist and are valid for BlogPost entity
+        // blogPost.setSummary(blogPostDetails.getSummary()); // Summary field does not exist in BlogPost
+        // blogPost.setTags(blogPostDetails.getTags()); // Tags field does not exist in BlogPost
+        // blogPost.setCategoryId(blogPostDetails.getCategoryId()); // CategoryId field does not exist in BlogPost
+        if (blogPostDetails.getSlug() != null) {
+            blogPost.setSlug(blogPostDetails.getSlug());
         }
-        if (blogPostDetails.getTags() != null) {
-            blogPost.setTags(blogPostDetails.getTags());
-        }
-        if (blogPostDetails.getCategoryId() != null) {
-            blogPost.setCategoryId(blogPostDetails.getCategoryId());
+        if (blogPostDetails.getPublishedAt() != null) {
+            blogPost.setPublishedAt(blogPostDetails.getPublishedAt());
         }
         
         return blogPostRepository.save(blogPost);

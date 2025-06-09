@@ -32,7 +32,6 @@ public class StudentService {
         Student student = getStudentById(id);
         student.setFullName(studentDetails.getFullName());
         student.setDateOfBirth(studentDetails.getDateOfBirth());
-        student.setGender(studentDetails.getGender());
         student.setClassName(studentDetails.getClassName());
         return studentRepository.save(student);
     }

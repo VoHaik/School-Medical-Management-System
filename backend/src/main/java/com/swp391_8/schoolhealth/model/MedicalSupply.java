@@ -1,43 +1,58 @@
 package com.swp391_8.schoolhealth.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
 @Entity
-@Table(name = "medical_supplies")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class MedicalSupply {    @Id
+@Table(name = "MedicalSupplies")
+public class MedicalSupply {
+
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "supply_id")
-    private Integer id;
+    private Integer supplyId;
 
-    @ManyToOne
-    @JoinColumn(name = "event_id", nullable = false)
-    private MedicalEvent event;
-
-    @Column(nullable = false, length = 100)
+    @Column(name = "name", nullable = false, length = 100, unique = true)
     private String name;
 
-    @Column(name = "quantity_used", nullable = false)
-    private Integer quantityUsed;
+    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+    private String description;
 
-    @Column(length = 50)
-    private String unit;
+    @Column(name = "quantity_on_hand", nullable = false)
+    private Integer quantityOnHand;
 
-    @ManyToOne
-    @JoinColumn(name = "updated_by")
-    private User updatedBy;
+    @Column(name = "unit", length = 50)
+    private String unit; // e.g., box, bottle, piece
 
-    @Column(name = "updated_at")
+    @Column(name = "reorder_level")
+    private Integer reorderLevel;
+
+    @Column(name = "supplier_info", columnDefinition = "NVARCHAR(MAX)")
+    private String supplierInfo;
+
+    @Column(name = "location", length = 255) // Physical location in the school
+    private String location;
+
+    @Column(name = "last_restocked_at")
+    private LocalDateTime lastRestockedAt;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();

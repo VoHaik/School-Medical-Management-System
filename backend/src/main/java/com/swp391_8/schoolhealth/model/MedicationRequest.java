@@ -1,18 +1,14 @@
 package com.swp391_8.schoolhealth.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
+import lombok.Getter;
+import lombok.Setter;
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
 @Entity
-@Table(name = "medication_requests")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "MedicationRequests")
 public class MedicationRequest {
 
     @Id
@@ -24,60 +20,49 @@ public class MedicationRequest {
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_id", nullable = false)
-    private User parent; // User who submitted the request
-
-    @Column(name = "medication_name", nullable = false, length = 255)
+    @Column(name = "medication_name", nullable = false, length = 100)
     private String medicationName;
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "dosage", columnDefinition = "NVARCHAR(MAX)")
     private String dosage;
 
-    @Column(nullable = false, length = 100)
-    private String frequency; // e.g., "Twice a day", "Every 4 hours"
-
-    @Column(name = "start_date", nullable = false)
-    private LocalDate startDate;
-
-    @Column(name = "end_date", nullable = false)
-    private LocalDate endDate;
-
-    @Lob // For longer text
-    @Column(name = "reason", nullable = false)
-    private String reason;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private MedicationRequestStatus status;
-
-    @Column(name = "request_date", nullable = false)
-    private LocalDateTime requestDate;
+    @Column(name = "instructions", columnDefinition = "NVARCHAR(MAX)")
+    private String instructions;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "approved_by")
-    private User approvedBy; // Nurse or Admin who approved/rejected
+    @JoinColumn(name = "submitted_by_user_id", nullable = false)
+    private User submittedByUser;
 
-    @Column(name = "action_date") // Date of approval/rejection/cancellation
-    private LocalDateTime actionDate;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "status_id", nullable = false)
+    private StatusType statusType; // Links to StatusTypes table
 
-    @Lob
-    @Column(name = "notes") // Notes from school nurse or admin
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "administered_by_user_id")
+    private User administeredByUser;
+
+    @Column(name = "administered_at")
+    private LocalDateTime administeredAt;
+
+    @Column(name = "notes", columnDefinition = "NVARCHAR(MAX)")
     private String notes;
 
-    public enum MedicationRequestStatus {
-        PENDING,    // Request submitted by parent, awaiting review
-        APPROVED,   // Request approved by school nurse/admin
-        REJECTED,   // Request rejected by school nurse/admin
-        ADMINISTERED, // Medication has been administered (can be a final status or part of a log)
-        CANCELLED   // Request cancelled by parent (only if PENDING)
-    }
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        requestDate = LocalDateTime.now();
-        if (status == null) {
-            status = MedicationRequestStatus.PENDING;
-        }
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        // Default status logic was tied to the removed enum field,
+        // status is now handled by status_id -> statusType
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

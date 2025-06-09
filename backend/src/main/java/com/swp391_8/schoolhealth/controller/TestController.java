@@ -28,7 +28,7 @@ public class TestController {
         Map<String, Object> response = new HashMap<>();
         response.put("totalRoles", roles.size());        response.put("roles", roles.stream().map(role -> {
             Map<String, Object> roleInfo = new HashMap<>();
-            roleInfo.put("id", role.getId());
+            roleInfo.put("id", role.getRoleId()); // Changed from getId()
             roleInfo.put("name", role.getName());
             roleInfo.put("roleName", role.getRoleName());
             return roleInfo;

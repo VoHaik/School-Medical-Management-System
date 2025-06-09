@@ -7,8 +7,10 @@ import com.swp391_8.schoolhealth.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.time.ZoneId;
 
 @Service
 public class NotificationServiceImpl implements NotificationService {
@@ -17,10 +19,10 @@ public class NotificationServiceImpl implements NotificationService {
     private NotificationRepository notificationRepository;
 
     @Override
-    public List<NotificationDTO> getNotificationsByUserId(Long userId) {
-        // Assuming User entity is linked and has a getUsername() or similar for createdBy
-        // And Notification entity has a direct userId field for the recipient
-        return notificationRepository.findByUser_UserIdOrderByCreatedAtDesc(userId).stream() //MODIFIED HERE
+    public List<NotificationDTO> getNotificationsByUserId(Integer userId) { // Ensure userId is Integer
+        // Corrected to use the actual method name from NotificationRepository
+        // and ensure the parameter type matches.
+        return notificationRepository.findByRecipientUserUserIdOrderBySentAtDesc(userId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -28,13 +30,12 @@ public class NotificationServiceImpl implements NotificationService {
     private NotificationDTO convertToDTO(Notification notification) {
         NotificationDTO dto = new NotificationDTO();
         dto.setNotificationId(notification.getNotificationId());
-        dto.setUserId(notification.getUserId()); // Assuming direct userId field
+        dto.setUserId(notification.getRecipientUser().getUserId());
         dto.setTitle(notification.getTitle());
-        dto.setMessage(notification.getMessage());
-        dto.setRead(notification.isRead());
-        dto.setCreatedAt(notification.getCreatedAt());
-        dto.setNotificationType(notification.getNotificationType());
-        // dto.setCreatedBy(notification.getUser() != null ? notification.getUser().getUsername() : "System"); // Example if linked to a User entity who created it
+        dto.setMessage(notification.getContent());
+        dto.setRead(notification.getIsRead());
+        dto.setCreatedAt(Date.from(notification.getSentAt().atZone(ZoneId.systemDefault()).toInstant()));
+        dto.setNotificationType(notification.getNotificationType().getTypeName());
         return dto;
     }
 

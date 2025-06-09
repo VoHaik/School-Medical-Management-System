@@ -40,7 +40,12 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", username)); // Corrected
 
         // Ensure student's parent matches the logged-in user
-        if (student.getParentUser() == null || !student.getParentUser().getUserId().equals(parentUser.getUserId())) {
+        // Updated logic to check through parentRelationships
+        boolean isAuthorizedParent = student.getParentRelationships().stream()
+                .anyMatch(relationship -> relationship.getParentUser() != null && 
+                                         relationship.getParentUser().getUserId().equals(parentUser.getUserId()));
+
+        if (!isAuthorizedParent) {
             throw new SecurityException("User " + username + " is not authorized to submit health declarations for student " + dto.getStudentId());
         }
 

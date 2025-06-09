@@ -1,60 +1,55 @@
 package com.swp391_8.schoolhealth.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Nationalized;
-
+import lombok.Getter;
+import lombok.Setter;
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "HealthProfiles")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class HealthProfile {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "profile_id")
-    private Integer id;
+    private Integer profileId;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false, unique = true)
     private Student student;
 
-    @Nationalized
     @Column(name = "allergies", columnDefinition = "NVARCHAR(MAX)")
     private String allergies;
 
-    @Nationalized
     @Column(name = "chronic_conditions", columnDefinition = "NVARCHAR(MAX)")
     private String chronicConditions;
 
-    @Nationalized
     @Column(name = "treatment_history", columnDefinition = "NVARCHAR(MAX)")
     private String treatmentHistory;
 
-    @Nationalized
     @Column(name = "vision", length = 50)
     private String vision;
 
-    @Nationalized
     @Column(name = "hearing", length = 50)
     private String hearing;
 
-    @Nationalized
     @Column(name = "vaccination_history_notes", columnDefinition = "NVARCHAR(MAX)")
     private String vaccinationHistoryNotes;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "updated_by_user_id")
-    private User updatedBy;
+    private User updatedByUser;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @PrePersist
+    protected void onPersist() { // Renamed from onCreate to avoid conflict if superclass has it
+        updatedAt = LocalDateTime.now();
+    }
+
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();

@@ -8,6 +8,6 @@ import java.util.List;
 
 @Repository
 public interface BlogPostRepository extends JpaRepository<BlogPost, Integer> {
-    List<BlogPost> findByAuthorId(Integer authorId);
+    List<BlogPost> findByCreatedByUserUserId(Integer userId);
     List<BlogPost> findAllByOrderByCreatedAtDesc();
 }

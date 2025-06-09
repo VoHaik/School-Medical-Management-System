@@ -16,8 +16,8 @@ import java.time.LocalDateTime;
 public class Medication {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "request_id")
-    private Integer id;
+    @Column(name = "medication_id") // Changed from request_id to medication_id for clarity
+    private Integer medicationId; // Renamed from id to medicationId
 
     @ManyToOne
     @JoinColumn(name = "student_id", nullable = false)
@@ -37,11 +37,11 @@ public class Medication {
 
     @ManyToOne
     @JoinColumn(name = "submitted_by_user_id", nullable = false)
-    private User submittedBy;
+    private User submittedBy; // Field name was submittedByUser, changed to submittedBy for consistency
 
     @ManyToOne
     @JoinColumn(name = "status_id", nullable = false)
-    private StatusType status;
+    private StatusType statusType; // Renamed from status to statusType
 
     @ManyToOne
     @JoinColumn(name = "administered_by_user_id")
@@ -64,7 +64,8 @@ public class Medication {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-    }    @PreUpdate
+    }
+    @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }

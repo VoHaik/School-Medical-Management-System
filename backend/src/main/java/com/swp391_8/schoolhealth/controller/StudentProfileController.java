@@ -39,7 +39,7 @@ public class StudentProfileController {
         }
 
         User user = userOptional.get();
-        Optional<Student> studentOptional = studentRepository.findByUser_Id(user.getId());
+        Optional<Student> studentOptional = studentRepository.findByUser_UserId(user.getUserId());
 
         if (!studentOptional.isPresent()) {
             return ResponseEntity.badRequest().body(new MessageResponse("Student profile not found", false));
@@ -48,13 +48,13 @@ public class StudentProfileController {
         Student student = studentOptional.get();
 
         Map<String, Object> response = new HashMap<>();
-        response.put("id", student.getId());
+        response.put("id", student.getStudentId()); // Changed from getId()
         response.put("fullName", student.getFullName());
         response.put("dateOfBirth", student.getDateOfBirth());
-        response.put("gender", student.getGender());
+        // response.put("gender", student.getGender()); // Commented out as gender is not available
         response.put("className", student.getClassName());
         response.put("email", user.getEmail());
-        response.put("phone", user.getPhone());
+        response.put("phone", user.getPhoneNumber()); // Changed from getPhone()
 
         return ResponseEntity.ok(response);
     }
@@ -71,7 +71,7 @@ public class StudentProfileController {
         }
 
         User user = userOptional.get();
-        Optional<Student> studentOptional = studentRepository.findByUser_Id(user.getId());
+        Optional<Student> studentOptional = studentRepository.findByUser_UserId(user.getUserId());
 
         if (!studentOptional.isPresent()) {
             return ResponseEntity.badRequest().body(new MessageResponse("Student profile not found", false));
@@ -85,16 +85,12 @@ public class StudentProfileController {
         }
 
         if (profileData.containsKey("phone")) {
-            user.setPhone((String) profileData.get("phone"));
+            user.setPhoneNumber((String) profileData.get("phone"));
         }
 
         // Update student information
         if (profileData.containsKey("fullName")) {
             student.setFullName((String) profileData.get("fullName"));
-        }
-
-        if (profileData.containsKey("gender")) {
-            student.setGender((String) profileData.get("gender"));
         }
 
         if (profileData.containsKey("className")) {
@@ -121,7 +117,7 @@ public class StudentProfileController {
         User user = userOptional.get();
         
         // Check if student profile already exists
-        Optional<Student> existingStudent = studentRepository.findByUser_Id(user.getId());
+        Optional<Student> existingStudent = studentRepository.findByUser_UserId(user.getUserId());
         if (existingStudent.isPresent()) {
             return ResponseEntity.badRequest().body(new MessageResponse("Student profile already exists", false));
         }
@@ -132,7 +128,7 @@ public class StudentProfileController {
         }
 
         if (profileData.containsKey("phone")) {
-            user.setPhone((String) profileData.get("phone"));
+            user.setPhoneNumber((String) profileData.get("phone"));
         }
 
         // Create new student profile
@@ -143,10 +139,6 @@ public class StudentProfileController {
             student.setFullName((String) profileData.get("fullName"));
         } else {
             student.setFullName(user.getFullName()); // Use user's full name as default
-        }
-
-        if (profileData.containsKey("gender")) {
-            student.setGender((String) profileData.get("gender"));
         }
 
         if (profileData.containsKey("className")) {

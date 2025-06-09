@@ -2,9 +2,11 @@ package com.swp391_8.schoolhealth.service;
 
 import com.swp391_8.schoolhealth.dto.MedicationRequestDTO; // Corrected import
 import com.swp391_8.schoolhealth.model.MedicationRequest;
+import com.swp391_8.schoolhealth.model.StatusType; // Added import
 import com.swp391_8.schoolhealth.model.Student;
 import com.swp391_8.schoolhealth.model.User;
 import com.swp391_8.schoolhealth.repository.MedicationRequestRepository;
+import com.swp391_8.schoolhealth.repository.StatusTypeRepository; // Added import
 import com.swp391_8.schoolhealth.repository.StudentRepository;
 import com.swp391_8.schoolhealth.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +17,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional; // Added import
 
 @Service
 public class MedicationRequestService {
+
+    private static final String MEDICATION_REQUEST_CATEGORY = "Medication Request";
+    private static final String STATUS_PENDING = "PENDING";
+    private static final String STATUS_APPROVED = "APPROVED";
+    private static final String STATUS_REJECTED = "REJECTED";
+    private static final String STATUS_CANCELLED = "CANCELLED";
 
     @Autowired
     private MedicationRequestRepository medicationRequestRepository;
@@ -27,6 +36,9 @@ public class MedicationRequestService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private StatusTypeRepository statusTypeRepository; // Added repository
 
     @Autowired
     private SecurityService securityService; // For permission checks
@@ -43,23 +55,23 @@ public class MedicationRequestService {
         Student student = studentRepository.findById(requestDTO.getStudentId())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
+        StatusType pendingStatus = statusTypeRepository.findByStatusNameAndCategory(STATUS_PENDING, MEDICATION_REQUEST_CATEGORY)
+                .orElseThrow(() -> new RuntimeException("StatusType 'PENDING' for category 'Medication Request' not found. Please ensure it exists in the database."));
+
         MedicationRequest request = new MedicationRequest();
-        request.setParent(parent);
+        request.setSubmittedByUser(parent);
         request.setStudent(student);
         request.setMedicationName(requestDTO.getMedicationName());
         request.setDosage(requestDTO.getDosage());
-        request.setFrequency(requestDTO.getFrequency());
-        request.setStartDate(requestDTO.getStartDate());
-        request.setEndDate(requestDTO.getEndDate());
-        request.setReason(requestDTO.getReason());
-        // Status and requestDate are set by @PrePersist in MedicationRequest entity
+        request.setInstructions(requestDTO.getInstructions()); // Assuming DTO has instructions
+        request.setStatusType(pendingStatus); // Set status using StatusType
 
         return medicationRequestRepository.save(request);
     }
 
     public List<MedicationRequest> getMedicationRequestsByParent(Authentication authentication) {
         Integer parentId = getUserIdFromAuthentication(authentication);
-        return medicationRequestRepository.findByParentId(parentId);
+        return medicationRequestRepository.findBySubmittedByUserUserId(parentId); // Changed from findByParentId
     }
 
     public List<MedicationRequest> getMedicationRequestsForStudentByParent(Integer studentId, Authentication authentication) {
@@ -67,7 +79,7 @@ public class MedicationRequestService {
         if (!securityService.isParentOfStudent(authentication, studentId)) {
             throw new SecurityException("Authenticated user is not authorized to view medication requests for this student.");
         }
-        return medicationRequestRepository.findByStudentIdAndParentId(studentId, parentId);
+        return medicationRequestRepository.findByStudentStudentIdAndSubmittedByUserUserId(studentId, parentId); // Changed from findByStudentStudentIdAndParentId
     }
 
     public MedicationRequest cancelMedicationRequest(Integer requestId, Authentication authentication) {
@@ -75,16 +87,21 @@ public class MedicationRequestService {
         MedicationRequest request = medicationRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Medication request not found with ID: " + requestId));
 
-        if (!request.getParent().getId().equals(parentId)) {
+        if (!request.getSubmittedByUser().getUserId().equals(parentId)) {
             throw new SecurityException("User is not authorized to cancel this medication request.");
         }
 
-        if (request.getStatus() != MedicationRequest.MedicationRequestStatus.PENDING) {
-            throw new IllegalStateException("Only PENDING medication requests can be cancelled.");
+        StatusType currentStatus = request.getStatusType();
+        if (currentStatus == null || !STATUS_PENDING.equals(currentStatus.getStatusName())) {
+            throw new IllegalStateException("Only PENDING medication requests can be cancelled. Current status: " + (currentStatus != null ? currentStatus.getStatusName() : "null"));
         }
 
-        request.setStatus(MedicationRequest.MedicationRequestStatus.CANCELLED);
-        request.setActionDate(LocalDateTime.now());
+        StatusType cancelledStatus = statusTypeRepository.findByStatusNameAndCategory(STATUS_CANCELLED, MEDICATION_REQUEST_CATEGORY)
+                .orElseThrow(() -> new RuntimeException("StatusType 'CANCELLED' for category 'Medication Request' not found. Please ensure it exists in the database."));
+
+        request.setStatusType(cancelledStatus);
+        // request.setActionDate(LocalDateTime.now()); // No actionDate field, updatedAt is auto-managed
+        // administeredAt and administeredByUser are for approval/rejection actions by staff
         return medicationRequestRepository.save(request);
     }
 
@@ -94,7 +111,7 @@ public class MedicationRequestService {
     }
 
     public List<MedicationRequest> getPendingMedicationRequests() {
-        return medicationRequestRepository.findByStatus(MedicationRequest.MedicationRequestStatus.PENDING);
+        return medicationRequestRepository.findByStatusTypeStatusName(STATUS_PENDING);
     }
 
     public MedicationRequest approveMedicationRequest(Integer requestId, Authentication authentication, String notes) {
@@ -104,9 +121,12 @@ public class MedicationRequestService {
         User approver = userRepository.findById(getUserIdFromAuthentication(authentication))
                 .orElseThrow(() -> new RuntimeException("Approver (Nurse/Staff) not found"));
 
-        request.setStatus(MedicationRequest.MedicationRequestStatus.APPROVED);
-        request.setApprovedBy(approver);
-        request.setActionDate(LocalDateTime.now());
+        StatusType approvedStatus = statusTypeRepository.findByStatusNameAndCategory(STATUS_APPROVED, MEDICATION_REQUEST_CATEGORY)
+                .orElseThrow(() -> new RuntimeException("StatusType 'APPROVED' for category 'Medication Request' not found. Please ensure it exists in the database."));
+
+        request.setStatusType(approvedStatus);
+        request.setAdministeredByUser(approver);
+        request.setAdministeredAt(LocalDateTime.now());
         request.setNotes(notes);
         return medicationRequestRepository.save(request);
     }
@@ -118,9 +138,12 @@ public class MedicationRequestService {
         User rejector = userRepository.findById(getUserIdFromAuthentication(authentication))
                 .orElseThrow(() -> new RuntimeException("Rejector (Nurse/Staff) not found"));
 
-        request.setStatus(MedicationRequest.MedicationRequestStatus.REJECTED);
-        request.setApprovedBy(rejector); // Even for rejection, this field indicates who actioned it
-        request.setActionDate(LocalDateTime.now());
+        StatusType rejectedStatus = statusTypeRepository.findByStatusNameAndCategory(STATUS_REJECTED, MEDICATION_REQUEST_CATEGORY)
+                .orElseThrow(() -> new RuntimeException("StatusType 'REJECTED' for category 'Medication Request' not found. Please ensure it exists in the database."));
+
+        request.setStatusType(rejectedStatus);
+        request.setAdministeredByUser(rejector);
+        request.setAdministeredAt(LocalDateTime.now()); // Record time of rejection
         request.setNotes(rejectionReason); // Use notes field for rejection reason
         return medicationRequestRepository.save(request);
     }

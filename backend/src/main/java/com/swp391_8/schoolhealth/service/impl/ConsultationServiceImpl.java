@@ -61,15 +61,15 @@ public class ConsultationServiceImpl implements ConsultationService {
         if (dto.getCheckupId() != null) {
             HealthCheckup checkup = healthCheckupRepository.findById(dto.getCheckupId())
                     .orElseThrow(() -> new EntityNotFoundException("HealthCheckup not found with id: " + dto.getCheckupId()));
-            existingConsultation.setCheckup(checkup);
+            existingConsultation.setRelatedHealthCheckup(checkup); // Changed from setCheckup
         } else {
-            existingConsultation.setCheckup(null);
+            existingConsultation.setRelatedHealthCheckup(null); // Changed from setCheckup
         }
 
         existingConsultation.setConsultationDate(dto.getConsultationDate());
         existingConsultation.setLocation(dto.getLocation());
-        existingConsultation.setDescription(dto.getDescription());
-        existingConsultation.setResult(dto.getResult());
+        existingConsultation.setReason(dto.getReason()); // Changed from setDescription
+        existingConsultation.setRecommendations(dto.getRecommendations()); // Changed from setResult
 
         Consultation updatedConsultation = consultationRepository.save(existingConsultation);
         return convertToDTO(updatedConsultation);
@@ -85,18 +85,18 @@ public class ConsultationServiceImpl implements ConsultationService {
 
     private ConsultationDTO convertToDTO(Consultation consultation) {
         ConsultationDTO dto = new ConsultationDTO();
-        dto.setId(consultation.getId());
+        dto.setConsultationId(consultation.getConsultationId());
         if (consultation.getStudent() != null) {
             dto.setStudentId(consultation.getStudent().getStudentId());
-            dto.setStudentName(consultation.getStudent().getFirstName() + " " + consultation.getStudent().getLastName()); // Example: full name
+            dto.setStudentName(consultation.getStudent().getFullName()); // Use getFullName()
         }
-        if (consultation.getCheckup() != null) {
-            dto.setCheckupId(consultation.getCheckup().getCheckupId());
+        if (consultation.getRelatedHealthCheckup() != null) { // Changed from getCheckup
+            dto.setCheckupId(consultation.getRelatedHealthCheckup().getCheckupId()); // Changed from getCheckup
         }
         dto.setConsultationDate(consultation.getConsultationDate());
         dto.setLocation(consultation.getLocation());
-        dto.setDescription(consultation.getDescription());
-        dto.setResult(consultation.getResult());
+        dto.setReason(consultation.getReason()); // Changed from getDescription
+        dto.setRecommendations(consultation.getRecommendations()); // Changed from getResult
         return dto;
     }
 
@@ -111,13 +111,13 @@ public class ConsultationServiceImpl implements ConsultationService {
         if (dto.getCheckupId() != null) {
             HealthCheckup checkup = healthCheckupRepository.findById(dto.getCheckupId())
                     .orElseThrow(() -> new EntityNotFoundException("HealthCheckup not found with id: " + dto.getCheckupId()));
-            consultation.setCheckup(checkup);
+            consultation.setRelatedHealthCheckup(checkup); // Changed from setCheckup
         }
         // For creation, other fields are set directly
         consultation.setConsultationDate(dto.getConsultationDate());
         consultation.setLocation(dto.getLocation());
-        consultation.setDescription(dto.getDescription());
-        consultation.setResult(dto.getResult());
+        consultation.setReason(dto.getReason()); // Ensure this was changed
+        consultation.setRecommendations(dto.getRecommendations()); // Ensure this was changed
         return consultation;
     }
 }

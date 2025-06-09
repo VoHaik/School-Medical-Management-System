@@ -3,56 +3,50 @@ package com.swp391_8.schoolhealth.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "notifications")
+@Table(name = "Notifications")
 public class Notification {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "notification_id")
     private Integer notificationId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false) // The user this notification is for
-    private User user;
+    @JoinColumn(name = "recipient_user_id", nullable = false)
+    private User recipientUser;
+
+    @Column(name = "title", nullable = false, length = 255)
+    private String title;
+
+    @Column(name = "content", nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id") // Optional: if the notification is related to a specific student
-    private Student student;
+    @JoinColumn(name = "notification_type_id", nullable = false)
+    private NotificationType notificationType; // Links to NotificationTypes table
 
-    @Column(name = "message", nullable = false, columnDefinition = "TEXT")
-    private String message;
+    @Column(name = "related_entity_id")
+    private Integer relatedEntityId;
 
-    @Column(name = "type", length = 50) // E.g., 'MEDICATION_UPDATE', 'EVENT_REMINDER', 'FORM_APPROVAL'
-    private String type;
+    @Column(name = "sent_at", nullable = false, updatable = false)
+    private LocalDateTime sentAt;
 
-    @Column(name = "is_read", nullable = false)
-    private boolean isRead = false;
+    @Column(name = "read_at")
+    private LocalDateTime readAt;
 
-    @CreationTimestamp
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Date createdAt;
+    @Column(name = "is_read")
+    private Boolean isRead = false;
 
-    @Column(name = "link_to", length = 255) // Optional: A URL or path to navigate to
-    private String linkTo;
-
-    // Add getters if not already present due to Lombok or other reasons.
-    // Assuming fields: Integer userId, String title, String notificationType
-    public Integer getUserId() {
-        return user.getUserId();
-    }
-
-    public String getTitle() {
-        return message; // Assuming title is the same as message, adjust if necessary
-    }
-
-    public String getNotificationType() {
-        return type;
+    @PrePersist
+    protected void onCreate() {
+        sentAt = LocalDateTime.now();
+        if (isRead == null) {
+            isRead = false;
+        }
     }
 }

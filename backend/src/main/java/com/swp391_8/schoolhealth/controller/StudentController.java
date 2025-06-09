@@ -140,10 +140,6 @@ public class StudentController {
             }
         }
         
-        if (studentData.containsKey("gender")) {
-            student.setGender((String) studentData.get("gender"));
-        }
-        
         if (studentData.containsKey("className")) {
             student.setClassName((String) studentData.get("className"));
         }
