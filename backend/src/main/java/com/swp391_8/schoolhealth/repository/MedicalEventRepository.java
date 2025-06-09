@@ -1,0 +1,12 @@
+package com.swp391_8.schoolhealth.repository;
+
+import com.swp391_8.schoolhealth.model.MedicalEvent;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface MedicalEventRepository extends JpaRepository<MedicalEvent, Integer> {
+    List<MedicalEvent> findByStudentId(Integer studentId);
+}
