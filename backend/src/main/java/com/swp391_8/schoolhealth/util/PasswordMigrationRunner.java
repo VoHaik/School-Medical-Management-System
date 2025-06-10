@@ -1,4 +1,4 @@
-package com.swp391_8.schoolhealth.utils;
+package com.swp391_8.schoolhealth.util;
 
 import com.swp391_8.schoolhealth.model.User;
 import com.swp391_8.schoolhealth.repository.UserRepository;
