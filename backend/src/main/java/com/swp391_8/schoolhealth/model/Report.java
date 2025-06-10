@@ -31,7 +31,7 @@ public class Report {
     private LocalDateTime generatedAt;
 
     @Column(name = "content", columnDefinition = "NVARCHAR(MAX)")
-    private String contentText; // Renamed from 'content', ensure this matches SQL or use @Column(name="content")
+    private String content; // Renamed from contentText
 
     @Column(name = "file_path", length = 255)
     private String filePath;

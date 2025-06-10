@@ -23,10 +23,8 @@ public class HomepageContent {
     private ContentType contentType; // Links to ContentTypes table
 
     @Column(name = "title", nullable = false, length = 200)
-    private String title;
-
-    @Column(name = "content", nullable = false, columnDefinition = "NVARCHAR(MAX)")
-    private String contentText; // Renamed from 'content' to avoid conflict, matches SQL 'content'
+    private String title;    @Column(name = "content", nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    private String content;
 
     @Column(name = "slug", length = 255, unique = true) // Added unique = true as per SQL
     private String slug;
