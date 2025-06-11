@@ -36,7 +36,7 @@ public class ParentDashboardController {
         // If studentId is provided and relevant, the service should handle filtering.
         // For now, assuming notifications are primarily parent-userId based.
         System.out.println("Fetching notifications for parentId: " + parentId + (studentId != null ? ", studentId: " + studentId : ""));
-        List<NotificationDTO> notifications = notificationService.getNotificationsByUserId(parentId.intValue());
+        List<NotificationDTO> notifications = notificationService.getNotificationsByUserId(parentId);
         if (notifications.isEmpty()) {
             return ResponseEntity.noContent().build();
         }

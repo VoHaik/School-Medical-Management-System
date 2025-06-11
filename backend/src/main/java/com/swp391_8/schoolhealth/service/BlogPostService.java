@@ -29,13 +29,13 @@ public class BlogPostService {
     }
 
     public List<BlogPost> getPostsByAuthorId(Integer authorId) {
-        return blogPostRepository.findByCreatedByUserUserId(authorId); // Changed from findByCreatedByUser_Id to findByCreatedByUserUserId
+        return blogPostRepository.findByAuthorId(authorId);
     }
 
     public BlogPost createPost(BlogPost blogPost, Integer authorId) {
         User author = userRepository.findById(authorId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", authorId));
-        blogPost.setCreatedByUser(author); // Changed from setAuthor to setCreatedByUser
+        blogPost.setAuthor(author);
         return blogPostRepository.save(blogPost);
     }
 
@@ -47,16 +47,16 @@ public class BlogPostService {
     public BlogPost updatePost(Integer id, BlogPost blogPostDetails) {
         BlogPost blogPost = getPostById(id);
         blogPost.setTitle(blogPostDetails.getTitle());
-        blogPost.setContentText(blogPostDetails.getContentText()); // Changed from setContent and getContent to setContentText and getContentText
+        blogPost.setContent(blogPostDetails.getContent());
         
-        // Update additional fields if they exist and are valid for BlogPost entity
-        // blogPost.setSummary(blogPostDetails.getSummary()); // Summary field does not exist in BlogPost
-        // blogPost.setTags(blogPostDetails.getTags()); // Tags field does not exist in BlogPost
-        // blogPost.setCategoryId(blogPostDetails.getCategoryId()); // CategoryId field does not exist in BlogPost
-        if (blogPostDetails.getSlug() != null) {
+        // Update additional fields if they exist
+        // if (blogPostDetails.getTags() != null) { // Commented out tags update
+        //     blogPost.setTags(blogPostDetails.getTags()); // Commented out tags update
+        // }
+        if (blogPostDetails.getSlug() != null) { // Added slug update
             blogPost.setSlug(blogPostDetails.getSlug());
         }
-        if (blogPostDetails.getPublishedAt() != null) {
+        if (blogPostDetails.getPublishedAt() != null) { // Added publishedAt update
             blogPost.setPublishedAt(blogPostDetails.getPublishedAt());
         }
         

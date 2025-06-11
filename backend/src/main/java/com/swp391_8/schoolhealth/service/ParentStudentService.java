@@ -46,6 +46,10 @@ public class ParentStudentService {
             }
         }
         
+        if (studentData.containsKey("gender")) {
+            student.setGender((String) studentData.get("gender"));
+        }
+        
         if (studentData.containsKey("className")) {
             student.setClassName((String) studentData.get("className"));
         }
@@ -68,10 +72,9 @@ public class ParentStudentService {
             relationshipType = (String) studentData.get("relationshipType");
         }
 
-        ParentStudentRelationship relationship = new ParentStudentRelationship();
-        relationship.setParentUser(parentUser);
-        relationship.setStudent(savedStudent);
-        relationship.setRelationshipType(relationshipType);
+        ParentStudentRelationship relationship = new ParentStudentRelationship(
+            parentUser, savedStudent, relationshipType
+        );
         parentStudentRelationshipRepository.save(relationship);
 
         return savedStudent;
@@ -80,7 +83,7 @@ public class ParentStudentService {
     @Transactional
     public Student updateStudentForParent(Integer studentId, Map<String, Object> studentData, Integer parentUserId) {
         // Verify that the parent has permission to update this student
-        if (!parentStudentRelationshipRepository.existsByParentUserUserIdAndStudentStudentId(parentUserId, studentId)) {
+        if (!parentStudentRelationshipRepository.existsByParentUserIdAndStudentStudentId(parentUserId, studentId)) {
             throw new RuntimeException("Parent does not have permission to update this student");
         }
 
@@ -108,6 +111,10 @@ public class ParentStudentService {
             }
         }
         
+        if (studentData.containsKey("gender")) {
+            student.setGender((String) studentData.get("gender"));
+        }
+        
         if (studentData.containsKey("className")) {
             student.setClassName((String) studentData.get("className"));
         }
@@ -116,7 +123,7 @@ public class ParentStudentService {
     }
 
     public boolean isParentOfStudent(Integer parentUserId, Integer studentId) {
-        return parentStudentRelationshipRepository.existsByParentUserUserIdAndStudentStudentId(parentUserId, studentId);
+        return parentStudentRelationshipRepository.existsByParentUserIdAndStudentStudentId(parentUserId, studentId);
     }
 
     public ParentStudentRelationship createParentStudentRelationship(Integer parentUserId, Integer studentId, String relationshipType) {
@@ -132,14 +139,15 @@ public class ParentStudentService {
         }
 
         // Check if relationship already exists
-        if (parentStudentRelationshipRepository.existsByParentUserUserIdAndStudentStudentId(parentUserId, studentId)) {
+        if (parentStudentRelationshipRepository.existsByParentUserIdAndStudentStudentId(parentUserId, studentId)) {
             throw new RuntimeException("Parent-student relationship already exists");
         }
 
-        ParentStudentRelationship relationship = new ParentStudentRelationship();
-        relationship.setParentUser(parentOptional.get());
-        relationship.setStudent(studentOptional.get());
-        relationship.setRelationshipType(relationshipType);
+        ParentStudentRelationship relationship = new ParentStudentRelationship(
+            parentOptional.get(), 
+            studentOptional.get(), 
+            relationshipType
+        );
 
         return parentStudentRelationshipRepository.save(relationship);
     }

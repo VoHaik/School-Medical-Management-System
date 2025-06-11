@@ -11,11 +11,10 @@ public class MedicationRequestDTO {
     private LocalDate endDate;
     private String reason; // Added missing reason field
     private String notes; // Parent's notes for the request
-    private String instructions; // Added instructions field
 
     public MedicationRequestDTO() {}
 
-    public MedicationRequestDTO(Integer studentId, String medicationName, String dosage, String frequency, LocalDate startDate, LocalDate endDate, String reason, String notes, String instructions) {
+    public MedicationRequestDTO(Integer studentId, String medicationName, String dosage, String frequency, LocalDate startDate, LocalDate endDate, String reason, String notes) {
         this.studentId = studentId;
         this.medicationName = medicationName;
         this.dosage = dosage;
@@ -24,7 +23,6 @@ public class MedicationRequestDTO {
         this.endDate = endDate;
         this.reason = reason; // Initialize reason
         this.notes = notes;
-        this.instructions = instructions; // Initialize instructions
     }
 
     public Integer getStudentId() {
@@ -89,13 +87,5 @@ public class MedicationRequestDTO {
 
     public void setNotes(String notes) {
         this.notes = notes;
-    }
-
-    public String getInstructions() { // Added getter for instructions
-        return instructions;
-    }
-
-    public void setInstructions(String instructions) { // Added setter for instructions
-        this.instructions = instructions;
     }
 }

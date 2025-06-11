@@ -56,10 +56,10 @@ public class BlogPostController {
     public ResponseEntity<BlogPost> createTestPost() {
         BlogPost testPost = new BlogPost();
         testPost.setTitle("Test Blog Post");
-        testPost.setContentText("This is a test blog post to verify the API is working correctly."); // Changed from setContent
-        // testPost.setSummary("Test post summary"); // Field does not exist
-        // testPost.setCategoryId(1); // Field does not exist
-        
+        testPost.setContent("This is a test blog post to verify the API is working correctly.");
+        testPost.setSlug("test-blog-post"); // Added slug
+        testPost.setPublishedAt(java.time.LocalDateTime.now()); // Added publishedAt
+
         // For testing, we'll create without authentication
         // In real scenario, this should be removed
         BlogPost newPost = blogPostService.createTestPost(testPost);

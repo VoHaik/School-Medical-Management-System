@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "health_records")
 @Data
@@ -24,7 +27,8 @@ public class HealthRecord {    @Id
 
     private String hearing;
 
-    @OneToOne
+    @OneToMany(mappedBy = "healthRecord", cascade = CascadeType.ALL)
+    private Set<Vaccination> vaccinations = new HashSet<>();    @OneToOne
     @JoinColumn(name = "student_id")
     private Student student;
 }

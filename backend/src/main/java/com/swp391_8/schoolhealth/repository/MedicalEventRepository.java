@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface MedicalEventRepository extends JpaRepository<MedicalEvent, Integer> {
-    List<MedicalEvent> findByStudentStudentId(Integer studentId);
+    List<MedicalEvent> findByStudentId(Integer studentId);
 }

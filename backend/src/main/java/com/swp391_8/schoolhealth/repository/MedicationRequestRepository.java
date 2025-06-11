@@ -1,7 +1,7 @@
 package com.swp391_8.schoolhealth.repository;
 
 import com.swp391_8.schoolhealth.model.MedicationRequest;
-import com.swp391_8.schoolhealth.model.StatusType; // Added import
+import com.swp391_8.schoolhealth.model.MedicationRequest.MedicationRequestStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,15 +10,15 @@ import java.util.List;
 @Repository
 public interface MedicationRequestRepository extends JpaRepository<MedicationRequest, Integer> {
 
-    List<MedicationRequest> findByStudentStudentId(Integer studentId);
+    List<MedicationRequest> findByStudentId(Integer studentId);
 
-    List<MedicationRequest> findBySubmittedByUserUserId(Integer userId);
+    List<MedicationRequest> findByParentId(Integer parentId);
 
-    List<MedicationRequest> findByStudentStudentIdAndSubmittedByUserUserId(Integer studentId, Integer userId);
+    List<MedicationRequest> findByStudentIdAndParentId(Integer studentId, Integer parentId);
 
-    // Updated methods to query by StatusType's statusName
-    List<MedicationRequest> findByStudentStudentIdAndStatusTypeStatusName(Integer studentId, String statusName);
-    List<MedicationRequest> findBySubmittedByUserUserIdAndStatusTypeStatusName(Integer userId, String statusName);
-    List<MedicationRequest> findByStatusTypeStatusName(String statusName);
+    // Add more specific queries if needed, e.g., by status
+    List<MedicationRequest> findByStudentIdAndStatus(Integer studentId, MedicationRequestStatus status);
+    List<MedicationRequest> findByParentIdAndStatus(Integer parentId, MedicationRequestStatus status);
+    List<MedicationRequest> findByStatus(MedicationRequestStatus status);
 
 }

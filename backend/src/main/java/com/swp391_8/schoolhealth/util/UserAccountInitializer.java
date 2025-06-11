@@ -82,8 +82,7 @@ public class UserAccountInitializer implements CommandLineRunner {
     
     private void createRoleIfNotExists(String roleName, String description) {
         if (!roleRepository.existsByRoleName(roleName)) {
-            Role role = new Role(roleName);
-            role.setDescription(description);
+            Role role = new Role(roleName, description);
             roleRepository.save(role);
             logger.info("Created role: {}", roleName);
         } else {

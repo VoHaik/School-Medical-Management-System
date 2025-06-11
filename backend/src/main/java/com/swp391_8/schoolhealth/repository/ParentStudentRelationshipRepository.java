@@ -12,15 +12,15 @@ import java.util.List;
 public interface ParentStudentRelationshipRepository extends JpaRepository<ParentStudentRelationship, Integer> {
     
     // Find all relationships for a specific parent
-    List<ParentStudentRelationship> findByParentUserUserId(Integer parentUserId);
+    List<ParentStudentRelationship> findByParentUserId(Integer parentUserId);
     
     // Find all relationships for a specific student
     List<ParentStudentRelationship> findByStudentStudentId(Integer studentId);
     
     // Check if a specific parent-student relationship exists
-    boolean existsByParentUserUserIdAndStudentStudentId(Integer parentUserId, Integer studentId);
+    boolean existsByParentUserIdAndStudentStudentId(Integer parentUserId, Integer studentId);
     
     // Find relationship by parent and student
-    @Query("SELECT psr FROM ParentStudentRelationship psr WHERE psr.parentUser.userId = :parentUserId AND psr.student.studentId = :studentId")
+    @Query("SELECT psr FROM ParentStudentRelationship psr WHERE psr.parent.userId = :parentUserId AND psr.student.studentId = :studentId")
     ParentStudentRelationship findByParentAndStudent(@Param("parentUserId") Integer parentUserId, @Param("studentId") Integer studentId);
 }

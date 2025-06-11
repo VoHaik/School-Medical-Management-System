@@ -1,74 +1,64 @@
 package com.swp391_8.schoolhealth.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
 @Entity
-@Table(name = "Vaccinations")
-public class Vaccination {
-
-    @Id
+@Table(name = "vaccinations")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Vaccination {    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "vaccination_id")
-    private Integer vaccinationId;
+    private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
+
+    @ManyToOne
+    @JoinColumn(name = "health_record_id")
+    private HealthRecord healthRecord;
 
     @Column(name = "vaccine_name", nullable = false, length = 100)
     private String vaccineName;
 
-    @Column(name = "vaccination_date")
+    @Column(name = "vaccination_date", nullable = false)
     private LocalDate vaccinationDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "consent_status_id", nullable = false)
-    private StatusType consentStatus; // Links to StatusTypes table
+    @Enumerated(EnumType.STRING)
+    @Column(name = "consent_status", columnDefinition = "ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending'")
+    private ConsentStatus consentStatus = ConsentStatus.Pending;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "consent_by_user_id")
-    private User consentByUser;
+    public enum ConsentStatus {
+        Pending, Approved, Rejected
+    }
 
-    @Column(name = "consent_date")
-    private LocalDate consentDate;
+    @ManyToOne
+    @JoinColumn(name = "consent_by")
+    private User consentBy;
 
-    @Column(name = "result", columnDefinition = "NVARCHAR(MAX)")
+    @Column(columnDefinition = "TEXT")
     private String result;
 
     @Column(name = "follow_up_date")
     private LocalDate followUpDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "administered_by_user_id")
-    private User administeredByUser;
+    @ManyToOne
+    @JoinColumn(name = "administered_by")
+    private User administeredBy;
 
-    @Column(name = "notification_sent_to_parent")
-    private Boolean notificationSentToParent = false;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-        if (notificationSentToParent == null) {
-            notificationSentToParent = false;
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 }

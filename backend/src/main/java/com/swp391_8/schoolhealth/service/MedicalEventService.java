@@ -16,6 +16,6 @@ public class MedicalEventService {
     // Service methods for School Nurse will be added here later
 
     public List<MedicalEvent> getMedicalEventsByStudentId(Integer studentId) {
-        return medicalEventRepository.findByStudentStudentId(studentId);
+        return medicalEventRepository.findByStudentId(studentId);
     }
 }
