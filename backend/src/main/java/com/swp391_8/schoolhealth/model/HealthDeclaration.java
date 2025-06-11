@@ -22,6 +22,10 @@ public class HealthDeclaration {
     @JoinColumn(name = "parent_user_id") // Foreign key to User table
     private User parent;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "submitted_by", nullable = false)
+    private User submittedBy; // Added
+
     @Column(name = "emergency_contact_name")
     private String emergencyContactName;
 
@@ -88,15 +92,15 @@ public class HealthDeclaration {
     private String symptoms;
 
     @Column(name = "has_symptoms")
-    private boolean hasSymptoms;
+    private Boolean hasSymptoms; // Changed from boolean to Boolean
 
     @Column(name = "close_contact")
-    private boolean closeContact;
+    private Boolean closeContact; // Changed from boolean to Boolean
 
     @Column(name = "travel_history")
-    private boolean travelHistory;
+    private Boolean travelHistory; // Changed from boolean to Boolean
 
-    @Column(name = "additional_info")
+    @Column(name = "additional_info", columnDefinition = "TEXT")
     private String additionalInfo;
 
     // Getters and Setters
@@ -123,6 +127,14 @@ public class HealthDeclaration {
 
     public void setParent(User parent) {
         this.parent = parent;
+    }
+
+    public User getSubmittedBy() { // Added getter for submittedBy
+        return submittedBy;
+    }
+
+    public void setSubmittedBy(User submittedBy) { // Added setter for submittedBy
+        this.submittedBy = submittedBy;
     }
 
     public String getEmergencyContactName() {
@@ -290,27 +302,27 @@ public class HealthDeclaration {
         this.symptoms = symptoms;
     }
 
-    public boolean isHasSymptoms() { // Changed from getHasSymptoms to isHasSymptoms for boolean
+    public Boolean getHasSymptoms() { // Changed from isHasSymptoms to getHasSymptoms for Boolean
         return hasSymptoms;
     }
 
-    public void setHasSymptoms(boolean hasSymptoms) {
+    public void setHasSymptoms(Boolean hasSymptoms) {
         this.hasSymptoms = hasSymptoms;
     }
 
-    public boolean isCloseContact() { // Changed from getCloseContact to isCloseContact for boolean
+    public Boolean getCloseContact() { // Changed from isCloseContact to getCloseContact for Boolean
         return closeContact;
     }
 
-    public void setCloseContact(boolean closeContact) {
+    public void setCloseContact(Boolean closeContact) {
         this.closeContact = closeContact;
     }
 
-    public boolean isTravelHistory() { // Changed from getTravelHistory to isTravelHistory for boolean
+    public Boolean getTravelHistory() { // Changed from isTravelHistory to getTravelHistory for Boolean
         return travelHistory;
     }
 
-    public void setTravelHistory(boolean travelHistory) {
+    public void setTravelHistory(Boolean travelHistory) {
         this.travelHistory = travelHistory;
     }
 

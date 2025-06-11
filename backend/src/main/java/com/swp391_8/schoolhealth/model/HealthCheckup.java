@@ -1,66 +1,62 @@
 package com.swp391_8.schoolhealth.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
 @Entity
-@Table(name = "health_checkups")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class HealthCheckup {    @Id
+@Table(name = "HealthCheckups")
+public class HealthCheckup {
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "checkup_id")
-    private Integer id;
+    @Column(name = "checkup_id", nullable = false)
+    private Integer checkupId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "checkup_type_id", nullable = false)
+    private CheckupType checkupType;
 
     @Column(name = "checkup_date", nullable = false)
     private LocalDate checkupDate;
 
-    @Column(name = "checkup_type", length = 100)
-    private String checkupType;
+    @Nationalized
+    @Lob
+    @Column(name = "results")
+    private String results;
 
-    @Column(columnDefinition = "TEXT")
-    private String result;
+    @Nationalized
+    @Lob
+    @Column(name = "notes")
+    private String notes;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "consent_status")
-    private ConsentStatus consentStatus = ConsentStatus.Pending;
-
-    public enum ConsentStatus {
-        Pending, Approved, Rejected
-    }
-
-    @ManyToOne
-    @JoinColumn(name = "consent_by")
-    private User consentBy;
-
-    @Column(name = "follow_up_date")
-    private LocalDate followUpDate;
-
-    @ManyToOne
-    @JoinColumn(name = "performed_by")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "performed_by_user_id")
     private User performedBy;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
-    // Add getter if not already present.
-    // Assuming field: Integer checkupId
-    public Integer getCheckupId() {
-        return id;
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

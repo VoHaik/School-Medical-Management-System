@@ -3,9 +3,15 @@ package com.swp391_8.schoolhealth.dto;
 import java.time.LocalDate;
 import java.util.List;
 
+// Added Lombok annotations for getters and setters
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class HealthDeclarationDTO {
-    private Integer declarationId; // Added
-    private boolean isDraft; // Added
+    private Integer declarationId;
+    private Boolean isDraft; // Changed from boolean to Boolean
     private Integer studentId;
     private String emergencyContactName;
     private String emergencyContactPhone;
@@ -13,7 +19,7 @@ public class HealthDeclarationDTO {
     private String physicianPhone;
     private List<String> allergies;
     private List<String> medicalConditions;
-    private List<VaccinationRecordDTO> vaccinations; // Changed from VaccinationDTO
+    private List<VaccinationRecordDTO> vaccinations;
     private String visionScreeningResult;
     private LocalDate visionScreeningDate;
     private String hearingScreeningResult;
@@ -23,224 +29,65 @@ public class HealthDeclarationDTO {
     private String scoliosisScreeningResult;
     private LocalDate scoliosisScreeningDate;
     private String notes;
-    private Boolean consentSignature; // Representing the checkbox
+    private Boolean consentSignature;
     private LocalDate declarationDate;
     private String symptoms;
-    private boolean hasSymptoms;
-    private boolean closeContact;
-    private boolean travelHistory;
+    private Boolean hasSymptoms;     // Changed from boolean to Boolean
+    private Boolean closeContact;    // Changed from boolean to Boolean
+    private Boolean travelHistory;   // Changed from boolean to Boolean
     private String additionalInfo;
-    // Add other fields as necessary from HealthDeclaration.js
 
-    // Getters and Setters
+    private Integer submittedByUserId; // Added
+    private String submittedByUsername; // Added
 
-    public Integer getDeclarationId() { // Added
-        return declarationId;
-    }
+    // Lombok's @Getter and @Setter will generate the necessary methods.
+    // Explicit getters and setters below are no longer needed if Lombok is active.
+    // ...existing code...
+    // public Integer getDeclarationId() { // Added
+    //     return declarationId;
+    // }
 
-    public void setDeclarationId(Integer declarationId) { // Added
-        this.declarationId = declarationId;
-    }
+    // public void setDeclarationId(Integer declarationId) { // Added
+    //     this.declarationId = declarationId;
+    // }
 
-    public boolean isDraft() { // Added
-        return isDraft;
-    }
+    // public boolean isDraft() { // Old getter for primitive
+    //     return isDraft;
+    // }
+    // public Boolean getIsDraft() { // New getter for Boolean
+    //     return isDraft;
+    // }
 
-    public void setDraft(boolean isDraft) { // Added
-        this.isDraft = isDraft;
-    }
+    // public void setDraft(boolean isDraft) { // Old setter for primitive
+    //     this.isDraft = isDraft;
+    // }
+    // public void setIsDraft(Boolean isDraft) { // New setter for Boolean
+    //    this.isDraft = isDraft;
+    // }
+    // ... (similar changes for hasSymptoms, closeContact, travelHistory)
 
-    public Integer getStudentId() {
-        return studentId;
-    }
+    // public Integer getStudentId() {
+    //     return studentId;
+    // }
 
-    public void setStudentId(Integer studentId) {
-        this.studentId = studentId;
-    }
+    // public void setStudentId(Integer studentId) {
+    //     this.studentId = studentId;
+    // }
+    // ... (other existing getters and setters can be removed if @Getter/@Setter are used)
 
-    public String getEmergencyContactName() {
-        return emergencyContactName;
-    }
+    // public void setSubmittedByUserId(Integer submittedByUserId) {
+    //     this.submittedByUserId = submittedByUserId;
+    // }
 
-    public void setEmergencyContactName(String emergencyContactName) {
-        this.emergencyContactName = emergencyContactName;
-    }
+    // public Integer getSubmittedByUserId() {
+    //     return submittedByUserId;
+    // }
 
-    public String getEmergencyContactPhone() {
-        return emergencyContactPhone;
-    }
+    // public void setSubmittedByUsername(String submittedByUsername) {
+    //     this.submittedByUsername = submittedByUsername;
+    // }
 
-    public void setEmergencyContactPhone(String emergencyContactPhone) {
-        this.emergencyContactPhone = emergencyContactPhone;
-    }
-
-    public String getPhysicianName() {
-        return physicianName;
-    }
-
-    public void setPhysicianName(String physicianName) {
-        this.physicianName = physicianName;
-    }
-
-    public String getPhysicianPhone() {
-        return physicianPhone;
-    }
-
-    public void setPhysicianPhone(String physicianPhone) {
-        this.physicianPhone = physicianPhone;
-    }
-
-    public List<String> getAllergies() {
-        return allergies;
-    }
-
-    public void setAllergies(List<String> allergies) {
-        this.allergies = allergies;
-    }
-
-    public List<String> getMedicalConditions() {
-        return medicalConditions;
-    }
-
-    public void setMedicalConditions(List<String> medicalConditions) {
-        this.medicalConditions = medicalConditions;
-    }
-
-    public List<VaccinationRecordDTO> getVaccinations() { // Changed from VaccinationDTO
-        return vaccinations;
-    }
-
-    public void setVaccinations(List<VaccinationRecordDTO> vaccinations) { // Changed from VaccinationDTO
-        this.vaccinations = vaccinations;
-    }
-
-    public String getVisionScreeningResult() {
-        return visionScreeningResult;
-    }
-
-    public void setVisionScreeningResult(String visionScreeningResult) {
-        this.visionScreeningResult = visionScreeningResult;
-    }
-
-    public LocalDate getVisionScreeningDate() {
-        return visionScreeningDate;
-    }
-
-    public void setVisionScreeningDate(LocalDate visionScreeningDate) {
-        this.visionScreeningDate = visionScreeningDate;
-    }
-
-    public String getHearingScreeningResult() {
-        return hearingScreeningResult;
-    }
-
-    public void setHearingScreeningResult(String hearingScreeningResult) {
-        this.hearingScreeningResult = hearingScreeningResult;
-    }
-
-    public LocalDate getHearingScreeningDate() {
-        return hearingScreeningDate;
-    }
-
-    public void setHearingScreeningDate(LocalDate hearingScreeningDate) {
-        this.hearingScreeningDate = hearingScreeningDate;
-    }
-
-    public String getDentalScreeningResult() {
-        return dentalScreeningResult;
-    }
-
-    public void setDentalScreeningResult(String dentalScreeningResult) {
-        this.dentalScreeningResult = dentalScreeningResult;
-    }
-
-    public LocalDate getDentalScreeningDate() {
-        return dentalScreeningDate;
-    }
-
-    public void setDentalScreeningDate(LocalDate dentalScreeningDate) {
-        this.dentalScreeningDate = dentalScreeningDate;
-    }
-
-    public String getScoliosisScreeningResult() {
-        return scoliosisScreeningResult;
-    }
-
-    public void setScoliosisScreeningResult(String scoliosisScreeningResult) {
-        this.scoliosisScreeningResult = scoliosisScreeningResult;
-    }
-
-    public LocalDate getScoliosisScreeningDate() {
-        return scoliosisScreeningDate;
-    }
-
-    public void setScoliosisScreeningDate(LocalDate scoliosisScreeningDate) {
-        this.scoliosisScreeningDate = scoliosisScreeningDate;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    public Boolean getConsentSignature() {
-        return consentSignature;
-    }
-
-    public void setConsentSignature(Boolean consentSignature) {
-        this.consentSignature = consentSignature;
-    }
-
-    public LocalDate getDeclarationDate() {
-        return declarationDate;
-    }
-
-    public void setDeclarationDate(LocalDate declarationDate) {
-        this.declarationDate = declarationDate;
-    }
-
-    public String getSymptoms() {
-        return symptoms;
-    }
-
-    public void setSymptoms(String symptoms) {
-        this.symptoms = symptoms;
-    }
-
-    public boolean isHasSymptoms() {
-        return hasSymptoms;
-    }
-
-    public void setHasSymptoms(boolean hasSymptoms) {
-        this.hasSymptoms = hasSymptoms;
-    }
-
-    public boolean isCloseContact() {
-        return closeContact;
-    }
-
-    public void setCloseContact(boolean closeContact) {
-        this.closeContact = closeContact;
-    }
-
-    public boolean isTravelHistory() {
-        return travelHistory;
-    }
-
-    public void setTravelHistory(boolean travelHistory) {
-        this.travelHistory = travelHistory;
-    }
-
-    public String getAdditionalInfo() {
-        return additionalInfo;
-    }
-
-    public void setAdditionalInfo(String additionalInfo) {
-        this.additionalInfo = additionalInfo;
-    }
-
-    // Removed Inner DTO for Vaccinations - It should be a top-level class com.swp391_8.schoolhealth.dto.VaccinationRecordDTO
+    // public String getSubmittedByUsername() {
+    //     return submittedByUsername;
+    // }
 }

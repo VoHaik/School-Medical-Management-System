@@ -47,7 +47,15 @@ public class ParentStudentService {
         }
         
         if (studentData.containsKey("gender")) {
-            student.setGender((String) studentData.get("gender"));
+            // student.setGender((String) studentData.get("gender")); // Removed as gender is now in User
+            User studentUser = student.getUser();
+            if (studentUser != null) {
+                studentUser.setGender((String) studentData.get("gender"));
+            } else {
+                // Handle case where student.getUser() is null, perhaps log a warning or error
+                // For now, we'll assume a User object should exist or be created if gender is provided
+                // This might require fetching/creating the User entity if it's not already associated
+            }
         }
         
         if (studentData.containsKey("className")) {
@@ -112,7 +120,14 @@ public class ParentStudentService {
         }
         
         if (studentData.containsKey("gender")) {
-            student.setGender((String) studentData.get("gender"));
+            // student.setGender((String) studentData.get("gender")); // Removed as gender is now in User
+            User studentUser = student.getUser();
+            if (studentUser != null) {
+                studentUser.setGender((String) studentData.get("gender"));
+                // userRepository.save(studentUser); // Consider if user needs to be explicitly saved
+            } else {
+                 // Handle case where student.getUser() is null
+            }
         }
         
         if (studentData.containsKey("className")) {

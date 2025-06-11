@@ -8,6 +8,6 @@ import java.util.List;
 
 @Repository
 public interface ConsultationRepository extends JpaRepository<Consultation, Integer> {
-    List<Consultation> findByStudentStudentIdOrderByConsultationDateDesc(Integer studentId);
+    List<Consultation> findByStudentStudentIdOrderByConsultationDatetimeDesc(Integer studentId);
     // Add other query methods if needed, e.g., find by date range, etc.
 }

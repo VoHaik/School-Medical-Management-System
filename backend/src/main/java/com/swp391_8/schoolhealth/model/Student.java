@@ -21,7 +21,7 @@ public class Student {
     private Integer studentId;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", unique = true)
+    @JoinColumn(name = "user_id", nullable = false, unique = true) // Changed: nullable = false
     private User user;
 
     @Nationalized
@@ -36,24 +36,18 @@ public class Student {
     private LocalDate dateOfBirth;
 
     @Nationalized
-    @Column(name = "gender", length = 10)
-    private String gender;
-
-    @Nationalized
     @Column(name = "class_name", length = 20)
     private String className;
+
+    @Nationalized
+    @Column(name = "school_class", length = 50) // Added
+    private String schoolClass;                 // Added
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    @Column(name = "first_name")
-    private String firstName;
-
-    @Column(name = "last_name")
-    private String lastName;
 
     @PrePersist
     protected void onCreate() {
@@ -64,20 +58,6 @@ public class Student {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    // Add relation to parent User
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_user_id") // Name of the foreign key column in Students table
-    private User parentUser;
-
-    // Getters and setters for parentUser
-    public User getParentUser() {
-        return parentUser;
-    }
-
-    public void setParentUser(User parentUser) {
-        this.parentUser = parentUser;
     }
 
     // Additional getters/setters for compatibility
@@ -130,14 +110,6 @@ public class Student {
         this.dateOfBirth = dateOfBirth;
     }
 
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-
     public String getClassName() {
         return className;
     }
@@ -145,6 +117,9 @@ public class Student {
     public void setClassName(String className) {
         this.className = className;
     }
+
+    public String getSchoolClass() { return schoolClass; } // Added getter
+    public void setSchoolClass(String schoolClass) { this.schoolClass = schoolClass; } // Added setter
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
@@ -160,15 +135,5 @@ public class Student {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    // Add getters if not already present.
-    // Assuming fields: String firstName, String lastName
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
     }
 }

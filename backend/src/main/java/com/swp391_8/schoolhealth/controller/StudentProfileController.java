@@ -39,22 +39,24 @@ public class StudentProfileController {
         }
 
         User user = userOptional.get();
-        Optional<Student> studentOptional = studentRepository.findByUser_Id(user.getId());
+        Optional<Student> studentOptional = studentRepository.findByUserId(user.getUserId());
 
         if (!studentOptional.isPresent()) {
             return ResponseEntity.badRequest().body(new MessageResponse("Student profile not found", false));
         }
 
         Student student = studentOptional.get();
+        User studentUser = student.getUser(); // Get the associated User object
 
         Map<String, Object> response = new HashMap<>();
-        response.put("id", student.getId());
-        response.put("fullName", student.getFullName());
-        response.put("dateOfBirth", student.getDateOfBirth());
-        response.put("gender", student.getGender());
-        response.put("className", student.getClassName());
-        response.put("email", user.getEmail());
-        response.put("phone", user.getPhone());
+        response.put("studentId", student.getStudentId()); // Use studentId from Student entity
+        response.put("fullName", studentUser.getFullName()); // Corrected: Use getFullName()
+        response.put("dateOfBirth", student.getDateOfBirth()); // Get DoB from Student entity
+        response.put("gender", studentUser.getGender()); // Get gender from User entity
+        response.put("className", student.getSchoolClass()); // Use schoolClass from Student entity
+        response.put("email", studentUser.getEmail());
+        response.put("phone", studentUser.getPhone());
+        response.put("studentCode", student.getStudentCode());
 
         return ResponseEntity.ok(response);
     }
@@ -71,38 +73,46 @@ public class StudentProfileController {
         }
 
         User user = userOptional.get();
-        Optional<Student> studentOptional = studentRepository.findByUser_Id(user.getId());
+        Optional<Student> studentOptional = studentRepository.findByUserId(user.getUserId());
 
         if (!studentOptional.isPresent()) {
             return ResponseEntity.badRequest().body(new MessageResponse("Student profile not found", false));
         }
 
         Student student = studentOptional.get();
+        User studentUser = student.getUser(); // Get the associated User object for updates
 
         // Update user information
         if (profileData.containsKey("email")) {
-            user.setEmail((String) profileData.get("email"));
+            studentUser.setEmail((String) profileData.get("email"));
         }
-
         if (profileData.containsKey("phone")) {
-            user.setPhone((String) profileData.get("phone"));
+            studentUser.setPhone((String) profileData.get("phone"));
         }
-
-        // Update student information
-        if (profileData.containsKey("fullName")) {
-            student.setFullName((String) profileData.get("fullName"));
+        if (profileData.containsKey("fullName")) { // Added for fullName
+            studentUser.setFullName((String) profileData.get("fullName"));
         }
-
         if (profileData.containsKey("gender")) {
-            student.setGender((String) profileData.get("gender"));
+            studentUser.setGender((String) profileData.get("gender"));
         }
-
+        
+        // Update student information
+        if (profileData.containsKey("dateOfBirth")) {
+            String dateOfBirthStr = (String) profileData.get("dateOfBirth");
+            if (dateOfBirthStr != null && !dateOfBirthStr.isEmpty()) {
+                try {
+                    student.setDateOfBirth(java.time.LocalDate.parse(dateOfBirthStr)); // Set DoB on Student entity
+                } catch (Exception e) {
+                    return ResponseEntity.badRequest().body(new MessageResponse("Invalid date format for dateOfBirth. Use YYYY-MM-DD.", false));
+                }
+            }
+        }
         if (profileData.containsKey("className")) {
-            student.setClassName((String) profileData.get("className"));
+            student.setSchoolClass((String) profileData.get("className")); // Corrected field name
         }
 
-        userRepository.save(user);
-        studentRepository.save(student);
+        userRepository.save(studentUser); // Save changes to User entity
+        studentRepository.save(student); // Save changes to Student entity
 
         return ResponseEntity.ok(new MessageResponse("Profile updated successfully", true));
     }
@@ -119,59 +129,57 @@ public class StudentProfileController {
         }
 
         User user = userOptional.get();
-        
+
         // Check if student profile already exists
-        Optional<Student> existingStudent = studentRepository.findByUser_Id(user.getId());
+        Optional<Student> existingStudent = studentRepository.findByUserId(user.getUserId());
         if (existingStudent.isPresent()) {
             return ResponseEntity.badRequest().body(new MessageResponse("Student profile already exists", false));
         }
 
-        // Update user information
+        // Update user information from profileData if provided
         if (profileData.containsKey("email")) {
             user.setEmail((String) profileData.get("email"));
         }
-
         if (profileData.containsKey("phone")) {
             user.setPhone((String) profileData.get("phone"));
         }
-
+        if (profileData.containsKey("fullName")) { // Added for fullName
+            user.setFullName((String) profileData.get("fullName"));
+        }
+        if (profileData.containsKey("gender")) {
+            user.setGender((String) profileData.get("gender"));
+        }
+        
         // Create new student profile
         Student student = new Student();
         student.setUser(user);
-        
-        if (profileData.containsKey("fullName")) {
-            student.setFullName((String) profileData.get("fullName"));
-        } else {
-            student.setFullName(user.getFullName()); // Use user's full name as default
-        }
-
-        if (profileData.containsKey("gender")) {
-            student.setGender((String) profileData.get("gender"));
-        }
-
-        if (profileData.containsKey("className")) {
-            student.setClassName((String) profileData.get("className"));
-        }
 
         if (profileData.containsKey("dateOfBirth")) {
             String dateOfBirthStr = (String) profileData.get("dateOfBirth");
             if (dateOfBirthStr != null && !dateOfBirthStr.isEmpty()) {
                 try {
-                    student.setDateOfBirth(java.time.LocalDate.parse(dateOfBirthStr));
+                    student.setDateOfBirth(java.time.LocalDate.parse(dateOfBirthStr)); // Set DoB on Student entity
                 } catch (Exception e) {
-                    return ResponseEntity.badRequest().body(new MessageResponse("Invalid date format for dateOfBirth", false));
+                    return ResponseEntity.badRequest().body(new MessageResponse("Invalid date format for dateOfBirth. Use YYYY-MM-DD.", false));
                 }
             }
         }
 
-        // Generate a unique student code
-        String studentCode = "STU" + System.currentTimeMillis();
-        student.setStudentCode(studentCode);
+        if (profileData.containsKey("className")) {
+            student.setSchoolClass((String) profileData.get("className")); // Corrected field name
+        }
 
-        userRepository.save(user);
+        // Generate a unique student code if not provided
+        if (profileData.containsKey("studentCode") && profileData.get("studentCode") != null) {
+             student.setStudentCode((String) profileData.get("studentCode"));
+        } else {
+            String studentCode = "STU" + System.currentTimeMillis(); // Consider a more robust generation strategy
+            student.setStudentCode(studentCode);
+        }
+
+        userRepository.save(user); // Save updated user info
         studentRepository.save(student);
 
         return ResponseEntity.ok(new MessageResponse("Profile created successfully", true));
     }
-
 }

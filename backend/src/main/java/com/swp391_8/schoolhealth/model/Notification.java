@@ -1,58 +1,58 @@
 package com.swp391_8.schoolhealth.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Nationalized;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
-@Getter
-@Setter
 @Entity
-@Table(name = "notifications")
+@Table(name = "Notification")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "notification_id")
+    @Column(name = "notification_id", nullable = false)
     private Integer notificationId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false) // The user this notification is for
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id") // Optional: if the notification is related to a specific student
-    private Student student;
+    @JoinColumn(name = "type_id", nullable = false)
+    private NotificationType notificationType;
 
-    @Column(name = "message", nullable = false, columnDefinition = "TEXT")
+    @Nationalized
+    @Lob
+    @Column(name = "title", nullable = false)
+    private String title;
+
+    @Nationalized
+    @Lob
+    @Column(name = "message", nullable = false)
     private String message;
 
-    @Column(name = "type", length = 50) // E.g., 'MEDICATION_UPDATE', 'EVENT_REMINDER', 'FORM_APPROVAL'
-    private String type;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", referencedColumnName = "user_id")
+    private User createdBy; // Field for who created the notification
 
     @Column(name = "is_read", nullable = false)
-    private boolean isRead = false;
+    private Boolean isRead; // Changed from boolean to Boolean to allow null if necessary, and for getter getIsRead()
 
-    @CreationTimestamp
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at", nullable = false, updatable = false)
-    private Date createdAt;
+    private LocalDateTime createdAt;
 
-    @Column(name = "link_to", length = 255) // Optional: A URL or path to navigate to
-    private String linkTo;
+    @Column(name = "link_url")
+    @Nationalized
+    private String linkUrl;
 
-    // Add getters if not already present due to Lombok or other reasons.
-    // Assuming fields: Integer userId, String title, String notificationType
-    public Integer getUserId() {
-        return user.getUserId();
-    }
-
-    public String getTitle() {
-        return message; // Assuming title is the same as message, adjust if necessary
-    }
-
-    public String getNotificationType() {
-        return type;
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
     }
 }

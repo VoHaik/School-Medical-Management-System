@@ -1,14 +1,15 @@
 package com.swp391_8.schoolhealth.service;
 
-import com.swp391_8.schoolhealth.dto.MedicationRequestDTO; // Corrected import
+import com.swp391_8.schoolhealth.dto.MedicationRequestDTO;
 import com.swp391_8.schoolhealth.model.MedicationRequest;
 import com.swp391_8.schoolhealth.model.Student;
 import com.swp391_8.schoolhealth.model.User;
+import com.swp391_8.schoolhealth.model.StatusType;
 import com.swp391_8.schoolhealth.repository.MedicationRequestRepository;
 import com.swp391_8.schoolhealth.repository.StudentRepository;
 import com.swp391_8.schoolhealth.repository.UserRepository;
+import com.swp391_8.schoolhealth.repository.StatusTypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,37 +30,40 @@ public class MedicationRequestService {
     private UserRepository userRepository;
 
     @Autowired
-    private SecurityService securityService; // For permission checks
+    private StatusTypeRepository statusTypeRepository;
+
+    @Autowired
+    private SecurityService securityService;
 
     @Transactional
     public MedicationRequest createMedicationRequest(MedicationRequestDTO requestDTO, Authentication authentication) {
-        // Ensure the authenticated user is the parent of the student
         if (!securityService.isParentOfStudent(authentication, requestDTO.getStudentId())) {
             throw new SecurityException("Authenticated user is not authorized to create a medication request for this student.");
         }
 
-        User parent = userRepository.findById(getUserIdFromAuthentication(authentication))
-                .orElseThrow(() -> new RuntimeException("Parent not found"));
+        User submittedByUser = userRepository.findById(getUserIdFromAuthentication(authentication))
+                .orElseThrow(() -> new RuntimeException("Submitting user not found"));
         Student student = studentRepository.findById(requestDTO.getStudentId())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
+        StatusType pendingStatus = statusTypeRepository.findByStatusName("PENDING")
+                .orElseThrow(() -> new RuntimeException("StatusType 'PENDING' not found. Please ensure it exists in the database."));
+
         MedicationRequest request = new MedicationRequest();
-        request.setParent(parent);
+        request.setSubmittedBy(submittedByUser);
         request.setStudent(student);
         request.setMedicationName(requestDTO.getMedicationName());
         request.setDosage(requestDTO.getDosage());
-        request.setFrequency(requestDTO.getFrequency());
-        request.setStartDate(requestDTO.getStartDate());
-        request.setEndDate(requestDTO.getEndDate());
-        request.setReason(requestDTO.getReason());
-        // Status and requestDate are set by @PrePersist in MedicationRequest entity
+        request.setInstructions(requestDTO.getReason());
+        request.setNotes(requestDTO.getNotes());
+        request.setStatus(pendingStatus);
 
         return medicationRequestRepository.save(request);
     }
 
     public List<MedicationRequest> getMedicationRequestsByParent(Authentication authentication) {
         Integer parentId = getUserIdFromAuthentication(authentication);
-        return medicationRequestRepository.findByParentId(parentId);
+        return medicationRequestRepository.findBySubmittedByUserId(parentId);
     }
 
     public List<MedicationRequest> getMedicationRequestsForStudentByParent(Integer studentId, Authentication authentication) {
@@ -67,24 +71,29 @@ public class MedicationRequestService {
         if (!securityService.isParentOfStudent(authentication, studentId)) {
             throw new SecurityException("Authenticated user is not authorized to view medication requests for this student.");
         }
-        return medicationRequestRepository.findByStudentIdAndParentId(studentId, parentId);
+        return medicationRequestRepository.findByStudentStudentIdAndSubmittedByUserId(studentId, parentId);
     }
 
+    @Transactional
     public MedicationRequest cancelMedicationRequest(Integer requestId, Authentication authentication) {
-        Integer parentId = getUserIdFromAuthentication(authentication);
+        Integer userId = getUserIdFromAuthentication(authentication);
         MedicationRequest request = medicationRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Medication request not found with ID: " + requestId));
 
-        if (!request.getParent().getId().equals(parentId)) {
+        if (!request.getSubmittedBy().getUserId().equals(userId)) {
             throw new SecurityException("User is not authorized to cancel this medication request.");
         }
 
-        if (request.getStatus() != MedicationRequest.MedicationRequestStatus.PENDING) {
-            throw new IllegalStateException("Only PENDING medication requests can be cancelled.");
+        StatusType pendingStatus = statusTypeRepository.findByStatusName("PENDING")
+                .orElseThrow(() -> new RuntimeException("StatusType 'PENDING' not found."));
+        StatusType cancelledStatus = statusTypeRepository.findByStatusName("CANCELLED")
+                .orElseThrow(() -> new RuntimeException("StatusType 'CANCELLED' not found."));
+
+        if (!request.getStatus().equals(pendingStatus)) {
+            throw new IllegalStateException("Only PENDING medication requests can be cancelled. Current status: " + request.getStatus().getStatusName());
         }
 
-        request.setStatus(MedicationRequest.MedicationRequestStatus.CANCELLED);
-        request.setActionDate(LocalDateTime.now());
+        request.setStatus(cancelledStatus);
         return medicationRequestRepository.save(request);
     }
 
@@ -94,9 +103,12 @@ public class MedicationRequestService {
     }
 
     public List<MedicationRequest> getPendingMedicationRequests() {
-        return medicationRequestRepository.findByStatus(MedicationRequest.MedicationRequestStatus.PENDING);
+        StatusType pendingStatus = statusTypeRepository.findByStatusName("PENDING")
+                .orElseThrow(() -> new RuntimeException("StatusType 'PENDING' not found."));
+        return medicationRequestRepository.findByStatus(pendingStatus);
     }
 
+    @Transactional
     public MedicationRequest approveMedicationRequest(Integer requestId, Authentication authentication, String notes) {
         MedicationRequest request = medicationRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Medication request not found with ID: " + requestId));
@@ -104,13 +116,23 @@ public class MedicationRequestService {
         User approver = userRepository.findById(getUserIdFromAuthentication(authentication))
                 .orElseThrow(() -> new RuntimeException("Approver (Nurse/Staff) not found"));
 
-        request.setStatus(MedicationRequest.MedicationRequestStatus.APPROVED);
-        request.setApprovedBy(approver);
-        request.setActionDate(LocalDateTime.now());
+        StatusType approvedStatus = statusTypeRepository.findByStatusName("APPROVED")
+                .orElseThrow(() -> new RuntimeException("StatusType 'APPROVED' not found."));
+        StatusType pendingStatus = statusTypeRepository.findByStatusName("PENDING")
+                .orElseThrow(() -> new RuntimeException("StatusType 'PENDING' not found."));
+
+        if (!request.getStatus().equals(pendingStatus)) {
+            throw new IllegalStateException("Only PENDING medication requests can be approved. Current status: " + request.getStatus().getStatusName());
+        }
+
+        request.setStatus(approvedStatus);
+        request.setAdministeredBy(approver);
+        request.setAdministeredAt(LocalDateTime.now());
         request.setNotes(notes);
         return medicationRequestRepository.save(request);
     }
 
+    @Transactional
     public MedicationRequest rejectMedicationRequest(Integer requestId, Authentication authentication, String rejectionReason) {
         MedicationRequest request = medicationRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Medication request not found with ID: " + requestId));
@@ -118,10 +140,19 @@ public class MedicationRequestService {
         User rejector = userRepository.findById(getUserIdFromAuthentication(authentication))
                 .orElseThrow(() -> new RuntimeException("Rejector (Nurse/Staff) not found"));
 
-        request.setStatus(MedicationRequest.MedicationRequestStatus.REJECTED);
-        request.setApprovedBy(rejector); // Even for rejection, this field indicates who actioned it
-        request.setActionDate(LocalDateTime.now());
-        request.setNotes(rejectionReason); // Use notes field for rejection reason
+        StatusType rejectedStatus = statusTypeRepository.findByStatusName("REJECTED")
+                .orElseThrow(() -> new RuntimeException("StatusType 'REJECTED' not found."));
+        StatusType pendingStatus = statusTypeRepository.findByStatusName("PENDING")
+                .orElseThrow(() -> new RuntimeException("StatusType 'PENDING' not found."));
+
+        if (!request.getStatus().equals(pendingStatus)) {
+            throw new IllegalStateException("Only PENDING medication requests can be rejected. Current status: " + request.getStatus().getStatusName());
+        }
+
+        request.setStatus(rejectedStatus);
+        request.setAdministeredBy(rejector);
+        request.setAdministeredAt(LocalDateTime.now());
+        request.setNotes(rejectionReason);
         return medicationRequestRepository.save(request);
     }
 
@@ -130,16 +161,31 @@ public class MedicationRequestService {
         if (authentication == null || authentication.getPrincipal() == null) {
             throw new SecurityException("User not authenticated.");
         }
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof com.swp391_8.schoolhealth.security.services.UserDetailsImpl) {
+            return ((com.swp391_8.schoolhealth.security.services.UserDetailsImpl) principal).getId();
+        } else if (principal instanceof org.springframework.security.core.userdetails.User) {
+            String username = ((org.springframework.security.core.userdetails.User) principal).getUsername();
+            User appUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found with username: " + username + " from UserDetails."));
+            return appUser.getUserId();
+        } else if (principal instanceof String && principal.equals("anonymousUser")) {
+             throw new SecurityException("User is anonymous.");
+        }
+        
         try {
-            // Assuming the principal's class has a getId() method that returns Integer
-            return (Integer) authentication.getPrincipal().getClass().getMethod("getId").invoke(authentication.getPrincipal());
+            try {
+                 return (Integer) principal.getClass().getMethod("getUserId").invoke(principal);
+            } catch (NoSuchMethodException nsme) {
+                 try {
+                    return (Integer) principal.getClass().getMethod("getId").invoke(principal);
+                 } catch (NoSuchMethodException nsme2) {
+                    throw new RuntimeException("Principal class " + principal.getClass().getName() + " does not have getUserId() or getId() method.", nsme2);
+                 }
+            }
         } catch (Exception e) {
-            // Log the exception for debugging
-            // logger.error("Error retrieving user ID from authentication principal", e);
-            throw new RuntimeException("Could not extract user ID from authentication principal. Ensure principal has getId().", e);
+            throw new RuntimeException("Could not extract user ID from authentication principal. Principal type: " + principal.getClass().getName(), e);
         }
     }
-
-    // ... any other existing methods ...
-
 }

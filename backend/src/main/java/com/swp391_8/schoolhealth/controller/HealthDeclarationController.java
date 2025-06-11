@@ -70,7 +70,7 @@ public class HealthDeclarationController {
     private final HealthDeclarationService healthDeclarationService = new HealthDeclarationService() {
         @Override
         public HealthDeclarationDTO saveHealthDeclaration(HealthDeclarationDTO dto) {
-            System.out.println("Mock Service (inline): Saving health declaration for student ID: " + dto.getStudentId() + ", Draft: " + dto.isDraft());
+            System.out.println("Mock Service (inline): Saving health declaration for student ID: " + dto.getStudentId() + ", Draft: " + dto.getIsDraft()); // Changed to getIsDraft()
             // Simulate saving and returning DTO
             if (dto.getDeclarationId() == null) {
                  // Assign a mock ID if it's a new declaration
