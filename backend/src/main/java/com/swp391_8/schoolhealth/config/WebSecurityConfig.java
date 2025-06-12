@@ -50,16 +50,14 @@ public class WebSecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
-    }
-
-    @Bean
+    }    @Bean
     public PasswordEncoder passwordEncoder() {
         // For testing: use NoOp password encoder (stores passwords in plain text)
         // WARNING: This is only for development/testing purposes
-        // return org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance(); // Commented out NoOp
+        return org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance(); // ENABLED for testing
         
         // For production, use BCrypt:
-        return new BCryptPasswordEncoder(); // UNCOMMENTED for production
+        // return new BCryptPasswordEncoder(); // COMMENTED OUT for testing
     }
 
     @Bean
