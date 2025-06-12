@@ -50,6 +50,7 @@ import HealthProfile from './pages/student/HealthProfile';
 import MedicalHistory from './pages/student/MedicalHistory';
 import VaccinationRecord from './pages/student/VaccinationRecord';
 import HealthResources from './pages/student/HealthResources';
+import Profile from './pages/student/Profile';
 
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -98,7 +99,7 @@ function App() {
                 {/* Legacy Routes */}
                 <Route path="/student-profile" element={
                   <ProtectedRoute>
-                    <StudentProfile />
+                    <Profile />
                   </ProtectedRoute>
                 } />
                 <Route path="/student-blog" element={
@@ -248,9 +249,12 @@ function App() {
                   <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
                     <DataExport />
                   </ProtectedRoute>
+                } />                {/* Student Routes */}
+                <Route path="/student/profile" element={
+                  <ProtectedRoute allowedRoles={['ROLE_STUDENT']}>
+                    <Profile />
+                  </ProtectedRoute>
                 } />
-
-                {/* Student Routes */}
                 <Route path="/student/health-profile" element={
                   <ProtectedRoute allowedRoles={['ROLE_STUDENT']}>
                     <HealthProfile />
@@ -265,12 +269,16 @@ function App() {
                   <ProtectedRoute allowedRoles={['ROLE_STUDENT']}>
                     <VaccinationRecord />
                   </ProtectedRoute>
-                } />
-                <Route path="/student/health-resources" element={
+                } />                <Route path="/student/health-resources" element={
                   <ProtectedRoute allowedRoles={['ROLE_STUDENT']}>
                     <HealthResources />
                   </ProtectedRoute>
                 } />
+                {/* <Route path="/student/profile" element={
+                  <ProtectedRoute allowedRoles={['ROLE_STUDENT']}>
+                    <Profile />
+                  </ProtectedRoute>
+                } /> */}
 
                 {/* Catch all route */}
                 <Route path="*" element={<Navigate to="/" replace />} />

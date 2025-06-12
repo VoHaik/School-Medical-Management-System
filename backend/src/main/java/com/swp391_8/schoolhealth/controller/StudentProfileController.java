@@ -49,19 +49,24 @@ public class StudentProfileController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("id", student.getId());
-        response.put("fullName", student.getFullName());
-        response.put("dateOfBirth", student.getDateOfBirth());
+        response.put("fullName", student.getFullName());        response.put("dateOfBirth", student.getDateOfBirth());
         response.put("gender", student.getGender());
         response.put("className", student.getClassName());
         response.put("email", user.getEmail());
-        response.put("phone", user.getPhone());
+        response.put("phone", user.getPhone()); // Use getPhone() for consistency with setPhone()
 
         return ResponseEntity.ok(response);
-    }
-
-    @PutMapping
+    }    @PutMapping
     @PreAuthorize("hasRole('STUDENT') or hasRole('PARENT')")
     public ResponseEntity<?> updateStudentProfile(@RequestBody Map<String, Object> profileData) {
+        // Debug: Log all received data
+        System.out.println("=== PUT REQUEST DEBUG ===");
+        System.out.println("Received profileData keys: " + profileData.keySet());
+        for (Map.Entry<String, Object> entry : profileData.entrySet()) {
+            System.out.println("Key: " + entry.getKey() + ", Value: " + entry.getValue() + ", Type: " + (entry.getValue() != null ? entry.getValue().getClass().getSimpleName() : "null"));
+        }
+        System.out.println("========================");
+        
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
@@ -86,9 +91,7 @@ public class StudentProfileController {
 
         if (profileData.containsKey("phone")) {
             user.setPhone((String) profileData.get("phone"));
-        }
-
-        // Update student information
+        }        // Update student information
         if (profileData.containsKey("fullName")) {
             student.setFullName((String) profileData.get("fullName"));
         }
@@ -99,6 +102,28 @@ public class StudentProfileController {
 
         if (profileData.containsKey("className")) {
             student.setClassName((String) profileData.get("className"));
+        }        // Add missing dateOfBirth handling for PUT method
+        if (profileData.containsKey("dateOfBirth")) {
+            System.out.println("=== DATEOFBIRTH PROCESSING ===");
+            Object dateOfBirthObj = profileData.get("dateOfBirth");
+            System.out.println("dateOfBirth found! Value: " + dateOfBirthObj + ", Type: " + (dateOfBirthObj != null ? dateOfBirthObj.getClass().getSimpleName() : "null"));
+            
+            if (dateOfBirthObj == null || dateOfBirthObj.toString().isEmpty() || dateOfBirthObj.toString().equals("null")) {
+                System.out.println("Setting dateOfBirth to null");
+                student.setDateOfBirth(null); // Cho phép xóa ngày sinh
+            } else {
+                try {
+                    System.out.println("Attempting to parse dateOfBirth: " + dateOfBirthObj.toString());
+                    student.setDateOfBirth(java.time.LocalDate.parse(dateOfBirthObj.toString()));
+                    System.out.println("Successfully set dateOfBirth to: " + student.getDateOfBirth());
+                } catch (Exception e) {
+                    System.err.println("Error parsing dateOfBirth: " + e.getMessage());
+                    return ResponseEntity.badRequest().body(new MessageResponse("Invalid date format for dateOfBirth", false));
+                }
+            }
+            System.out.println("==============================");
+        } else {
+            System.out.println("dateOfBirth key NOT FOUND in request data");
         }
 
         userRepository.save(user);
@@ -151,15 +176,20 @@ public class StudentProfileController {
 
         if (profileData.containsKey("className")) {
             student.setClassName((String) profileData.get("className"));
-        }
-
-        if (profileData.containsKey("dateOfBirth")) {
-            String dateOfBirthStr = (String) profileData.get("dateOfBirth");
-            if (dateOfBirthStr != null && !dateOfBirthStr.isEmpty()) {
-                try {
-                    student.setDateOfBirth(java.time.LocalDate.parse(dateOfBirthStr));
-                } catch (Exception e) {
-                    return ResponseEntity.badRequest().body(new MessageResponse("Invalid date format for dateOfBirth", false));
+        }        if (profileData.containsKey("dateOfBirth")) {
+            Object dateOfBirthObj = profileData.get("dateOfBirth");
+            System.out.println("Received dateOfBirth for POST: " + dateOfBirthObj + " (type: " + (dateOfBirthObj != null ? dateOfBirthObj.getClass().getSimpleName() : "null") + ")");
+            
+            if (dateOfBirthObj != null) {
+                String dateOfBirthStr = dateOfBirthObj.toString();
+                if (!dateOfBirthStr.isEmpty() && !dateOfBirthStr.equals("null")) {
+                    try {
+                        student.setDateOfBirth(java.time.LocalDate.parse(dateOfBirthStr));
+                        System.out.println("Successfully set dateOfBirth for POST: " + dateOfBirthStr);
+                    } catch (Exception e) {
+                        System.err.println("Error parsing dateOfBirth for POST: " + e.getMessage());
+                        return ResponseEntity.badRequest().body(new MessageResponse("Invalid date format for dateOfBirth: " + dateOfBirthStr, false));
+                    }
                 }
             }
         }
