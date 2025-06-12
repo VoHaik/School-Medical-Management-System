@@ -18,11 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-<<<<<<< Updated upstream
-import java.time.LocalDate; // Added for date parsing
-=======
 import java.time.LocalDate; // Ensure LocalDate is imported
->>>>>>> Stashed changes
 
 @RestController
 @RequestMapping("/api/students")
@@ -59,57 +55,6 @@ public class StudentController {
         return ResponseEntity.ok(students);
     }
 
-    // Helper method to convert Map to Student object, potentially updating an existing User
-    private Student convertMapToStudent(Map<String, Object> studentData, User userToUpdateOrCreate, Student studentToUpdate) {
-        User user = (userToUpdateOrCreate != null) ? userToUpdateOrCreate : new User();
-
-        // Populate User fields from studentData
-        if (studentData.containsKey("username")) {
-            user.setUsername((String) studentData.get("username"));
-        }
-        if (studentData.containsKey("password")) {
-            // Password should be handled (e.g., hashed) by the service layer if it's a new user or password change
-            user.setPassword((String) studentData.get("password"));
-        }
-        if (studentData.containsKey("email")) {
-            user.setEmail((String) studentData.get("email"));
-        }
-        if (studentData.containsKey("phoneNumber")) {
-            user.setPhoneNumber((String) studentData.get("phoneNumber"));
-        }
-        if (studentData.containsKey("fullName")) {
-            user.setFullName((String) studentData.get("fullName"));
-        }
-        // Add gender extraction for user from studentData map
-        if (studentData.containsKey("gender")) {
-            user.setGender((String) studentData.get("gender"));
-        }
-
-        Student student = (studentToUpdate != null) ? studentToUpdate : new Student();
-        student.setUser(user); // Associate the user with the student
-
-        // Populate Student specific fields
-        if (studentData.containsKey("studentCode")) {
-            student.setStudentCode((String) studentData.get("studentCode"));
-        }
-        if (studentData.containsKey("schoolClass")) {
-            student.setSchoolClass((String) studentData.get("schoolClass"));
-        }
-        if (studentData.containsKey("dob")) {
-            // Assuming dob is sent as a string in "yyyy-MM-dd" format
-            // You might need a more robust date parsing mechanism
-            try {
-                student.setDateOfBirth(LocalDate.parse((String) studentData.get("dob"))); // Set DoB on Student entity
-            } catch (Exception e) {
-                // Handle parsing exception, e.g., log it or throw a custom exception
-                System.err.println("Error parsing DOB: " + studentData.get("dob") + " - " + e.getMessage());
-            }
-        }
-        // ... any other student-specific fields
-
-        return student;
-    }
-
     @PostMapping
     @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN') or hasRole('PARENT')")
     public ResponseEntity<?> createStudent(@RequestBody Map<String, Object> studentData) {
@@ -128,17 +73,9 @@ public class StudentController {
                     return ResponseEntity.badRequest().body(new MessageResponse("Parent user not found", false));
                 }
                 User parentUser = parentUserOptional.get();
-                // Assuming parentStudentService.createStudentForParent handles User and Student creation appropriately
                 newStudent = parentStudentService.createStudentForParent(studentData, parentUser);
             } else {
-<<<<<<< Updated upstream
-                // Admin or School Nurse creating student
-                Student studentToCreate = convertMapToStudent(studentData, new User(), new Student()); // Pass new User and new Student for creation
-                String gender = (String) studentData.get("gender"); // Extract gender
-                newStudent = studentService.createStudent(studentToCreate, gender); // Pass gender
-=======
                 newStudent = studentService.createStudent(convertMapToStudent(studentData));
->>>>>>> Stashed changes
             }
             
             return ResponseEntity.ok(newStudent);
@@ -161,31 +98,10 @@ public class StudentController {
             Student studentToUpdate = studentService.getStudentByCode(studentCode); 
 
             if (isParent) {
-<<<<<<< Updated upstream
-                // Parent updating their child's record
-                // Assuming parentStudentService.updateStudentForParent handles User and Student updates
-                updatedStudent = parentStudentService.updateStudentForParent(id, studentData, userDetails.getId());
-            } else {
-                // Admin or School Nurse updating student
-                // Fetch existing student to get the associated User, if any, to update
-                Student existingStudent = studentService.getStudentById(id);
-                if (existingStudent == null) {
-                    return ResponseEntity.badRequest().body(new MessageResponse("Student not found for update", false));
-                }
-                User userToUpdate = existingStudent.getUser(); // Get the user associated with this student
-                if (userToUpdate == null) { // If student somehow has no user, create one to associate
-                    userToUpdate = new User();
-                }
-
-                Student studentWithUpdates = convertMapToStudent(studentData, userToUpdate, existingStudent);
-                String gender = (String) studentData.get("gender"); // Extract gender
-                updatedStudent = studentService.updateStudent(id, studentWithUpdates, gender); // Pass gender
-=======
                 updatedStudent = parentStudentService.updateStudentForParent(studentToUpdate, studentData, userDetails.getId());
             } else {
                 // For admin/staff, studentCode is path variable, studentDetails from request body
                 updatedStudent = studentService.updateStudent(studentCode, convertMapToStudent(studentData, studentCode)); 
->>>>>>> Stashed changes
             }
             
             return ResponseEntity.ok(updatedStudent);
@@ -204,8 +120,6 @@ public class StudentController {
             return ResponseEntity.badRequest().body(new MessageResponse("Error deleting student: " + e.getMessage(), false));
         }
     }
-<<<<<<< Updated upstream
-=======
 
     private Student convertMapToStudent(Map<String, Object> studentData) {
         Student student = new Student();
@@ -250,5 +164,4 @@ public class StudentController {
         // Add other fields as necessary
         return student;
     }
->>>>>>> Stashed changes
 }

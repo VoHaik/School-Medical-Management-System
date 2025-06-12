@@ -50,14 +50,14 @@ public class BlogPostService {
         blogPost.setContent(blogPostDetails.getContent());
         
         // Update additional fields if they exist
-        // if (blogPostDetails.getTags() != null) { // Commented out tags update
-        //     blogPost.setTags(blogPostDetails.getTags()); // Commented out tags update
-        // }
-        if (blogPostDetails.getSlug() != null) { // Added slug update
-            blogPost.setSlug(blogPostDetails.getSlug());
+        if (blogPostDetails.getSummary() != null) {
+            blogPost.setSummary(blogPostDetails.getSummary());
         }
-        if (blogPostDetails.getPublishedAt() != null) { // Added publishedAt update
-            blogPost.setPublishedAt(blogPostDetails.getPublishedAt());
+        if (blogPostDetails.getTags() != null) {
+            blogPost.setTags(blogPostDetails.getTags());
+        }
+        if (blogPostDetails.getCategoryId() != null) {
+            blogPost.setCategoryId(blogPostDetails.getCategoryId());
         }
         
         return blogPostRepository.save(blogPost);

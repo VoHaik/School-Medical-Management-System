@@ -3,8 +3,7 @@ package com.swp391_8.schoolhealth.service.impl;
 import com.swp391_8.schoolhealth.dto.ConsultationDTO;
 import com.swp391_8.schoolhealth.model.Consultation;
 import com.swp391_8.schoolhealth.model.Student;
-import com.swp391_8.schoolhealth.model.User; // Added import for User
-import com.swp391_8.schoolhealth.model.HealthCheckup;
+import com.swp391_8.schoolhealth.model.HealthCheckup; // Assuming HealthCheckup model exists
 import com.swp391_8.schoolhealth.repository.ConsultationRepository;
 import com.swp391_8.schoolhealth.repository.StudentRepository; // Assuming StudentRepository exists
 import com.swp391_8.schoolhealth.repository.HealthCheckupRepository; // Assuming HealthCheckupRepository exists
@@ -36,13 +35,8 @@ public class ConsultationServiceImpl implements ConsultationService {
     }
 
     @Override
-<<<<<<< Updated upstream
-    public List<ConsultationDTO> findByStudentId(Integer studentId) {
-        return consultationRepository.findByStudentStudentIdOrderByConsultationDatetimeDesc(studentId).stream()
-=======
     public List<ConsultationDTO> findByStudentCode(String studentCode) {
         return consultationRepository.findByStudentStudentCodeOrderByConsultationDateDesc(studentCode).stream()
->>>>>>> Stashed changes
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -67,16 +61,15 @@ public class ConsultationServiceImpl implements ConsultationService {
         if (dto.getCheckupId() != null) {
             HealthCheckup checkup = healthCheckupRepository.findById(dto.getCheckupId())
                     .orElseThrow(() -> new EntityNotFoundException("HealthCheckup not found with id: " + dto.getCheckupId()));
-            existingConsultation.setHealthCheckup(checkup);
+            existingConsultation.setCheckup(checkup);
         } else {
-            existingConsultation.setHealthCheckup(null);
+            existingConsultation.setCheckup(null);
         }
 
-        existingConsultation.setConsultationDatetime(dto.getConsultationDate()); // DTO.consultationDate -> Entity.consultationDatetime
+        existingConsultation.setConsultationDate(dto.getConsultationDate());
         existingConsultation.setLocation(dto.getLocation());
-        existingConsultation.setReason(dto.getDescription()); // DTO.description -> Entity.reason
-        existingConsultation.setDiagnosis(dto.getResult());      // DTO.result -> Entity.diagnosis
-        // existingConsultation.setRecommendations(dto.getRecommendations()); // If DTO had recommendations
+        existingConsultation.setDescription(dto.getDescription());
+        existingConsultation.setResult(dto.getResult());
 
         Consultation updatedConsultation = consultationRepository.save(existingConsultation);
         return convertToDTO(updatedConsultation);
@@ -92,37 +85,24 @@ public class ConsultationServiceImpl implements ConsultationService {
 
     private ConsultationDTO convertToDTO(Consultation consultation) {
         ConsultationDTO dto = new ConsultationDTO();
-        dto.setId(consultation.getConsultationId());
+        dto.setId(consultation.getId());
         if (consultation.getStudent() != null) {
-<<<<<<< Updated upstream
-            dto.setStudentId(consultation.getStudent().getStudentId());
-            User studentUser = consultation.getStudent().getUser();
-            if (studentUser != null) {
-                dto.setStudentName(studentUser.getFullName());
-            } else {
-                dto.setStudentName("N/A");
-            }
-        }
-        if (consultation.getHealthCheckup() != null) {
-            dto.setCheckupId(consultation.getHealthCheckup().getCheckupId());
-=======
             dto.setStudentCode(consultation.getStudent().getStudentCode());
             dto.setStudentName(consultation.getStudent().getFirstName() + " " + consultation.getStudent().getLastName()); // Example: full name
         }
         if (consultation.getCheckup() != null) {
             dto.setCheckupId(consultation.getCheckup().getId()); // Changed getCheckupId() to getId()
->>>>>>> Stashed changes
         }
-        dto.setConsultationDate(consultation.getConsultationDatetime()); // Entity.consultationDatetime -> DTO.consultationDate
+        dto.setConsultationDate(consultation.getConsultationDate());
         dto.setLocation(consultation.getLocation());
-        dto.setDescription(consultation.getReason()); // Entity.reason -> DTO.description
-        dto.setResult(consultation.getDiagnosis());      // Entity.diagnosis -> DTO.result
-        // dto.setRecommendations(consultation.getRecommendations()); // If DTO had recommendations
+        dto.setDescription(consultation.getDescription());
+        dto.setResult(consultation.getResult());
         return dto;
     }
 
     private Consultation convertToEntity(ConsultationDTO dto) {
         Consultation consultation = new Consultation();
+        // ID is not set for new entities, or it's set for updates via existingConsultation
 
         Student student = studentRepository.findByStudentCode(dto.getStudentCode())
                 .orElseThrow(() -> new EntityNotFoundException("Student not found with code: " + dto.getStudentCode()));
@@ -131,16 +111,13 @@ public class ConsultationServiceImpl implements ConsultationService {
         if (dto.getCheckupId() != null) {
             HealthCheckup checkup = healthCheckupRepository.findById(dto.getCheckupId())
                     .orElseThrow(() -> new EntityNotFoundException("HealthCheckup not found with id: " + dto.getCheckupId()));
-            consultation.setHealthCheckup(checkup);
-        } else {
-            consultation.setHealthCheckup(null);
+            consultation.setCheckup(checkup);
         }
-        
-        consultation.setConsultationDatetime(dto.getConsultationDate()); // DTO.consultationDate -> Entity.consultationDatetime
+        // For creation, other fields are set directly
+        consultation.setConsultationDate(dto.getConsultationDate());
         consultation.setLocation(dto.getLocation());
-        consultation.setReason(dto.getDescription()); // DTO.description -> Entity.reason
-        consultation.setDiagnosis(dto.getResult());      // DTO.result -> Entity.diagnosis
-        // consultation.setRecommendations(dto.getRecommendations()); // If DTO had recommendations
+        consultation.setDescription(dto.getDescription());
+        consultation.setResult(dto.getResult());
         return consultation;
     }
 }

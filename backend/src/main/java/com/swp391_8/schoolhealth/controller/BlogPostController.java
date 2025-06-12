@@ -57,9 +57,9 @@ public class BlogPostController {
         BlogPost testPost = new BlogPost();
         testPost.setTitle("Test Blog Post");
         testPost.setContent("This is a test blog post to verify the API is working correctly.");
-        testPost.setSlug("test-blog-post"); // Added slug
-        testPost.setPublishedAt(java.time.LocalDateTime.now()); // Added publishedAt
-
+        testPost.setSummary("Test post summary");
+        testPost.setCategoryId(1);
+        
         // For testing, we'll create without authentication
         // In real scenario, this should be removed
         BlogPost newPost = blogPostService.createTestPost(testPost);

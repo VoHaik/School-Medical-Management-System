@@ -23,10 +23,6 @@ public class Role {
     @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
-    @OneToMany(mappedBy = "role", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private Set<RolePermission> rolePermissions = new HashSet<>();
-
     // One-to-many relationship with users
     @OneToMany(mappedBy = "role", fetch = FetchType.LAZY)
     @JsonIgnore
@@ -89,27 +85,6 @@ public class Role {
 
     public void setUsers(Set<User> users) {
         this.users = users != null ? users : new HashSet<>();
-    }
-
-    // Getter and Setter for rolePermissions
-    public Set<RolePermission> getRolePermissions() {
-        return rolePermissions;
-    }
-
-    public void setRolePermissions(Set<RolePermission> rolePermissions) {
-        this.rolePermissions = rolePermissions;
-    }
-
-    // Convenience methods to add/remove permissions
-    public void addPermission(Permission permission) {
-        RolePermission rolePermission = new RolePermission();
-        rolePermission.setRole(this);
-        rolePermission.setPermission(permission);
-        this.rolePermissions.add(rolePermission);
-    }
-
-    public void removePermission(Permission permission) {
-        this.rolePermissions.removeIf(rp -> rp.getRole().equals(this) && rp.getPermission().equals(permission));
     }
 
     // Compatibility methods for existing code

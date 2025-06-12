@@ -44,10 +44,6 @@ public class User {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
-    @Nationalized
-    @Column(name = "gender", length = 10) // Added: Giới tính (e.g., 'Nam', 'Nữ', 'Khác')
-    private String gender;
-
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id", nullable = false)
@@ -104,10 +100,7 @@ public class User {
     
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
-
-    public String getGender() { return gender; }
-    public void setGender(String gender) { this.gender = gender; }
-
+    
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
     

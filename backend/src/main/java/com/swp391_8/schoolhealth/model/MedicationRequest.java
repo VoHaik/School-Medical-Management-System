@@ -4,12 +4,12 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Nationalized; // Added for @Nationalized
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "MedicationRequests") // Corrected table name
+@Table(name = "medication_requests")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,67 +24,60 @@ public class MedicationRequest {
     @JoinColumn(name = "student_code", referencedColumnName = "student_code", nullable = false)
     private Student student;
 
-<<<<<<< Updated upstream
-    @Nationalized // Added
-    @Column(name = "medication_name", nullable = false, length = 100) // Corrected length
-=======
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_code", referencedColumnName = "parent_code", nullable = false)
     private Parent parent; // Parent who submitted the request
 
     @Column(name = "medication_name", nullable = false, length = 255)
->>>>>>> Stashed changes
     private String medicationName;
 
-    @Nationalized // Added
-    @Lob // Changed to Lob for NVARCHAR(MAX)
-    @Column(name = "dosage") // Removed nullable = false as SQL allows NULL
+    @Column(nullable = false, length = 100)
     private String dosage;
 
-    @Nationalized // Added
-    @Lob // Added for NVARCHAR(MAX)
-    @Column(name = "instructions") // Added field
-    private String instructions;
+    @Column(nullable = false, length = 100)
+    private String frequency; // e.g., "Twice a day", "Every 4 hours"
+
+    @Column(name = "start_date", nullable = false)
+    private LocalDate startDate;
+
+    @Column(name = "end_date", nullable = false)
+    private LocalDate endDate;
+
+    @Lob // For longer text
+    @Column(name = "reason", nullable = false)
+    private String reason;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private MedicationRequestStatus status;
+
+    @Column(name = "request_date", nullable = false)
+    private LocalDateTime requestDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-<<<<<<< Updated upstream
-    @JoinColumn(name = "submitted_by_user_id", nullable = false) // Corrected mapping
-    private User submittedBy;
-=======
     @JoinColumn(name = "nurse_code", referencedColumnName = "nurse_code")
     private Nurse approvedBy; // Nurse who approved/rejected
->>>>>>> Stashed changes
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "status_id", nullable = false) // Corrected mapping to StatusType
-    private StatusType status;
+    @Column(name = "action_date") // Date of approval/rejection/cancellation
+    private LocalDateTime actionDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "administered_by_user_id") // Added field
-    private User administeredBy;
-
-    @Column(name = "administered_at") // Added field
-    private LocalDateTime administeredAt;
-
-    @Nationalized // Added
     @Lob
-    @Column(name = "notes")
+    @Column(name = "notes") // Notes from school nurse or admin
     private String notes;
 
-    @Column(name = "created_at", nullable = false, updatable = false) // Corrected mapping and added updatable = false
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false) // Added field
-    private LocalDateTime updatedAt;
+    public enum MedicationRequestStatus {
+        PENDING,    // Request submitted by parent, awaiting review
+        APPROVED,   // Request approved by school nurse/admin
+        REJECTED,   // Request rejected by school nurse/admin
+        ADMINISTERED, // Medication has been administered (can be a final status or part of a log)
+        CANCELLED   // Request cancelled by parent (only if PENDING)
+    }
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now(); // Initialize updatedAt on creation
-    }
-
-    @PreUpdate
-    protected void onUpdate() { // Added @PreUpdate
-        updatedAt = LocalDateTime.now();
+        requestDate = LocalDateTime.now();
+        if (status == null) {
+            status = MedicationRequestStatus.PENDING;
+        }
     }
 }

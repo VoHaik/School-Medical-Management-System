@@ -18,8 +18,9 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public List<NotificationDTO> getNotificationsByUserId(Long userId) {
-        // Fetch notifications where the recipient user's ID matches the given userId
-        return notificationRepository.findByUser_UserIdOrderByCreatedAtDesc(userId).stream()
+        // Assuming User entity is linked and has a getUsername() or similar for createdBy
+        // And Notification entity has a direct userId field for the recipient
+        return notificationRepository.findByUser_UserIdOrderByCreatedAtDesc(userId).stream() //MODIFIED HERE
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -27,31 +28,13 @@ public class NotificationServiceImpl implements NotificationService {
     private NotificationDTO convertToDTO(Notification notification) {
         NotificationDTO dto = new NotificationDTO();
         dto.setNotificationId(notification.getNotificationId());
-        // Assuming NotificationDTO has a field for the recipient's user ID
-        if (notification.getUser() != null) {
-            dto.setUserId(notification.getUser().getUserId());
-        }
+        dto.setUserId(notification.getUserId()); // Assuming direct userId field
         dto.setTitle(notification.getTitle());
-        // Use message from Notification entity, assuming it exists as per previous file read.
-        // If it was changed to 'content', this needs to be notification.getContent() and dto.setContent()
-        dto.setContent(notification.getMessage()); // Corrected: NotificationDTO uses 'content', Notification entity uses 'message' via getMessage()
-
-
-        // dto.setRead(notification.isRead()); // Old line, isRead() might not exist if 'isRead' is Boolean
-        dto.setIsRead(notification.getIsRead()); // Corrected to use getIsRead() for Boolean type
+        dto.setMessage(notification.getMessage());
+        dto.setRead(notification.isRead());
         dto.setCreatedAt(notification.getCreatedAt());
-        if (notification.getNotificationType() != null) {
-            dto.setNotificationType(notification.getNotificationType().getTypeName()); // Assuming NotificationType has getTypeName()
-        }
-
-        // Set the creator's name
-        if (notification.getCreatedBy() != null) {
-            // String createdByName = notification.getCreatedBy().getFirstName() + " " + notification.getCreatedBy().getLastName(); // Old way
-            dto.setCreatedBy(notification.getCreatedBy().getFullName()); // Corrected to use getFullName()
-        } else {
-            dto.setCreatedBy("System"); // Default if no creator is set
-        }
-        // dto.setLinkTo(notification.getLinkUrl()); // If DTO has linkTo and Notification has linkUrl
+        dto.setNotificationType(notification.getNotificationType());
+        // dto.setCreatedBy(notification.getUser() != null ? notification.getUser().getUsername() : "System"); // Example if linked to a User entity who created it
         return dto;
     }
 

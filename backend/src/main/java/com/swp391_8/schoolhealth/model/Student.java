@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Student {
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true) // Changed: nullable = false
+    @JoinColumn(name = "user_id", unique = true)
     private User user;
 
     @Id
@@ -36,18 +36,24 @@ public class Student {
     private LocalDate dateOfBirth;
 
     @Nationalized
-    @Column(name = "class_name", length = 20)
-    private String className;
+    @Column(name = "gender", length = 10)
+    private String gender;
 
     @Nationalized
-    @Column(name = "school_class", length = 50) // Added
-    private String schoolClass;                 // Added
+    @Column(name = "class_name", length = 20)
+    private String className;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "first_name")
+    private String firstName;
+
+    @Column(name = "last_name")
+    private String lastName;
 
     @PrePersist
     protected void onCreate() {
@@ -60,18 +66,6 @@ public class Student {
         updatedAt = LocalDateTime.now();
     }
 
-<<<<<<< Updated upstream
-    // Additional getters/setters for compatibility
-    public Integer getId() {
-        return studentId;
-    }
-
-    public void setId(Integer id) {
-        this.studentId = id;
-    }
-
-=======
->>>>>>> Stashed changes
     // Explicit getters/setters to fix compilation issues
     public User getUser() {
         return user;
@@ -113,6 +107,14 @@ public class Student {
         this.dateOfBirth = dateOfBirth;
     }
 
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
     public String getClassName() {
         return className;
     }
@@ -120,9 +122,6 @@ public class Student {
     public void setClassName(String className) {
         this.className = className;
     }
-
-    public String getSchoolClass() { return schoolClass; } // Added getter
-    public void setSchoolClass(String schoolClass) { this.schoolClass = schoolClass; } // Added setter
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
@@ -138,5 +137,15 @@ public class Student {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    // Add getters if not already present.
+    // Assuming fields: String firstName, String lastName
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
     }
 }
