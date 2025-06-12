@@ -94,15 +94,24 @@ public class UserAccountInitializer implements CommandLineRunner {
                                     String fullName, Role role) {
         if (!userRepository.existsByUsername(username)) {
             User user = new User();
+            // Ensure user_code is set first and is not null
+            String generatedUserCode = username.replaceAll("[^a-zA-Z0-9]", "") + "CODE";
+            if (generatedUserCode.isEmpty()) { // Fallback if username results in empty code (should not happen with given data)
+                generatedUserCode = "DEFAULT" + System.currentTimeMillis(); // Or some other default unique code
+                logger.warn("Generated an empty user_code for username: {}. Using fallback: {}", username, generatedUserCode);
+            }
+            user.setUserCode(generatedUserCode); 
+            
             user.setUsername(username);
-            user.setPassword(password);
+            user.setPassword(passwordEncoder.encode(password)); // Ensure password is encoded
             user.setEmail(email);
             user.setPhoneNumber(phoneNumber);
             user.setFullName(fullName);
             user.setRole(role);
+            user.setIsActive(true); // Corrected method name
             
             userRepository.save(user);
-            logger.info("Created user account: {}", username);
+            logger.info("Created user account: {} with user_code: {}", username, user.getUserCode());
         } else {
             logger.info("User already exists: {}", username);
         }

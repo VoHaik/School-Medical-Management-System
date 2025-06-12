@@ -35,9 +35,15 @@ public class Vaccination {
     @Column(name = "vaccination_date")
     private LocalDate vaccinationDate;
 
+<<<<<<< Updated upstream
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "consent_status_id", nullable = false)
     private StatusType consentStatus;
+=======
+    @Enumerated(EnumType.STRING)
+    @Column(name = "consent_status")
+    private ConsentStatus consentStatus = ConsentStatus.Pending;
+>>>>>>> Stashed changes
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "consent_by_user_id")

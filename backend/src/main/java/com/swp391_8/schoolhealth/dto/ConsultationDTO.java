@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 @Data
 public class ConsultationDTO {
     private Integer id;
-    private Integer studentId;
+    private String studentCode; // Changed from Integer studentId
     private String studentName; // For display purposes
     private Integer checkupId;
     private LocalDateTime consultationDate;

@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface MedicationSubmissionService {
     MedicationSubmissionDTO saveMedicationSubmission(MedicationSubmissionDTO medicationSubmissionDTO, MultipartFile doctorNote);
-    List<MedicationSubmissionDTO> getMedicationSubmissionsByStudentId(Long studentId);
+    List<MedicationSubmissionDTO> getMedicationSubmissionsByStudentCode(String studentCode);
 }

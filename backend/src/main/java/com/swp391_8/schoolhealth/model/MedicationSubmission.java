@@ -18,12 +18,12 @@ public class MedicationSubmission {
     private Integer submissionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", nullable = false)
+    @JoinColumn(name = "student_code", nullable = false, referencedColumnName = "student_code")
     private Student student;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_id", nullable = false) // Assuming User entity for parent
-    private User parent; // User who submitted the form
+    @JoinColumn(name = "parent_code", nullable = false, referencedColumnName = "parent_code") // Updated to use parent entity
+    private Parent parent; // Parent who submitted the form
 
     @Column(name = "medication_name", nullable = false, length = 255)
     private String medicationName;

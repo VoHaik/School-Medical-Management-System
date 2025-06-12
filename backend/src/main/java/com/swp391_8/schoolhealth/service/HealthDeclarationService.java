@@ -5,7 +5,7 @@ import java.util.Optional;
 
 public interface HealthDeclarationService {
     HealthDeclarationDTO saveHealthDeclaration(HealthDeclarationDTO dto, String username);
-    Optional<HealthDeclarationDTO> getHealthDeclarationByStudentId(Integer studentId);
-    // Optional<HealthDeclarationDTO> getDraftHealthDeclarationByStudentId(Integer studentId);
+    Optional<HealthDeclarationDTO> getHealthDeclarationByStudentCode(String studentCode);
+    // Optional<HealthDeclarationDTO> getDraftHealthDeclarationByStudentCode(String studentCode);
     // Add other methods as needed, e.g., for fetching specific declarations
 }

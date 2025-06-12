@@ -11,7 +11,7 @@ import java.util.Date;
 @AllArgsConstructor
 public class MedicationSubmissionDTO {
     private Integer submissionId;
-    private Integer studentId;
+    private String studentCode; // Changed from Integer studentId to String studentCode
     private String studentName; // Optional: For display purposes on the frontend if needed
     private String medicationName;
     private String dosage;

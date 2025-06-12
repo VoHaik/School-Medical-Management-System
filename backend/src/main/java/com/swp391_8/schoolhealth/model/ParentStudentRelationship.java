@@ -20,11 +20,11 @@ public class ParentStudentRelationship {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_user_id", nullable = false)
-    private User parent;
+    @JoinColumn(name = "parent_code", referencedColumnName = "parent_code", nullable = false)
+    private Parent parent;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", nullable = false)
+    @JoinColumn(name = "student_code", referencedColumnName = "student_code", nullable = false)
     private Student student;
 
     @Nationalized
@@ -40,7 +40,7 @@ public class ParentStudentRelationship {
     }
 
     // Constructor for convenience
-    public ParentStudentRelationship(User parent, Student student, String relationshipType) {
+    public ParentStudentRelationship(Parent parent, Student student, String relationshipType) {
         this.parent = parent;
         this.student = student;
         this.relationshipType = relationshipType;

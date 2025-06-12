@@ -21,11 +21,19 @@ public class MedicationRequest {
     private Integer requestId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", nullable = false)
+    @JoinColumn(name = "student_code", referencedColumnName = "student_code", nullable = false)
     private Student student;
 
+<<<<<<< Updated upstream
     @Nationalized // Added
     @Column(name = "medication_name", nullable = false, length = 100) // Corrected length
+=======
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_code", referencedColumnName = "parent_code", nullable = false)
+    private Parent parent; // Parent who submitted the request
+
+    @Column(name = "medication_name", nullable = false, length = 255)
+>>>>>>> Stashed changes
     private String medicationName;
 
     @Nationalized // Added
@@ -39,8 +47,13 @@ public class MedicationRequest {
     private String instructions;
 
     @ManyToOne(fetch = FetchType.LAZY)
+<<<<<<< Updated upstream
     @JoinColumn(name = "submitted_by_user_id", nullable = false) // Corrected mapping
     private User submittedBy;
+=======
+    @JoinColumn(name = "nurse_code", referencedColumnName = "nurse_code")
+    private Nurse approvedBy; // Nurse who approved/rejected
+>>>>>>> Stashed changes
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "status_id", nullable = false) // Corrected mapping to StatusType

@@ -15,18 +15,18 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Student {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "student_id")
-    private Integer studentId;
-
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true) // Changed: nullable = false
     private User user;
 
+    @Id
     @Nationalized
     @Column(name = "student_code", nullable = false, unique = true, length = 20)
     private String studentCode;
+
+    @Nationalized
+    @Column(name = "password", length = 255)  // Added password field for direct student login
+    private String password;
 
     @Nationalized
     @Column(name = "full_name", nullable = false, length = 100)
@@ -60,6 +60,7 @@ public class Student {
         updatedAt = LocalDateTime.now();
     }
 
+<<<<<<< Updated upstream
     // Additional getters/setters for compatibility
     public Integer getId() {
         return studentId;
@@ -69,15 +70,9 @@ public class Student {
         this.studentId = id;
     }
 
+=======
+>>>>>>> Stashed changes
     // Explicit getters/setters to fix compilation issues
-    public Integer getStudentId() {
-        return studentId;
-    }
-
-    public void setStudentId(Integer studentId) {
-        this.studentId = studentId;
-    }
-
     public User getUser() {
         return user;
     }
@@ -92,6 +87,14 @@ public class Student {
 
     public void setStudentCode(String studentCode) {
         this.studentCode = studentCode;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getFullName() {

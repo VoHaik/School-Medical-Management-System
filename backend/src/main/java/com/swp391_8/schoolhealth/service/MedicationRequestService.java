@@ -4,11 +4,21 @@ import com.swp391_8.schoolhealth.dto.MedicationRequestDTO;
 import com.swp391_8.schoolhealth.model.MedicationRequest;
 import com.swp391_8.schoolhealth.model.Student;
 import com.swp391_8.schoolhealth.model.User;
+<<<<<<< Updated upstream
 import com.swp391_8.schoolhealth.model.StatusType;
 import com.swp391_8.schoolhealth.repository.MedicationRequestRepository;
 import com.swp391_8.schoolhealth.repository.StudentRepository;
 import com.swp391_8.schoolhealth.repository.UserRepository;
 import com.swp391_8.schoolhealth.repository.StatusTypeRepository;
+=======
+import com.swp391_8.schoolhealth.model.Parent; // Added import
+import com.swp391_8.schoolhealth.model.Nurse; // Added import
+import com.swp391_8.schoolhealth.repository.MedicationRequestRepository;
+import com.swp391_8.schoolhealth.repository.StudentRepository;
+import com.swp391_8.schoolhealth.repository.UserRepository;
+import com.swp391_8.schoolhealth.repository.ParentRepository; // Added import
+import com.swp391_8.schoolhealth.repository.NurseRepository; // Added import
+>>>>>>> Stashed changes
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -30,6 +40,7 @@ public class MedicationRequestService {
     private UserRepository userRepository;
 
     @Autowired
+<<<<<<< Updated upstream
     private StatusTypeRepository statusTypeRepository;
 
     @Autowired
@@ -44,6 +55,28 @@ public class MedicationRequestService {
         User submittedByUser = userRepository.findById(getUserIdFromAuthentication(authentication))
                 .orElseThrow(() -> new RuntimeException("Submitting user not found"));
         Student student = studentRepository.findById(requestDTO.getStudentId())
+=======
+    private ParentRepository parentRepository; // Added injection
+
+    @Autowired
+    private NurseRepository nurseRepository; // Added injection
+
+    @Autowired
+    private SecurityService securityService; // For permission checks
+
+    @Transactional
+    public MedicationRequest createMedicationRequest(MedicationRequestDTO requestDTO, Authentication authentication) {
+        // Ensure the authenticated user is the parent of the student
+        if (!securityService.isParentOfStudentByCode(authentication, requestDTO.getStudentCode())) {
+            throw new SecurityException("Authenticated user is not authorized to create a medication request for this student.");
+        }
+
+        User parentUser = userRepository.findById(getUserIdFromAuthentication(authentication))
+                .orElseThrow(() -> new RuntimeException("Parent User not found"));
+        Parent parent = parentRepository.findByUserUserId(parentUser.getUserId())
+                .orElseThrow(() -> new RuntimeException("Parent record not found for user"));
+        Student student = studentRepository.findByStudentCode(requestDTO.getStudentCode())
+>>>>>>> Stashed changes
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
         StatusType pendingStatus = statusTypeRepository.findByStatusName("PENDING")
@@ -63,15 +96,23 @@ public class MedicationRequestService {
 
     public List<MedicationRequest> getMedicationRequestsByParent(Authentication authentication) {
         Integer parentId = getUserIdFromAuthentication(authentication);
+<<<<<<< Updated upstream
         return medicationRequestRepository.findBySubmittedByUserId(parentId);
+=======
+        return medicationRequestRepository.findByParentUserId(parentId);
+>>>>>>> Stashed changes
     }
 
-    public List<MedicationRequest> getMedicationRequestsForStudentByParent(Integer studentId, Authentication authentication) {
+    public List<MedicationRequest> getMedicationRequestsForStudentByParent(String studentCode, Authentication authentication) {
         Integer parentId = getUserIdFromAuthentication(authentication);
-        if (!securityService.isParentOfStudent(authentication, studentId)) {
+        if (!securityService.isParentOfStudentByCode(authentication, studentCode)) {
             throw new SecurityException("Authenticated user is not authorized to view medication requests for this student.");
         }
+<<<<<<< Updated upstream
         return medicationRequestRepository.findByStudentStudentIdAndSubmittedByUserId(studentId, parentId);
+=======
+        return medicationRequestRepository.findByStudentStudentCodeAndParentUserId(studentCode, parentId);
+>>>>>>> Stashed changes
     }
 
     @Transactional
@@ -80,7 +121,11 @@ public class MedicationRequestService {
         MedicationRequest request = medicationRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Medication request not found with ID: " + requestId));
 
+<<<<<<< Updated upstream
         if (!request.getSubmittedBy().getUserId().equals(userId)) {
+=======
+        if (!request.getParent().getUser().getUserId().equals(parentId)) { // Corrected to check against User's ID within Parent
+>>>>>>> Stashed changes
             throw new SecurityException("User is not authorized to cancel this medication request.");
         }
 
@@ -113,8 +158,11 @@ public class MedicationRequestService {
         MedicationRequest request = medicationRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Medication request not found with ID: " + requestId));
 
-        User approver = userRepository.findById(getUserIdFromAuthentication(authentication))
-                .orElseThrow(() -> new RuntimeException("Approver (Nurse/Staff) not found"));
+        User approverUser = userRepository.findById(getUserIdFromAuthentication(authentication))
+                .orElseThrow(() -> new RuntimeException("Approver User not found"));
+        Nurse approver = nurseRepository.findByUserUserId(approverUser.getUserId())
+                .orElseThrow(() -> new RuntimeException("Nurse record not found for user"));
+
 
         StatusType approvedStatus = statusTypeRepository.findByStatusName("APPROVED")
                 .orElseThrow(() -> new RuntimeException("StatusType 'APPROVED' not found."));
@@ -137,8 +185,10 @@ public class MedicationRequestService {
         MedicationRequest request = medicationRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Medication request not found with ID: " + requestId));
 
-        User rejector = userRepository.findById(getUserIdFromAuthentication(authentication))
-                .orElseThrow(() -> new RuntimeException("Rejector (Nurse/Staff) not found"));
+        User rejectorUser = userRepository.findById(getUserIdFromAuthentication(authentication))
+                .orElseThrow(() -> new RuntimeException("Rejector User not found"));
+        Nurse rejector = nurseRepository.findByUserUserId(rejectorUser.getUserId())
+                .orElseThrow(() -> new RuntimeException("Nurse record not found for user"));
 
         StatusType rejectedStatus = statusTypeRepository.findByStatusName("REJECTED")
                 .orElseThrow(() -> new RuntimeException("StatusType 'REJECTED' not found."));

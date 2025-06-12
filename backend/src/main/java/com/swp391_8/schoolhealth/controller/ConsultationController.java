@@ -32,12 +32,12 @@ public class ConsultationController {
         }
     }
 
-    @GetMapping("/student/{studentId}")
-    // Assuming securityService.isParentOfStudent(authentication, studentId) or similar method exists for this check
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN') or @securityService.isParentOfStudent(authentication, #studentId)")
-    public ResponseEntity<?> getConsultationsByStudentId(@PathVariable Integer studentId) {
+    @GetMapping("/student/{studentCode}") // Changed from studentId to studentCode
+    // Assuming securityService.isParentOfStudentByCode(authentication, studentCode) or similar method exists for this check
+    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN') or @securityService.isParentOfStudentByCode(authentication, #studentCode)") // Updated to use isParentOfStudentByCode
+    public ResponseEntity<?> getConsultationsByStudentId(@PathVariable String studentCode) { // Changed from Integer studentId to String studentCode
         try {
-            List<ConsultationDTO> consultations = consultationService.findByStudentId(studentId);
+            List<ConsultationDTO> consultations = consultationService.findByStudentCode(studentCode); // Changed from findByStudentId to findByStudentCode
             if (consultations.isEmpty()) {
                 return ResponseEntity.noContent().build();
             }

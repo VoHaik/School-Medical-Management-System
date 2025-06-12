@@ -97,4 +97,8 @@ public class UserService {
         // Save user
         return userRepository.save(user);
     }
+
+    public Optional<User> findById(Integer userId) {
+        return userRepository.findById(userId);
+    }
 }

@@ -29,6 +29,10 @@ public class User {
     private String password;
 
     @Nationalized
+    @Column(name = "user_code", nullable = false, unique = true, length = 50)
+    private String userCode;
+
+    @Nationalized
     @Column(name = "email", length = 100)
     private String email;
 
@@ -121,4 +125,7 @@ public class User {
     
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
+    
+    public String getUserCode() { return userCode; }
+    public void setUserCode(String userCode) { this.userCode = userCode; }
 }

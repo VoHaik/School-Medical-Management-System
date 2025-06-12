@@ -10,8 +10,9 @@ import java.util.List;
 @Repository
 public interface MedicationRequestRepository extends JpaRepository<MedicationRequest, Integer> {
 
-    List<MedicationRequest> findByStudentId(Integer studentId);
+    List<MedicationRequest> findByStudentStudentCode(String studentCode);
 
+<<<<<<< Updated upstream
     // List<MedicationRequest> findByParentId(Integer parentId); // Commented out as submittedBy is used now
 
     // List<MedicationRequest> findByStudentIdAndParentId(Integer studentId, Integer parentId); // Commented out
@@ -25,5 +26,15 @@ public interface MedicationRequestRepository extends JpaRepository<MedicationReq
     // List<MedicationRequest> findByParentIdAndStatus(Integer parentId, StatusType status); // Commented out
 
     List<MedicationRequest> findByStatus(StatusType status);
+=======
+    List<MedicationRequest> findByParentUserId(Integer parentId);
+
+    List<MedicationRequest> findByStudentStudentCodeAndParentUserId(String studentCode, Integer parentId);
+
+    // Add more specific queries if needed, e.g., by status
+    List<MedicationRequest> findByStudentStudentCodeAndStatus(String studentCode, MedicationRequestStatus status);
+    List<MedicationRequest> findByParentUserIdAndStatus(Integer parentId, MedicationRequestStatus status);
+    List<MedicationRequest> findByStatus(MedicationRequestStatus status);
+>>>>>>> Stashed changes
 
 }

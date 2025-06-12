@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback
+import { useForm, /* useFieldArray, */ Controller } from 'react-hook-form'; // Removed useFieldArray
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import {
@@ -40,7 +40,6 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Search as SearchIcon,
-  FilterList as FilterIcon,
   Medication as MedicationIcon,
   Warning as WarningIcon,
   Schedule as ScheduleIcon,
@@ -67,17 +66,12 @@ const medicationSchema = yup.object().shape({
   instructions: yup.string()
 });
 
-const administrationSchema = yup.object().shape({
-  studentId: yup.string().required('Student is required'),
-  medicationId: yup.string().required('Medication is required'),
+const medicationAdministrationSchema = yup.object().shape({
+  medicationName: yup.string().required('Medication name is required'),
   dosage: yup.string().required('Dosage is required'),
-  frequency: yup.string().required('Frequency is required'),
-  startDate: yup.date().required('Start date is required'),
-  endDate: yup.date().required('End date is required'),
-  administrationTime: yup.array().of(yup.string()).min(1, 'At least one administration time is required'),
-  instructions: yup.string(),
-  prescribedBy: yup.string().required('Prescribing doctor is required'),
-  consentGiven: yup.boolean().oneOf([true], 'Parent consent is required')
+  administrationTime: yup.date().required('Administration time is required'),
+  notes: yup.string(),
+  studentCode: yup.string().required('Student is required'), // Changed from studentId
 });
 
 function MedicationManagement() {
@@ -103,19 +97,24 @@ function MedicationManagement() {
   });
 
   const administrationForm = useForm({
-    resolver: yupResolver(administrationSchema),
+    resolver: yupResolver(medicationAdministrationSchema),
     defaultValues: {
       administrationTime: [],
       consentGiven: false
     }
   });
 
+  const checkLowStock = useCallback(() => { // Wrapped in useCallback
+    const alerts = medications.filter(med => med.quantity < 20);
+    setLowStockAlerts(alerts);
+  }, [medications]); // Added medications to dependency array
+
   useEffect(() => {
     fetchMedications();
     fetchAdministrations();
     fetchStudents();
     checkLowStock();
-  }, []);
+  }, [checkLowStock]); // Added checkLowStock to dependency array
 
   const fetchMedications = async () => {
     try {
@@ -173,18 +172,14 @@ function MedicationManagement() {
   const fetchStudents = async () => {
     try {
       // Mock data - replace with actual API call
+      // Ensure student objects have studentCode, name, class
       setStudents([
-        { id: 'S001', name: 'John Doe', class: '10A' },
-        { id: 'S002', name: 'Jane Smith', class: '9B' }
+        { studentCode: 'S001', name: 'John Doe', class: '10A' },
+        { studentCode: 'S002', name: 'Jane Smith', class: '9B' }
       ]);
     } catch (error) {
       console.error('Error fetching students:', error);
     }
-  };
-
-  const checkLowStock = () => {
-    const alerts = medications.filter(med => med.quantity < 20);
-    setLowStockAlerts(alerts);
   };
 
   const handleAddMedication = () => {
@@ -207,7 +202,13 @@ function MedicationManagement() {
 
   const handleEditAdministration = (administration) => {
     setSelectedAdministration(administration);
-    administrationForm.reset(administration);
+    // Ensure administration object has studentCode and administrationTime is correctly formatted
+    administrationForm.reset({
+        ...administration,
+        // studentCode: administration.student?.studentCode || administration.studentCode || '', // More robust if structure varies
+        administrationTime: administration.administrationTime ? new Date(administration.administrationTime).toISOString().split('T')[0] : null,
+        // Ensure other date or complex fields are handled if necessary
+    });
     setAdministrationDialogOpen(true);
   };
 
@@ -587,20 +588,28 @@ function MedicationManagement() {
           <DialogContent>
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
-                <Autocomplete
-                  options={students}
-                  getOptionLabel={(option) => `${option.name} (${option.class})`}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Student"
-                      error={!!administrationForm.formState.errors.studentId}
-                      helperText={administrationForm.formState.errors.studentId?.message}
+                <Controller
+                  name="studentCode"
+                  control={administrationForm.control}
+                  render={({ field }) => (
+                    <Autocomplete
+                      {...field}
+                      options={students}
+                      getOptionLabel={(option) => `${option.name} (${option.class}, ${option.studentCode})`} // Display studentCode
+                      value={students.find(s => s.studentCode === field.value) || null} // Ensure value is object
+                      onChange={(event, value) => {
+                        field.onChange(value?.studentCode || ''); // Set studentCode to form
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Student"
+                          error={!!administrationForm.formState.errors.studentCode}
+                          helperText={administrationForm.formState.errors.studentCode?.message}
+                        />
+                      )}
                     />
                   )}
-                  onChange={(event, value) => {
-                    administrationForm.setValue('studentId', value?.id || '');
-                  }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>

@@ -15,12 +15,12 @@ public class HealthDeclaration {
     private Integer declarationId;
 
     @ManyToOne
-    @JoinColumn(name = "student_id", nullable = false)
+    @JoinColumn(name = "student_code", referencedColumnName = "student_code", nullable = false)
     private Student student;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_user_id") // Foreign key to User table
-    private User parent;
+    @JoinColumn(name = "parent_code", referencedColumnName = "parent_code") 
+    private Parent parent;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "submitted_by", nullable = false)
@@ -121,11 +121,11 @@ public class HealthDeclaration {
         this.student = student;
     }
 
-    public User getParent() {
+    public Parent getParent() {
         return parent;
     }
 
-    public void setParent(User parent) {
+    public void setParent(Parent parent) {
         this.parent = parent;
     }
 

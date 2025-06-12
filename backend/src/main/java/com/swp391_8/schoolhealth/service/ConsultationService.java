@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface ConsultationService {
     ConsultationDTO findById(Integer id);
-    List<ConsultationDTO> findByStudentId(Integer studentId);
+    List<ConsultationDTO> findByStudentCode(String studentCode);
     ConsultationDTO createConsultation(ConsultationDTO consultationDTO);
     ConsultationDTO updateConsultation(Integer id, ConsultationDTO consultationDTO);
     void deleteConsultation(Integer id);

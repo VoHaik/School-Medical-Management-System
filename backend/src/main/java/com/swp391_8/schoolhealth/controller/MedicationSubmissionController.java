@@ -57,16 +57,16 @@ public class MedicationSubmissionController {
 
     @GetMapping
     @PreAuthorize("hasRole('PARENT') or hasRole('TEACHER') or hasRole('STAFF')")
-    public ResponseEntity<List<MedicationSubmissionDTO>> getMedicationSubmissionsByStudentId(@RequestParam Long studentId) {
+    public ResponseEntity<List<MedicationSubmissionDTO>> getMedicationSubmissionsByStudentCode(@RequestParam String studentCode) { // Changed from studentId to studentCode, and Long to String
         // Log the request
-        System.out.println("Fetching medication submissions for studentId: " + studentId);
+        System.out.println("Fetching medication submissions for studentCode: " + studentCode);
         try {
-            List<MedicationSubmissionDTO> submissions = medicationSubmissionService.getMedicationSubmissionsByStudentId(studentId);
+            List<MedicationSubmissionDTO> submissions = medicationSubmissionService.getMedicationSubmissionsByStudentCode(studentCode); // Changed from getMedicationSubmissionsByStudentId to getMedicationSubmissionsByStudentCode
             if (submissions.isEmpty()) {
-                System.out.println("No medication submissions found for studentId: " + studentId);
+                System.out.println("No medication submissions found for studentCode: " + studentCode);
                 return ResponseEntity.noContent().build();
             }
-            System.out.println("Found " + submissions.size() + " submissions for studentId: " + studentId);
+            System.out.println("Found " + submissions.size() + " submissions for studentCode: " + studentCode);
             return ResponseEntity.ok(submissions);
         } catch (RuntimeException e) {
             // Log the exception details

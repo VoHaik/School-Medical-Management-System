@@ -81,12 +81,12 @@ public class MedicationRequestController {
         }
     }
 
-    @GetMapping("/student/{studentId}")
-    @PreAuthorize("hasRole('PARENT') and @securityService.isParentOfStudent(authentication, #studentId)")
+    @GetMapping("/student/{studentCode}")
+    @PreAuthorize("hasRole('PARENT') and @securityService.isParentOfStudentByCode(authentication, #studentCode)")
     public ResponseEntity<List<MedicationRequest>> getMedicationRequestsForStudent(
-            @PathVariable Integer studentId, Authentication authentication) {
-        // Service method signature is getMedicationRequestsForStudentByParent(Integer studentId, Authentication authentication)
-        List<MedicationRequest> requests = medicationRequestService.getMedicationRequestsForStudentByParent(studentId, authentication);
+            @PathVariable String studentCode, Authentication authentication) {
+        // Service method signature is getMedicationRequestsForStudentByParent(String studentCode, Authentication authentication)
+        List<MedicationRequest> requests = medicationRequestService.getMedicationRequestsForStudentByParent(studentCode, authentication);
         return ResponseEntity.ok(requests);
     }
 

@@ -39,7 +39,11 @@ public class StudentProfileController {
         }
 
         User user = userOptional.get();
+<<<<<<< Updated upstream
         Optional<Student> studentOptional = studentRepository.findByUserId(user.getUserId());
+=======
+        Optional<Student> studentOptional = studentRepository.findByUser(user);
+>>>>>>> Stashed changes
 
         if (!studentOptional.isPresent()) {
             return ResponseEntity.badRequest().body(new MessageResponse("Student profile not found", false));
@@ -49,6 +53,7 @@ public class StudentProfileController {
         User studentUser = student.getUser(); // Get the associated User object
 
         Map<String, Object> response = new HashMap<>();
+<<<<<<< Updated upstream
         response.put("studentId", student.getStudentId()); // Use studentId from Student entity
         response.put("fullName", studentUser.getFullName()); // Corrected: Use getFullName()
         response.put("dateOfBirth", student.getDateOfBirth()); // Get DoB from Student entity
@@ -57,6 +62,15 @@ public class StudentProfileController {
         response.put("email", studentUser.getEmail());
         response.put("phone", studentUser.getPhone());
         response.put("studentCode", student.getStudentCode());
+=======
+        response.put("studentCode", student.getStudentCode()); // Changed from getId to getStudentCode
+        response.put("fullName", student.getFullName());
+        response.put("dateOfBirth", student.getDateOfBirth());
+        response.put("gender", student.getGender());
+        response.put("className", student.getClassName());
+        response.put("email", user.getEmail());
+        response.put("phone", user.getPhone()); // Use getPhone() for consistency with setPhone()
+>>>>>>> Stashed changes
 
         return ResponseEntity.ok(response);
     }
@@ -73,7 +87,11 @@ public class StudentProfileController {
         }
 
         User user = userOptional.get();
+<<<<<<< Updated upstream
         Optional<Student> studentOptional = studentRepository.findByUserId(user.getUserId());
+=======
+        Optional<Student> studentOptional = studentRepository.findByUser(user);
+>>>>>>> Stashed changes
 
         if (!studentOptional.isPresent()) {
             return ResponseEntity.badRequest().body(new MessageResponse("Student profile not found", false));
@@ -131,7 +149,11 @@ public class StudentProfileController {
         User user = userOptional.get();
 
         // Check if student profile already exists
+<<<<<<< Updated upstream
         Optional<Student> existingStudent = studentRepository.findByUserId(user.getUserId());
+=======
+        Optional<Student> existingStudent = studentRepository.findByUser(user);
+>>>>>>> Stashed changes
         if (existingStudent.isPresent()) {
             return ResponseEntity.badRequest().body(new MessageResponse("Student profile already exists", false));
         }

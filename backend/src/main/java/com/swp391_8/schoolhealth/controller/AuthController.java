@@ -84,6 +84,15 @@ public class AuthController {
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signupRequest) {
         logger.info("Processing registration request for user: {}", signupRequest.getUsername());
         try {
+            // Prevent self-registration for STUDENT role
+            // signupRequest.getRole() returns UserService.UserRole enum type
+            if (signupRequest.getRole() != null && signupRequest.getRole() == UserService.UserRole.Student) {
+                logger.warn("Registration failed: Attempt to self-register as a STUDENT ('{}')", signupRequest.getUsername());
+                return ResponseEntity
+                        .badRequest()
+                        .body(new MessageResponse("Error: Student accounts cannot be registered through this form. Please contact an administrator.", false));
+            }
+
             // Check if username is already taken
             if (userService.existsByUsername(signupRequest.getUsername())) {
                 logger.warn("Registration failed: Username '{}' is already taken", signupRequest.getUsername());

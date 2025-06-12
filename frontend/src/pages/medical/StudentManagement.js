@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import {
   Card,
@@ -51,9 +49,7 @@ import {
 } from '@mui/lab';
 import {
   Search as SearchIcon,
-  FilterList as FilterIcon,
   Group as GroupIcon,
-  Person as PersonIcon,
   LocalHospital as HealthIcon,
   Medication as MedicationIcon,
   Vaccines as VaccinesIcon,
@@ -62,46 +58,19 @@ import {
   Visibility as VisibilityIcon,
   Edit as EditIcon,
   Assignment as AssignmentIcon,
-  Timeline as TimelineIcon,
   BarChart as BarChartIcon,
-  Phone as PhoneIcon,
-  Email as EmailIcon,
-  Home as HomeIcon
+  Phone as PhoneIcon
 } from '@mui/icons-material';
 import PageHeader from '../../components/PageHeader';
-
-const studentHealthProfileSchema = yup.object().shape({
-  studentId: yup.string().required('Student ID is required'),
-  healthConditions: yup.array().of(yup.string()),
-  allergies: yup.array().of(yup.string()),
-  medications: yup.array().of(yup.string()),
-  emergencyContacts: yup.array().of(yup.object()),
-  medicalNotes: yup.string(),
-  restrictions: yup.array().of(yup.string()),
-  lastCheckupDate: yup.date(),
-  nextCheckupDate: yup.date()
-});
 
 function StudentManagement() {
   const [activeTab, setActiveTab] = useState(0);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState(null);
   const [students, setStudents] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGrade, setFilterGrade] = useState('all');
   const [filterHealthStatus, setFilterHealthStatus] = useState('all');
   const [healthProfile, setHealthProfile] = useState(null);
-
-  const profileForm = useForm({
-    resolver: yupResolver(studentHealthProfileSchema),
-    defaultValues: {
-      healthConditions: [],
-      allergies: [],
-      medications: [],
-      emergencyContacts: [],
-      restrictions: []
-    }
-  });
 
   useEffect(() => {
     fetchStudents();
@@ -117,7 +86,7 @@ function StudentManagement() {
           grade: '10A',
           dateOfBirth: '2008-05-15',
           gender: 'Male',
-          studentId: 'STU001',
+          studentCode: 'STU001',
           email: 'john.doe@school.edu',
           phone: '(555) 123-4567',
           address: '123 Main St, City, State 12345',
@@ -144,7 +113,7 @@ function StudentManagement() {
           grade: '9B',
           dateOfBirth: '2009-03-20',
           gender: 'Female',
-          studentId: 'STU002',
+          studentCode: 'STU002',
           email: 'jane.smith@school.edu',
           phone: '(555) 234-5678',
           address: '456 Oak Ave, City, State 12345',
@@ -169,7 +138,7 @@ function StudentManagement() {
           grade: '11C',
           dateOfBirth: '2007-09-12',
           gender: 'Male',
-          studentId: 'STU003',
+          studentCode: 'STU003',
           email: 'michael.johnson@school.edu',
           phone: '(555) 345-6789',
           address: '789 Pine St, City, State 12345',
@@ -196,14 +165,13 @@ function StudentManagement() {
   };
 
   const handleViewProfile = (student) => {
-    setSelectedStudent(student);
     setHealthProfile(student);
     setProfileDialogOpen(true);
   };
 
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.studentId.toLowerCase().includes(searchTerm.toLowerCase());
+                         student.studentCode.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesGrade = filterGrade === 'all' || student.grade.includes(filterGrade);
     const matchesHealthStatus = filterHealthStatus === 'all' || student.healthStatus === filterHealthStatus;
     return matchesSearch && matchesGrade && matchesHealthStatus;
@@ -367,7 +335,7 @@ function StudentManagement() {
                           <div>
                             <Typography variant="subtitle2">{student.name}</Typography>
                             <Typography variant="caption" color="textSecondary">
-                              ID: {student.studentId}
+                              ID: {student.studentCode}
                             </Typography>
                           </div>
                         </Box>
@@ -523,7 +491,7 @@ function StudentManagement() {
               <div>
                 <Typography variant="h6">{healthProfile.name}</Typography>
                 <Typography variant="caption" color="textSecondary">
-                  {healthProfile.grade} - ID: {healthProfile.studentId}
+                  {healthProfile.grade} - ID: {healthProfile.studentCode}
                 </Typography>
               </div>
             </Box>

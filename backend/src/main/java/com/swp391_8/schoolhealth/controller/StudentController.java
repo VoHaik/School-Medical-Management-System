@@ -18,7 +18,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+<<<<<<< Updated upstream
 import java.time.LocalDate; // Added for date parsing
+=======
+import java.time.LocalDate; // Ensure LocalDate is imported
+>>>>>>> Stashed changes
 
 @RestController
 @RequestMapping("/api/students")
@@ -41,10 +45,10 @@ public class StudentController {
         return ResponseEntity.ok(students);
     }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN') or @securityService.isParentOfStudent(authentication, #id)")
-    public ResponseEntity<Student> getStudentById(@PathVariable Integer id) {
-        Student student = studentService.getStudentById(id);
+    @GetMapping("/{studentCode}")
+    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN') or @securityService.isParentOfStudentByCode(authentication, #studentCode)")
+    public ResponseEntity<Student> getStudentByCode(@PathVariable String studentCode) {
+        Student student = studentService.getStudentByCode(studentCode);
         return ResponseEntity.ok(student);
     }
 
@@ -127,10 +131,14 @@ public class StudentController {
                 // Assuming parentStudentService.createStudentForParent handles User and Student creation appropriately
                 newStudent = parentStudentService.createStudentForParent(studentData, parentUser);
             } else {
+<<<<<<< Updated upstream
                 // Admin or School Nurse creating student
                 Student studentToCreate = convertMapToStudent(studentData, new User(), new Student()); // Pass new User and new Student for creation
                 String gender = (String) studentData.get("gender"); // Extract gender
                 newStudent = studentService.createStudent(studentToCreate, gender); // Pass gender
+=======
+                newStudent = studentService.createStudent(convertMapToStudent(studentData));
+>>>>>>> Stashed changes
             }
             
             return ResponseEntity.ok(newStudent);
@@ -139,9 +147,9 @@ public class StudentController {
         }
     }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN') or @securityService.isParentOfStudent(authentication, #id)")
-    public ResponseEntity<?> updateStudent(@PathVariable Integer id, @RequestBody Map<String, Object> studentData) {
+    @PutMapping("/{studentCode}")
+    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN') or @securityService.isParentOfStudentByCode(authentication, #studentCode)")
+    public ResponseEntity<?> updateStudent(@PathVariable String studentCode, @RequestBody Map<String, Object> studentData) {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -150,8 +158,10 @@ public class StudentController {
                     .anyMatch(auth -> auth.getAuthority().equals("ROLE_PARENT"));
             
             Student updatedStudent;
-            
+            Student studentToUpdate = studentService.getStudentByCode(studentCode); 
+
             if (isParent) {
+<<<<<<< Updated upstream
                 // Parent updating their child's record
                 // Assuming parentStudentService.updateStudentForParent handles User and Student updates
                 updatedStudent = parentStudentService.updateStudentForParent(id, studentData, userDetails.getId());
@@ -170,6 +180,12 @@ public class StudentController {
                 Student studentWithUpdates = convertMapToStudent(studentData, userToUpdate, existingStudent);
                 String gender = (String) studentData.get("gender"); // Extract gender
                 updatedStudent = studentService.updateStudent(id, studentWithUpdates, gender); // Pass gender
+=======
+                updatedStudent = parentStudentService.updateStudentForParent(studentToUpdate, studentData, userDetails.getId());
+            } else {
+                // For admin/staff, studentCode is path variable, studentDetails from request body
+                updatedStudent = studentService.updateStudent(studentCode, convertMapToStudent(studentData, studentCode)); 
+>>>>>>> Stashed changes
             }
             
             return ResponseEntity.ok(updatedStudent);
@@ -178,10 +194,61 @@ public class StudentController {
         }
     }
 
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> deleteStudent(@PathVariable Integer id) {
-        studentService.deleteStudent(id);
-        return ResponseEntity.ok().build();
+    @DeleteMapping("/{studentCode}")
+    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    public ResponseEntity<?> deleteStudent(@PathVariable String studentCode) {
+        try {
+            studentService.deleteStudent(studentCode);
+            return ResponseEntity.ok(new MessageResponse("Student deleted successfully!", true));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error deleting student: " + e.getMessage(), false));
+        }
     }
+<<<<<<< Updated upstream
+=======
+
+    private Student convertMapToStudent(Map<String, Object> studentData) {
+        Student student = new Student();
+        if (studentData.containsKey("studentCode")) {
+            student.setStudentCode((String) studentData.get("studentCode"));
+        }
+        if (studentData.containsKey("fullName")) {
+            student.setFullName((String) studentData.get("fullName"));
+        }
+        if (studentData.containsKey("dateOfBirth") && studentData.get("dateOfBirth") != null) {
+            try {
+                 student.setDateOfBirth(LocalDate.parse((String)studentData.get("dateOfBirth")));
+            } catch (Exception e) { /* Handle parsing error if necessary */ }
+        }
+        if (studentData.containsKey("gender")) {
+            student.setGender((String) studentData.get("gender"));
+        }
+        if (studentData.containsKey("className")) {
+            student.setClassName((String) studentData.get("className"));
+        }
+        // Add other fields as necessary
+        return student;
+    }
+    
+    private Student convertMapToStudent(Map<String, Object> studentData, String existingStudentCode) {
+        Student student = new Student();
+        student.setStudentCode(existingStudentCode);
+        if (studentData.containsKey("fullName")) {
+            student.setFullName((String) studentData.get("fullName"));
+        }
+        if (studentData.containsKey("dateOfBirth") && studentData.get("dateOfBirth") != null) {
+             try {
+                 student.setDateOfBirth(LocalDate.parse((String)studentData.get("dateOfBirth")));
+            } catch (Exception e) { /* Handle parsing error if necessary */ }
+        }
+        if (studentData.containsKey("gender")) {
+            student.setGender((String) studentData.get("gender"));
+        }
+        if (studentData.containsKey("className")) {
+            student.setClassName((String) studentData.get("className"));
+        }
+        // Add other fields as necessary
+        return student;
+    }
+>>>>>>> Stashed changes
 }

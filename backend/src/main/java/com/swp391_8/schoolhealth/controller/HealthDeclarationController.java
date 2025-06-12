@@ -14,8 +14,8 @@ import java.util.Optional; // Placeholder for service return type
 // Placeholder for HealthDeclarationService - this should be in its own file: com.swp391_8.schoolhealth.service.HealthDeclarationService
 interface HealthDeclarationService {
     HealthDeclarationDTO saveHealthDeclaration(HealthDeclarationDTO dto);
-    Optional<HealthDeclarationDTO> getHealthDeclarationByStudentId(Integer studentId); // Assuming one active/latest or specific logic
-    // Or List<HealthDeclarationDTO> getHealthDeclarationsByStudentId(Integer studentId); // If multiple are expected
+    Optional<HealthDeclarationDTO> getHealthDeclarationByStudentCode(String studentCode); // Changed from studentId to studentCode
+    // Or List<HealthDeclarationDTO> getHealthDeclarationsByStudentCode(String studentCode); // If multiple are expected
 }
 
 // Placeholder for a simple service implementation - this should be in its own file: com.swp391_8.schoolhealth.service.impl.HealthDeclarationServiceImpl
@@ -70,7 +70,11 @@ public class HealthDeclarationController {
     private final HealthDeclarationService healthDeclarationService = new HealthDeclarationService() {
         @Override
         public HealthDeclarationDTO saveHealthDeclaration(HealthDeclarationDTO dto) {
+<<<<<<< Updated upstream
             System.out.println("Mock Service (inline): Saving health declaration for student ID: " + dto.getStudentId() + ", Draft: " + dto.getIsDraft()); // Changed to getIsDraft()
+=======
+            System.out.println("Mock Service (inline): Saving health declaration for student Code: " + dto.getStudentCode() + ", Draft: " + dto.isDraft()); // Changed from getStudentId to getStudentCode
+>>>>>>> Stashed changes
             // Simulate saving and returning DTO
             if (dto.getDeclarationId() == null) {
                  // Assign a mock ID if it's a new declaration
@@ -81,8 +85,8 @@ public class HealthDeclarationController {
         }
 
         @Override
-        public Optional<HealthDeclarationDTO> getHealthDeclarationByStudentId(Integer studentId) {
-            System.out.println("Mock Service (inline): Fetching health declaration for student ID: " + studentId);
+        public Optional<HealthDeclarationDTO> getHealthDeclarationByStudentCode(String studentCode) { // Changed from studentId to studentCode
+            System.out.println("Mock Service (inline): Fetching health declaration for student Code: " + studentCode); // Changed from studentId to studentCode
             // Simulate fetching. Return empty or a mock DTO.
             // This needs to align with frontend expectations (one or list)
             // The frontend HealthDeclaration.js fetches and then setsFormValues, suggesting one declaration.
@@ -103,10 +107,10 @@ public class HealthDeclarationController {
 
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_PARENT')")
+    @PreAuthorize("hasRole(\'ROLE_PARENT\')")
     public ResponseEntity<HealthDeclarationDTO> submitHealthDeclaration(@RequestBody HealthDeclarationDTO healthDeclarationDTO) {
         // Basic validation (can be expanded with @Valid and validation annotations on DTO)
-        if (healthDeclarationDTO.getStudentId() == null) {
+        if (healthDeclarationDTO.getStudentCode() == null || healthDeclarationDTO.getStudentCode().isEmpty()) { // Changed from getStudentId to getStudentCode and added isEmpty check
             return ResponseEntity.badRequest().body(null); // Or a proper error DTO
         }
         try {
@@ -119,13 +123,13 @@ public class HealthDeclarationController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_PARENT') or hasRole('ROLE_NURSE')")
-    public ResponseEntity<HealthDeclarationDTO> getHealthDeclarationByStudent(@RequestParam Integer studentId) {
+    @PreAuthorize("hasRole(\'ROLE_PARENT\') or hasRole(\'ROLE_NURSE\')")
+    public ResponseEntity<HealthDeclarationDTO> getHealthDeclarationByStudent(@RequestParam String studentCode) { // Changed from Integer studentId to String studentCode
         // The frontend (HealthDeclaration.js) seems to expect a single object for a student to populate the form.
         // If a student can have multiple declarations, this might need to return the latest, or the frontend
         // might need to be adjusted to handle a list (e.g., to show history and allow editing a draft).
         // For now, aligning with the apparent expectation of a single current/draft declaration.
-        Optional<HealthDeclarationDTO> declarationDTO = healthDeclarationService.getHealthDeclarationByStudentId(studentId);
+        Optional<HealthDeclarationDTO> declarationDTO = healthDeclarationService.getHealthDeclarationByStudentCode(studentCode); // Changed from getHealthDeclarationByStudentId to getHealthDeclarationByStudentCode
         if (declarationDTO.isPresent()) {
             return ResponseEntity.ok(declarationDTO.get());
         } else {

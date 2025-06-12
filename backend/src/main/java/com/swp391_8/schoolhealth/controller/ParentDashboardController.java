@@ -61,12 +61,12 @@ public class ParentDashboardController {
 
     // Endpoint to get medication submission summaries for a specific student of the parent.
     // studentId is crucial here.
-    @GetMapping("/medication-submissions/summary/student/{studentId}")
+    @GetMapping("/medication-submissions/summary/student/{studentCode}") // Changed from studentId to studentCode
     @PreAuthorize("hasRole('PARENT')")
-    public ResponseEntity<List<MedicationSubmissionDTO>> getMedicationSummaryForStudent(@PathVariable Long studentId) {
-        // Parent authorization ensures this parentId can view this studentId (should be handled by security context or service layer check)
-        System.out.println("Fetching medication summary for studentId: " + studentId);
-        List<MedicationSubmissionDTO> medicationSummaries = medicationSubmissionService.getMedicationSubmissionsByStudentId(studentId);
+    // Ensure that the security context or service layer checks if the authenticated parent can view this studentCode
+    public ResponseEntity<List<MedicationSubmissionDTO>> getMedicationSummaryForStudent(@PathVariable String studentCode) { // Changed from Long studentId to String studentCode
+        System.out.println("Fetching medication summary for studentCode: " + studentCode);
+        List<MedicationSubmissionDTO> medicationSummaries = medicationSubmissionService.getMedicationSubmissionsByStudentCode(studentCode); // Changed from getMedicationSubmissionsByStudentId to getMedicationSubmissionsByStudentCode
         if (medicationSummaries.isEmpty()) {
             return ResponseEntity.noContent().build();
         }

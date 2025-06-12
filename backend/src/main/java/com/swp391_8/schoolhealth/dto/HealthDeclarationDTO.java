@@ -10,9 +10,15 @@ import lombok.Setter;
 @Getter
 @Setter
 public class HealthDeclarationDTO {
+<<<<<<< Updated upstream
     private Integer declarationId;
     private Boolean isDraft; // Changed from boolean to Boolean
     private Integer studentId;
+=======
+    private Integer declarationId; // Added
+    private boolean isDraft; // Added
+    private String studentCode; // Changed from Integer studentId to String studentCode
+>>>>>>> Stashed changes
     private String emergencyContactName;
     private String emergencyContactPhone;
     private String physicianName;
@@ -66,6 +72,7 @@ public class HealthDeclarationDTO {
     // }
     // ... (similar changes for hasSymptoms, closeContact, travelHistory)
 
+<<<<<<< Updated upstream
     // public Integer getStudentId() {
     //     return studentId;
     // }
@@ -74,6 +81,15 @@ public class HealthDeclarationDTO {
     //     this.studentId = studentId;
     // }
     // ... (other existing getters and setters can be removed if @Getter/@Setter are used)
+=======
+    public String getStudentCode() {
+        return studentCode;
+    }
+
+    public void setStudentCode(String studentCode) {
+        this.studentCode = studentCode;
+    }
+>>>>>>> Stashed changes
 
     // public void setSubmittedByUserId(Integer submittedByUserId) {
     //     this.submittedByUserId = submittedByUserId;

@@ -36,8 +36,13 @@ public class ConsultationServiceImpl implements ConsultationService {
     }
 
     @Override
+<<<<<<< Updated upstream
     public List<ConsultationDTO> findByStudentId(Integer studentId) {
         return consultationRepository.findByStudentStudentIdOrderByConsultationDatetimeDesc(studentId).stream()
+=======
+    public List<ConsultationDTO> findByStudentCode(String studentCode) {
+        return consultationRepository.findByStudentStudentCodeOrderByConsultationDateDesc(studentCode).stream()
+>>>>>>> Stashed changes
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -55,8 +60,8 @@ public class ConsultationServiceImpl implements ConsultationService {
                 .orElseThrow(() -> new EntityNotFoundException("Consultation not found with id: " + id));
 
         // Update fields from DTO
-        Student student = studentRepository.findById(dto.getStudentId())
-                .orElseThrow(() -> new EntityNotFoundException("Student not found with id: " + dto.getStudentId()));
+        Student student = studentRepository.findByStudentCode(dto.getStudentCode())
+                .orElseThrow(() -> new EntityNotFoundException("Student not found with code: " + dto.getStudentCode()));
         existingConsultation.setStudent(student);
 
         if (dto.getCheckupId() != null) {
@@ -89,6 +94,7 @@ public class ConsultationServiceImpl implements ConsultationService {
         ConsultationDTO dto = new ConsultationDTO();
         dto.setId(consultation.getConsultationId());
         if (consultation.getStudent() != null) {
+<<<<<<< Updated upstream
             dto.setStudentId(consultation.getStudent().getStudentId());
             User studentUser = consultation.getStudent().getUser();
             if (studentUser != null) {
@@ -99,6 +105,13 @@ public class ConsultationServiceImpl implements ConsultationService {
         }
         if (consultation.getHealthCheckup() != null) {
             dto.setCheckupId(consultation.getHealthCheckup().getCheckupId());
+=======
+            dto.setStudentCode(consultation.getStudent().getStudentCode());
+            dto.setStudentName(consultation.getStudent().getFirstName() + " " + consultation.getStudent().getLastName()); // Example: full name
+        }
+        if (consultation.getCheckup() != null) {
+            dto.setCheckupId(consultation.getCheckup().getId()); // Changed getCheckupId() to getId()
+>>>>>>> Stashed changes
         }
         dto.setConsultationDate(consultation.getConsultationDatetime()); // Entity.consultationDatetime -> DTO.consultationDate
         dto.setLocation(consultation.getLocation());
@@ -111,8 +124,8 @@ public class ConsultationServiceImpl implements ConsultationService {
     private Consultation convertToEntity(ConsultationDTO dto) {
         Consultation consultation = new Consultation();
 
-        Student student = studentRepository.findById(dto.getStudentId())
-                .orElseThrow(() -> new EntityNotFoundException("Student not found with id: " + dto.getStudentId()));
+        Student student = studentRepository.findByStudentCode(dto.getStudentCode())
+                .orElseThrow(() -> new EntityNotFoundException("Student not found with code: " + dto.getStudentCode()));
         consultation.setStudent(student);
 
         if (dto.getCheckupId() != null) {

@@ -8,6 +8,10 @@ import java.util.List;
 
 @Repository
 public interface ConsultationRepository extends JpaRepository<Consultation, Integer> {
+<<<<<<< Updated upstream
     List<Consultation> findByStudentStudentIdOrderByConsultationDatetimeDesc(Integer studentId);
+=======
+    List<Consultation> findByStudentStudentCodeOrderByConsultationDateDesc(String studentCode);
+>>>>>>> Stashed changes
     // Add other query methods if needed, e.g., find by date range, etc.
 }

@@ -20,7 +20,7 @@ public class Medication {
     private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "student_id", nullable = false)
+    @JoinColumn(name = "student_id", referencedColumnName = "student_code", nullable = false)
     private Student student;
 
     @Nationalized

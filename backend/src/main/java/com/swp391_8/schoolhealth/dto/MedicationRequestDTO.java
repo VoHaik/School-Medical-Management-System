@@ -3,34 +3,34 @@ package com.swp391_8.schoolhealth.dto;
 import java.time.LocalDate;
 
 public class MedicationRequestDTO {
-    private Integer studentId;
+    private String studentCode; // Changed from Integer studentId
     private String medicationName;
     private String dosage;
     private String frequency;
     private LocalDate startDate;
     private LocalDate endDate;
-    private String reason; // Added missing reason field
+    private String reason;
     private String notes; // Parent's notes for the request
 
     public MedicationRequestDTO() {}
 
-    public MedicationRequestDTO(Integer studentId, String medicationName, String dosage, String frequency, LocalDate startDate, LocalDate endDate, String reason, String notes) {
-        this.studentId = studentId;
+    public MedicationRequestDTO(String studentCode, String medicationName, String dosage, String frequency, LocalDate startDate, LocalDate endDate, String reason, String notes) {
+        this.studentCode = studentCode;
         this.medicationName = medicationName;
         this.dosage = dosage;
         this.frequency = frequency;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.reason = reason; // Initialize reason
+        this.reason = reason;
         this.notes = notes;
     }
 
-    public Integer getStudentId() {
-        return studentId;
+    public String getStudentCode() {
+        return studentCode;
     }
 
-    public void setStudentId(Integer studentId) {
-        this.studentId = studentId;
+    public void setStudentCode(String studentCode) {
+        this.studentCode = studentCode;
     }
 
     public String getMedicationName() {

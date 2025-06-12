@@ -40,8 +40,8 @@ public class MedicationSubmissionServiceImpl implements MedicationSubmissionServ
 
     @Override
     public MedicationSubmissionDTO saveMedicationSubmission(MedicationSubmissionDTO dto, MultipartFile doctorNote) {
-        Student student = studentRepository.findById(dto.getStudentId())
-                .orElseThrow(() -> new RuntimeException("Student not found with id: " + dto.getStudentId()));
+        Student student = studentRepository.findByStudentCode(dto.getStudentCode())
+                .orElseThrow(() -> new RuntimeException("Student not found with code: " + dto.getStudentCode()));
 
         MedicationSubmission submission = new MedicationSubmission();
         submission.setStudent(student);
@@ -70,8 +70,8 @@ public class MedicationSubmissionServiceImpl implements MedicationSubmissionServ
     }
 
     @Override
-    public List<MedicationSubmissionDTO> getMedicationSubmissionsByStudentId(Long studentId) {
-        return medicationSubmissionRepository.findByStudentStudentId(studentId).stream()
+    public List<MedicationSubmissionDTO> getMedicationSubmissionsByStudentCode(String studentCode) {
+        return medicationSubmissionRepository.findByStudentStudentCode(studentCode).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -79,7 +79,7 @@ public class MedicationSubmissionServiceImpl implements MedicationSubmissionServ
     private MedicationSubmissionDTO convertToDTO(MedicationSubmission submission) {
         MedicationSubmissionDTO dto = new MedicationSubmissionDTO();
         dto.setSubmissionId(submission.getSubmissionId());
-        dto.setStudentId(submission.getStudent().getStudentId());
+        dto.setStudentCode(submission.getStudent().getStudentCode());
         // dto.setParentId(submission.getParent().getUserId()); // Assuming Parent entity has getUserId()
         dto.setMedicationName(submission.getMedicationName());
         dto.setDosage(submission.getDosage());
