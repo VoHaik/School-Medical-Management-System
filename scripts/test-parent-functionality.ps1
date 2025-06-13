@@ -1,4 +1,0 @@
-- Tạo bảng tg parent_student
-- Student ko có pass, ĐN bằng mshs và mk, TK của Students đc lưu bảng Students
-- Sửa lại bảng User và Student trong đó các khóa chính phải là mã số thay vì là auto gen
-- Parent muốn đk tài khoản thì phải nhập đầy đủ thông tin cá nhân và chờ admin accept -> gửi mail để xn tk thành công
