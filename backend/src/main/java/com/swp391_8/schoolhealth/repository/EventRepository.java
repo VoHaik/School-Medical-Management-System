@@ -16,6 +16,9 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     // Example: Find events occurring on or after a certain date.
     List<Event> findByStartDateGreaterThanEqualOrderByStartDateAsc(Date date); // MODIFIED HERE
 
+    // New method to find events by target audience
+    List<Event> findByTargetAudienceInAndStartDateGreaterThanEqualOrderByStartDateAsc(List<String> targetAudiences, Date date);
+
     // If events are targeted (e.g., by grade or school section), you'd add parameters here.
     // List<Event> findByTargetAudienceAndEventDateGreaterThanEqualOrderByEventDateAsc(String targetAudience, Date date);
 }

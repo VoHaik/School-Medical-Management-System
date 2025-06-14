@@ -23,10 +23,6 @@ public class Parent {
     @Column(name = "parent_code", nullable = false, unique = true, length = 50)
     private String parentCode;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
     @Nationalized
     @Column(name = "full_name", length = 100)
     private String fullName;
@@ -83,14 +79,6 @@ public class Parent {
 
     public void setParentCode(String parentCode) {
         this.parentCode = parentCode;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
     }
 
     public String getFullName() {

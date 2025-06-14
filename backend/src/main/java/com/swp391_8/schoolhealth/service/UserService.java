@@ -36,11 +36,11 @@ public class UserService {
     private NurseRepository nurseRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder; // Keep autowired for now, but won't use encode()
+    private PasswordEncoder passwordEncoder;
 
     // Enum for user roles to maintain API compatibility
     public enum UserRole {
-        Parent, SchoolNurse, Admin, Manager, Student
+        Parent, SchoolNurse, Admin, Manager, Student // Manager can be treated like Teacher for prefix
     }
 
     public boolean existsByUsername(String username) {
@@ -51,48 +51,82 @@ public class UserService {
         return userRepository.existsByEmail(email);
     }
 
+    private synchronized String generateNextUserCode(String prefix, int length) {
+        String likePattern = prefix + "%";
+        Optional<String> lastUserCodeOpt = userRepository.findLastUserCodeByPrefix(likePattern);
+        int nextNum = 1;
+        if (lastUserCodeOpt.isPresent()) {
+            String lastCode = lastUserCodeOpt.get();
+            try {
+                String numericPart = lastCode.substring(prefix.length());
+                nextNum = Integer.parseInt(numericPart) + 1;
+            } catch (NumberFormatException e) {
+                logger.error("Error parsing numeric part of user_code: {}. Falling back to sequence 1.", lastCode, e);
+                // Fallback or more sophisticated error handling might be needed
+            }
+        }
+        return prefix + String.format("%0" + (length - prefix.length()) + "d", nextNum);
+    }
+
     @Transactional // Added Transactional
     public User registerUser(String username, String password, String fullName, String email, String phone, 
-                             String gender, String relationshipWithStudent, UserRole userRole) { // Changed gender to relationshipWithStudent, added gender back
+                             String gender, String relationshipWithStudent, UserRole userRole,
+                             String professionalId, String specialization, String qualification, // Nurse specific
+                             String address, String emergencyContact // Parent specific (emergencyContact already in phone, but can be distinct)
+                             ) { // Changed gender to relationshipWithStudent, added gender back
         // Create new user
         User user = new User();
-        // Ensure user_code is set first and is not null
-        String generatedUserCode = username.replaceAll("[^a-zA-Z0-9]", "") + "CODE";
-        if (generatedUserCode.isEmpty()) { 
-            generatedUserCode = "DEFAULT" + System.currentTimeMillis();
-            logger.warn("Generated an empty user_code for username: {}. Using fallback: {}", username, generatedUserCode);
-        }
-        user.setUserCode(generatedUserCode);
-        user.setUsername(username);
-        user.setPassword(password); // Store plain text password
-        user.setFullName(fullName); // Set on User
-        user.setEmail(email);
-        user.setPhoneNumber(phone); // Set on User
-        user.setIsActive(true);
-
-        // Map UserRole enum to database role names
         String roleName;
+        String userCodePrefix;
+        int userCodeLength;
+
         switch (userRole) {
             case Parent:
-                roleName = "Parent"; // Standardized to match Role names
+                roleName = "Parent"; // Standardized to match Role names in DB (e.g., "Parent" not "ROLE_PARENT")
+                userCodePrefix = "PAR"; 
+                userCodeLength = 6; // e.g., PAR001
                 break;
             case SchoolNurse:
-                roleName = "SchoolNurse"; // Standardized to match Role names
+                roleName = "SchoolNurse";
+                userCodePrefix = "NUR";
+                userCodeLength = 6; // e.g., NUR001
                 break;
             case Admin:
-                roleName = "Admin"; // Standardized to match Role names
+                roleName = "Admin";
+                userCodePrefix = "ADM";
+                userCodeLength = 6; // e.g., ADM001
                 break;
-            case Manager:
-                roleName = "Manager"; // Standardized to match Role names
+            case Manager: // Assuming Manager is like Teacher for user_code generation
+                roleName = "Manager";
+                userCodePrefix = "TEA"; // Or specific prefix for Manager e.g., "MGR"
+                userCodeLength = 6; // e.g., TEA001
                 break;
             case Student:
-                roleName = "Student"; // Standardized to match Role names
+                roleName = "Student";
+                userCodePrefix = "STU";
+                userCodeLength = 7; // e.g., STU0001 (4 digits for student number)
                 break;
             default:
                 // Fallback or throw error, for now, let's use Parent as a default if not specified or invalid
                 logger.warn("Unspecified or invalid UserRole provided: {}. Defaulting to Parent.", userRole);
                 roleName = "Parent";
+                userCodePrefix = "PAR";
+                userCodeLength = 6;
         }
+
+        String generatedUserCode = generateNextUserCode(userCodePrefix, userCodeLength);
+        // Ensure generatedUserCode is unique, regenerate if collision (highly unlikely with synchronized method and DB sequence logic)
+        while(userRepository.existsByUserCode(generatedUserCode)){
+            logger.warn("Generated user_code {} already exists. Regenerating.", generatedUserCode);
+            generatedUserCode = generateNextUserCode(userCodePrefix, userCodeLength);
+        }
+        user.setUserCode(generatedUserCode);
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(password)); // Password should be encoded
+        user.setFullName(fullName); // Set on User
+        user.setEmail(email);
+        user.setPhoneNumber(phone); // Set on User
+        user.setIsActive(true);
 
         Optional<Role> roleOptional = roleRepository.findByRoleName(roleName);
         if (roleOptional.isEmpty()) {
@@ -106,31 +140,41 @@ public class UserService {
             }
             throw new RuntimeException("Role " + roleName + " not found. Ensure roles are initialized.");
         }
-        
         user.setRole(roleOptional.get());
-        User savedUser = userRepository.save(user); // Save User first to get ID
-        logger.info("User '{}' registered successfully with role: {}", savedUser.getUsername(), savedUser.getRole().getRoleName());
+        User savedUser = userRepository.save(user); // Save User first to get ID and generated user_code
+        logger.info("User '{}' registered successfully with user_code: {} and role: {}", savedUser.getUsername(), savedUser.getUserCode(), savedUser.getRole().getRoleName());
 
         // Create Parent or Nurse specific entity
         if (userRole == UserRole.Parent) {
             Parent parent = new Parent();
-            parent.setUser(savedUser);
-            parent.setFullName(fullName);
-            parent.setPhoneNumber(phone);
-            parent.setGender(gender); // Set gender
-            parent.setRelationshipWithStudent(relationshipWithStudent); // Set relationship
-            // parent.setParentCode("P" + savedUser.getUserId()); // Example parent code
+            // parent.setUser(savedUser); // Removed: Parent no longer directly holds User
+            parent.setParentCode(savedUser.getUserCode()); // Set parent_code from User's user_code
+            parent.setFullName(fullName); // Consider if this should come from User or be distinct
+            parent.setPhoneNumber(phone); // Consider if this should come from User or be distinct
+            parent.setGender(gender); 
+            parent.setRelationshipWithStudent(relationshipWithStudent); 
+            parent.setAddress(address); // Set address for parent
+            parent.setEmergencyContact(emergencyContact != null ? emergencyContact : phone); // Set emergency contact
             parentRepository.save(parent);
-            logger.info("Parent profile created for user: {}", savedUser.getUsername());
+            logger.info("Parent profile created for user: {} with parent_code: {}", savedUser.getUsername(), parent.getParentCode());
         } else if (userRole == UserRole.SchoolNurse) {
             Nurse nurse = new Nurse();
-            nurse.setUser(savedUser);
-            nurse.setFullName(fullName);
-            nurse.setPhoneNumber(phone);
-            nurse.setGender(gender); // Set gender
-            // nurse.setNurseCode("N" + savedUser.getUserId()); // Example nurse code
+            // nurse.setUser(savedUser); // Removed: Nurse no longer directly holds User
+            nurse.setNurseCode(savedUser.getUserCode()); // Set nurse_code from User's user_code
+            nurse.setFullName(savedUser.getFullName());
+            nurse.setPhoneNumber(savedUser.getPhoneNumber());
+            nurse.setGender(gender);
+            nurse.setProfessionalId(professionalId); // Set from parameter
+            nurse.setSpecialization(specialization); // Set from parameter
+            nurse.setQualification(qualification); // Set from parameter
+            
+            if (nurse.getProfessionalId() == null || nurse.getProfessionalId().isEmpty()) {
+                 logger.error("Professional ID for Nurse {} is not set during registration. Nurse profile cannot be saved without it.", nurse.getNurseCode());
+                 // This should ideally throw an error or be validated before this point
+                 throw new IllegalArgumentException("Professional ID is required for School Nurse registration.");
+            }
             nurseRepository.save(nurse);
-            logger.info("Nurse profile created for user: {}", savedUser.getUsername());
+            logger.info("Nurse profile created for user: {} with nurse_code: {}", savedUser.getUsername(), nurse.getNurseCode());
         }
 
         return savedUser;
@@ -138,5 +182,9 @@ public class UserService {
 
     public Optional<User> findById(Integer userId) {
         return userRepository.findById(userId);
+    }
+
+    public Optional<User> findByUserCode(String userCode) {
+        return userRepository.findByUserCode(userCode);
     }
 }

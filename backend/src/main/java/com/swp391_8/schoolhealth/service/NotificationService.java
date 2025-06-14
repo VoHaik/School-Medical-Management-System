@@ -5,5 +5,6 @@ import java.util.List;
 
 public interface NotificationService {
     List<NotificationDTO> getNotificationsByUserId(Long userId);
+    List<NotificationDTO> getNotificationsByParentUsernameAndStudentCode(String parentUsername, String studentCode);
     // Potentially add methods like markAsRead, createNotification, etc.
 }

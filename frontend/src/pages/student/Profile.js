@@ -38,7 +38,6 @@ import {
   Verified as VerifiedIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
-import PageHeader from '../../components/PageHeader';
 
 const Profile = () => {
   const { currentUser, getAuthAxios } = useAuth();

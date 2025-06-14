@@ -23,10 +23,6 @@ public class Nurse {
     @Column(name = "nurse_code", nullable = false, unique = true, length = 50)
     private String nurseCode;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
     @Nationalized
     @Column(name = "full_name", length = 100)
     private String fullName;
@@ -83,14 +79,6 @@ public class Nurse {
 
     public void setNurseCode(String nurseCode) {
         this.nurseCode = nurseCode;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
     }
 
     public String getFullName() {

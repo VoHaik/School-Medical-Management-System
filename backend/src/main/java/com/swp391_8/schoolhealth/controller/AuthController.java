@@ -128,10 +128,17 @@ public class AuthController {
                     signupRequest.getPassword(),
                     signupRequest.getFullName(),
                     signupRequest.getEmail(),
-                    signupRequest.getPhone(),       // Assuming SignupRequest has getPhone() for phone number
-                    signupRequest.getGender(),      // Pass gender
-                    signupRequest.getRelationship(),// Pass relationship
-                    signupRequest.getRole()
+                    signupRequest.getPhone(),
+                    signupRequest.getGender(),
+                    signupRequest.getRelationship(),
+                    signupRequest.getRole(),
+                    // Nurse-specific fields: professionalId, specialization, qualification
+                    null, // professionalId - assuming not provided in general signup
+                    null, // specialization - assuming not provided
+                    null, // qualification - assuming not provided
+                    // Parent-specific fields: address, emergencyContact
+                    null, // address - assuming not provided in general signup or handle if SignupRequest is updated
+                    null  // emergencyContact - assuming not provided or handle if SignupRequest is updated
             );
 
             logger.info("User '{}' registered successfully with role: {}", user.getUsername(), user.getRole());

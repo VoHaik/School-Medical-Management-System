@@ -2,12 +2,16 @@ package com.swp391_8.schoolhealth.service.impl;
 
 import com.swp391_8.schoolhealth.dto.NotificationDTO;
 import com.swp391_8.schoolhealth.model.Notification;
+import com.swp391_8.schoolhealth.model.User;
 import com.swp391_8.schoolhealth.repository.NotificationRepository;
+import com.swp391_8.schoolhealth.repository.UserRepository;
 import com.swp391_8.schoolhealth.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -16,11 +20,34 @@ public class NotificationServiceImpl implements NotificationService {
     @Autowired
     private NotificationRepository notificationRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Override
     public List<NotificationDTO> getNotificationsByUserId(Long userId) {
-        // Assuming User entity is linked and has a getUsername() or similar for createdBy
-        // And Notification entity has a direct userId field for the recipient
-        return notificationRepository.findByUser_UserIdOrderByCreatedAtDesc(userId).stream() //MODIFIED HERE
+        return notificationRepository.findByUser_UserIdOrderByCreatedAtDesc(userId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<NotificationDTO> getNotificationsByParentUsernameAndStudentCode(String parentUsername, String studentCode) {
+        Optional<User> parentUserOptional = userRepository.findByUsername(parentUsername);
+        if (!parentUserOptional.isPresent()) {
+            System.out.println("Parent user not found: " + parentUsername);
+            return Collections.emptyList();
+        }
+        User parentUser = parentUserOptional.get();
+        Long parentUserId = Long.valueOf(parentUser.getUserId());
+
+        List<Notification> notifications;
+        if (studentCode != null && !studentCode.isEmpty()) {
+            notifications = notificationRepository.findByUser_UserIdAndStudent_StudentCodeOrderByCreatedAtDesc(parentUserId, studentCode);
+        } else {
+            notifications = notificationRepository.findByUser_UserIdOrderByCreatedAtDesc(parentUserId);
+        }
+
+        return notifications.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -28,13 +55,19 @@ public class NotificationServiceImpl implements NotificationService {
     private NotificationDTO convertToDTO(Notification notification) {
         NotificationDTO dto = new NotificationDTO();
         dto.setNotificationId(notification.getNotificationId());
-        dto.setUserId(notification.getUserId()); // Assuming direct userId field
+        if (notification.getUser() != null) {
+            dto.setUserId(notification.getUser().getUserId()); // Corrected: Pass Integer directly
+        } else if (notification.getUserId() != null) {
+            dto.setUserId(notification.getUserId());
+        }
         dto.setTitle(notification.getTitle());
         dto.setMessage(notification.getMessage());
         dto.setRead(notification.isRead());
         dto.setCreatedAt(notification.getCreatedAt());
         dto.setNotificationType(notification.getNotificationType());
-        // dto.setCreatedBy(notification.getUser() != null ? notification.getUser().getUsername() : "System"); // Example if linked to a User entity who created it
+        if (notification.getStudent() != null) {
+            dto.setStudentCode(notification.getStudent().getStudentCode());
+        }
         return dto;
     }
 

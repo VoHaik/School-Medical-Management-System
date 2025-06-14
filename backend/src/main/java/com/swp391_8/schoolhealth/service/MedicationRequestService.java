@@ -8,9 +8,9 @@ import com.swp391_8.schoolhealth.model.Parent; // Added import
 import com.swp391_8.schoolhealth.model.Nurse; // Added import
 import com.swp391_8.schoolhealth.repository.MedicationRequestRepository;
 import com.swp391_8.schoolhealth.repository.StudentRepository;
-import com.swp391_8.schoolhealth.repository.UserRepository;
 import com.swp391_8.schoolhealth.repository.ParentRepository; // Added import
 import com.swp391_8.schoolhealth.repository.NurseRepository; // Added import
+import com.swp391_8.schoolhealth.security.services.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -30,9 +30,6 @@ public class MedicationRequestService {
     private StudentRepository studentRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private ParentRepository parentRepository; // Added injection
 
     @Autowired
@@ -43,17 +40,18 @@ public class MedicationRequestService {
 
     @Transactional
     public MedicationRequest createMedicationRequest(MedicationRequestDTO requestDTO, Authentication authentication) {
+        UserDetailsImpl userDetails = getUserDetailsFromAuthentication(authentication);
+        String parentUserCode = userDetails.getUsername();
+
         // Ensure the authenticated user is the parent of the student
         if (!securityService.isParentOfStudentByCode(authentication, requestDTO.getStudentCode())) {
             throw new SecurityException("Authenticated user is not authorized to create a medication request for this student.");
         }
 
-        User parentUser = userRepository.findById(getUserIdFromAuthentication(authentication))
-                .orElseThrow(() -> new RuntimeException("Parent User not found"));
-        Parent parent = parentRepository.findByUserUserId(parentUser.getUserId())
-                .orElseThrow(() -> new RuntimeException("Parent record not found for user"));
+        Parent parent = parentRepository.findByParentCode(parentUserCode)
+                .orElseThrow(() -> new RuntimeException("Parent record not found for user code: " + parentUserCode));
         Student student = studentRepository.findByStudentCode(requestDTO.getStudentCode())
-                .orElseThrow(() -> new RuntimeException("Student not found"));
+                .orElseThrow(() -> new RuntimeException("Student not found with code: " + requestDTO.getStudentCode()));
 
         MedicationRequest request = new MedicationRequest();
         request.setParent(parent);
@@ -70,24 +68,32 @@ public class MedicationRequestService {
     }
 
     public List<MedicationRequest> getMedicationRequestsByParent(Authentication authentication) {
-        Integer parentId = getUserIdFromAuthentication(authentication);
-        return medicationRequestRepository.findByParentUserId(parentId);
+        UserDetailsImpl userDetails = getUserDetailsFromAuthentication(authentication);
+        String parentUserCode = userDetails.getUsername();
+        // Assuming MedicationRequestRepository will have a method findByParentParentCode
+        return medicationRequestRepository.findByParentParentCode(parentUserCode);
     }
 
     public List<MedicationRequest> getMedicationRequestsForStudentByParent(String studentCode, Authentication authentication) {
-        Integer parentId = getUserIdFromAuthentication(authentication);
+        UserDetailsImpl userDetails = getUserDetailsFromAuthentication(authentication);
+        String parentUserCode = userDetails.getUsername();
+
         if (!securityService.isParentOfStudentByCode(authentication, studentCode)) {
             throw new SecurityException("Authenticated user is not authorized to view medication requests for this student.");
         }
-        return medicationRequestRepository.findByStudentStudentCodeAndParentUserId(studentCode, parentId);
+        // Assuming MedicationRequestRepository will have a method findByStudentStudentCodeAndParentParentCode
+        return medicationRequestRepository.findByStudentStudentCodeAndParentParentCode(studentCode, parentUserCode);
     }
 
     public MedicationRequest cancelMedicationRequest(Integer requestId, Authentication authentication) {
-        Integer parentId = getUserIdFromAuthentication(authentication);
+        UserDetailsImpl userDetails = getUserDetailsFromAuthentication(authentication);
+        String authenticatedUserCode = userDetails.getUsername();
+
         MedicationRequest request = medicationRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Medication request not found with ID: " + requestId));
 
-        if (!request.getParent().getUser().getUserId().equals(parentId)) { // Corrected to check against User's ID within Parent
+        // Parent entity now has parentCode, which is the user_code.
+        if (request.getParent() == null || !authenticatedUserCode.equals(request.getParent().getParentCode())) {
             throw new SecurityException("User is not authorized to cancel this medication request.");
         }
 
@@ -110,14 +116,14 @@ public class MedicationRequestService {
     }
 
     public MedicationRequest approveMedicationRequest(Integer requestId, Authentication authentication, String notes) {
+        UserDetailsImpl userDetails = getUserDetailsFromAuthentication(authentication);
+        String approverUserCode = userDetails.getUsername();
+
         MedicationRequest request = medicationRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Medication request not found with ID: " + requestId));
 
-        User approverUser = userRepository.findById(getUserIdFromAuthentication(authentication))
-                .orElseThrow(() -> new RuntimeException("Approver User not found"));
-        Nurse approver = nurseRepository.findByUserUserId(approverUser.getUserId())
-                .orElseThrow(() -> new RuntimeException("Nurse record not found for user"));
-
+        Nurse approver = nurseRepository.findByNurseCode(approverUserCode)
+                .orElseThrow(() -> new RuntimeException("Nurse record not found for user code: " + approverUserCode));
 
         request.setStatus(MedicationRequest.MedicationRequestStatus.APPROVED);
         request.setApprovedBy(approver);
@@ -127,13 +133,14 @@ public class MedicationRequestService {
     }
 
     public MedicationRequest rejectMedicationRequest(Integer requestId, Authentication authentication, String rejectionReason) {
+        UserDetailsImpl userDetails = getUserDetailsFromAuthentication(authentication);
+        String rejectorUserCode = userDetails.getUsername();
+
         MedicationRequest request = medicationRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Medication request not found with ID: " + requestId));
 
-        User rejectorUser = userRepository.findById(getUserIdFromAuthentication(authentication))
-                .orElseThrow(() -> new RuntimeException("Rejector User not found"));
-        Nurse rejector = nurseRepository.findByUserUserId(rejectorUser.getUserId())
-                .orElseThrow(() -> new RuntimeException("Nurse record not found for user"));
+        Nurse rejector = nurseRepository.findByNurseCode(rejectorUserCode)
+                .orElseThrow(() -> new RuntimeException("Nurse record not found for user code: " + rejectorUserCode));
 
         request.setStatus(MedicationRequest.MedicationRequestStatus.REJECTED);
         request.setApprovedBy(rejector); // Even for rejection, this field indicates who actioned it
@@ -142,19 +149,17 @@ public class MedicationRequestService {
         return medicationRequestRepository.save(request);
     }
 
-    // Helper method to get user ID from Authentication object
-    private Integer getUserIdFromAuthentication(Authentication authentication) {
+    // Helper method to get UserDetailsImpl from Authentication object
+    private UserDetailsImpl getUserDetailsFromAuthentication(Authentication authentication) {
         if (authentication == null || authentication.getPrincipal() == null) {
             throw new SecurityException("User not authenticated.");
         }
-        try {
-            // Assuming the principal's class has a getId() method that returns Integer
-            return (Integer) authentication.getPrincipal().getClass().getMethod("getId").invoke(authentication.getPrincipal());
-        } catch (Exception e) {
-            // Log the exception for debugging
-            // logger.error("Error retrieving user ID from authentication principal", e);
-            throw new RuntimeException("Could not extract user ID from authentication principal. Ensure principal has getId().", e);
+        if (!(authentication.getPrincipal() instanceof UserDetailsImpl)) {
+            // Log the actual type for debugging if necessary
+            // logger.warn("Principal is not of type UserDetailsImpl, actual type: " + authentication.getPrincipal().getClass().getName());
+            throw new SecurityException("Authentication principal is not an instance of UserDetailsImpl.");
         }
+        return (UserDetailsImpl) authentication.getPrincipal();
     }
 
     // ... any other existing methods ...

@@ -87,7 +87,7 @@ const ParentDashboard = () => {
   }, [currentUser]);
 
   useEffect(() => {
-    const child = dashboardData.children.find(c => c.id === selectedChildId);
+    const child = dashboardData.children.find(c => c.studentCode === selectedChildId); // Changed c.id to c.studentCode
     const childName = child ? child.fullName : '';
 
     const filterItems = (items) => {
@@ -95,7 +95,7 @@ const ParentDashboard = () => {
       // Ensure items is an array before filtering
       if (!Array.isArray(items)) return []; 
       return items.filter(item => 
-        (item.studentName === childName || item.studentId === selectedChildId) || !item.studentId // Include items not tied to a student
+        (item.studentName === childName || item.studentCode === selectedChildId) || !item.studentCode // Changed item.studentId to item.studentCode
       );
     };
 
@@ -122,67 +122,115 @@ const ParentDashboard = () => {
 
   }, [selectedChildId, dashboardData.allRecentNotifications, dashboardData.allUpcomingEvents, dashboardData.allMedicationRequests, dashboardData.children]);
 
+  // This useEffect will re-fetch data if the selectedChildId changes, 
+  // or if the current user changes (e.g., on login)
+  useEffect(() => {
+    console.log("ParentDashboard currentUser state in useEffect:", currentUser); // Debug currentUser
+    if (currentUser && currentUser.accessToken) { // Check for accessToken specifically
+      fetchDashboardData(); 
+    } else if (currentUser && !currentUser.accessToken) {
+      console.error("ParentDashboard: currentUser exists but accessToken is missing. Data fetch skipped.", currentUser);
+      setLoading(false); // Stop loading if token is missing
+      setDashboardData({ // Reset data to avoid errors with undefined properties
+        children: [],
+        allRecentNotifications: [],
+        allUpcomingEvents: [],
+        allMedicationRequests: [],
+        healthSummary: { totalChildren: 0, activeAlerts: 0, pendingRequests: 0, upcomingEventsCount: 0 }
+      });
+    } else if (!currentUser) {
+      console.log("ParentDashboard: currentUser is null. Waiting for user data. Data fetch skipped.");
+      setLoading(false); // Stop loading if no user
+       setDashboardData({ // Reset data
+        children: [],
+        allRecentNotifications: [],
+        allUpcomingEvents: [],
+        allMedicationRequests: [],
+        healthSummary: { totalChildren: 0, activeAlerts: 0, pendingRequests: 0, upcomingEventsCount: 0 }
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, selectedChildId]); // Dependency array remains
+
   const fetchDashboardData = async () => {
     setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      if (!currentUser || !currentUser.id) {
-        setLoading(false);
-        return;
-      }
 
-      // Fetch children first
-      const childrenResponse = await axios.get(`/api/students/parent/${currentUser.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+    if (!currentUser || !currentUser.accessToken) {
+      console.error("fetchDashboardData: Cannot fetch data, currentUser or accessToken is missing.", currentUser);
+      setLoading(false);
+      setDashboardData(prevData => ({ // Keep existing children if any, clear others
+        ...prevData,
+        children: prevData.children || [], // Attempt to preserve children if already fetched by a previous valid call
+        allRecentNotifications: [],
+        allUpcomingEvents: [],
+        allMedicationRequests: [],
+        // healthSummary will be recalculated or can be reset here
+      }));
+      return;
+    }
+
+    try {
+      console.log(`Fetching children for parent: ${currentUser.username} with token: ${currentUser.accessToken ? currentUser.accessToken.substring(0, 15) + '...' : 'No Token'}`);
+      const childrenResponse = await axios.get(`/api/parent/students`, {
+        headers: { Authorization: `Bearer ${currentUser.accessToken}` },
       });
       const fetchedChildren = childrenResponse.data || [];
+      console.log("Fetched children:", fetchedChildren);
       setDashboardData(prev => ({ ...prev, children: fetchedChildren }));
 
-      // If a child is selected, fetch their specific data, otherwise fetch general data for the parent
-      const studentIdParam = selectedChildId ? `?studentId=${selectedChildId}` : '';
+      const studentCodeParam = selectedChildId ? `?studentCode=${selectedChildId}` : '';
 
-      // Fetch Notifications
-      const notificationsResponse = await axios.get(`/api/notifications/parent/${currentUser.id}${studentIdParam}`, {
-        headers: { Authorization: `Bearer ${token}` }
+      if (!currentUser.username) {
+        console.error("Parent code (currentUser.username) is not available for fetching notifications/events.");
+        // Potentially set parts of dashboard data to empty or show an error
+        setLoading(false); 
+        return;
+      }
+      
+      console.log(`Fetching notifications for parent: ${currentUser.username}, student: ${selectedChildId || 'All'}`);
+      const notificationsResponse = await axios.get(`/api/notifications/parent/${currentUser.username}${studentCodeParam}`, {
+        headers: { Authorization: `Bearer ${currentUser.accessToken}` },
       });
       const fetchedNotifications = notificationsResponse.data || [];
+      console.log("Fetched notifications:", fetchedNotifications);
 
-      // Fetch Events
-      const eventsResponse = await axios.get(`/api/events/parent/${currentUser.id}${studentIdParam}`, {
-        headers: { Authorization: `Bearer ${token}` }
+
+      console.log(`Fetching events for parent: ${currentUser.username}, student: ${selectedChildId || 'All'}`);
+      const eventsResponse = await axios.get(`/api/events/parent/${currentUser.username}${studentCodeParam}`, {
+        headers: { Authorization: `Bearer ${currentUser.accessToken}` },
       });
       const fetchedEvents = eventsResponse.data || [];
+      console.log("Fetched events:", fetchedEvents);
 
-      // Fetch Medication Summary/Requests
-      // This endpoint specifically requires studentId for the summary as per current backend mock.
-      // If no child is selected, we might fetch an aggregated summary or an empty list.
-      // For now, if no child is selected, we'll fetch an empty list for medication requests.
       let fetchedMedicationRequests = [];
       if (selectedChildId) {
-        const medicationResponse = await axios.get(`/api/medication-submissions/summary/parent/${currentUser.id}?studentId=${selectedChildId}`, {
-            headers: { Authorization: `Bearer ${token}` }
+        console.log(`Fetching medication requests for student: ${selectedChildId}`);
+        const medicationResponse = await axios.get(`/api/medication-submissions/summary/student/${selectedChildId}`, {
+          headers: { Authorization: `Bearer ${currentUser.accessToken}` },
         });
         fetchedMedicationRequests = medicationResponse.data || [];
+        console.log("Fetched medication requests:", fetchedMedicationRequests);
       } else {
-        // Optional: Fetch all medication requests for all children if an endpoint exists and is desired
-        // Or, fetch a parent-level summary if that makes sense for your application
-        // For now, keeping it empty if no specific child is selected for medication summary.
+        console.log("No child selected, skipping medication requests fetch for a specific child.");
       }
 
       setDashboardData(prevData => ({
         ...prevData,
-        children: fetchedChildren, // Ensure children are updated
+        children: fetchedChildren,
         allRecentNotifications: fetchedNotifications,
         allUpcomingEvents: fetchedEvents,
         allMedicationRequests: fetchedMedicationRequests,
-        // Health summary will be recalculated by the useEffect hook that depends on these arrays and selectedChildId
       }));
 
     } catch (error) {
-      console.error('Error fetching dashboard data:', error.response ? error.response.data : error);
-      // Set empty arrays on error to prevent issues with .filter or .map
+      console.error('Error fetching dashboard data:', error.response ? error.response.data : error.message, error.config);
+      if (error.response && error.response.status === 401) {
+        console.error("Received 401 Unauthorized. Token might be invalid or expired. CurrentUser:", currentUser);
+        // Potentially trigger logout or token refresh logic here if AuthContext supports it
+      }
       setDashboardData(prevData => ({
-        ...prevData, // Keep children if already fetched
+        ...prevData,
+        children: prevData.children || [], // Preserve children if fetched before error
         allRecentNotifications: [],
         allUpcomingEvents: [],
         allMedicationRequests: [],
@@ -191,59 +239,6 @@ const ParentDashboard = () => {
       setLoading(false);
     }
   };
-
-  // This useEffect will re-fetch data if the selectedChildId changes, 
-  // or if the current user changes (e.g., on login)
-  useEffect(() => {
-    if (currentUser && currentUser.id) {
-      fetchDashboardData(); 
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, selectedChildId]); // Re-fetch when selectedChildId changes
-
-  // This useEffect is for filtering and setting displayData and healthSummary
-  // It should run AFTER fetchDashboardData updates the `all*` arrays.
-  useEffect(() => {
-    const child = dashboardData.children.find(c => c.id === selectedChildId);
-    const childName = child ? child.fullName : ''; // Not used in current filter logic but kept for context
-
-    // If selectedChildId is present, the fetched data is already specific to that child (for notifications, events, meds).
-    // If selectedChildId is NOT present, fetched data is general for the parent.
-    // So, the `filterItems` logic might be redundant if backend already filters by studentId.
-    // However, if backend returns all items for a parent and frontend needs to filter, it's useful.
-    // For now, assuming backend handles filtering if studentId is passed.
-    // If studentId is NOT passed to backend, then frontend filtering is essential.
-
-    // Let's assume the `all*` arrays are now correctly populated (either all for parent, or specific to child)
-    // The current `fetchDashboardData` fetches child-specific data if `selectedChildId` is set.
-    // So, no additional frontend filtering is strictly needed if `selectedChildId` was used in API calls.
-
-    setDisplayData({
-      recentNotifications: dashboardData.allRecentNotifications, // Already filtered by backend if selectedChildId was used
-      upcomingEvents: dashboardData.allUpcomingEvents, // Already filtered by backend if selectedChildId was used
-      medicationRequests: dashboardData.allMedicationRequests, // Already filtered by backend if selectedChildId was used
-    });
-
-    // Recalculate health summary based on the (potentially filtered by backend) data
-    setDashboardData(prevData => ({
-      ...prevData,
-      healthSummary: {
-        totalChildren: prevData.children.length,
-        activeAlerts: Array.isArray(prevData.allRecentNotifications) ? prevData.allRecentNotifications.filter(n => n.type === 'HEALTH_FORM_DUE' || n.priority === 'high').length : 0, // Example: count high priority or specific types
-        pendingRequests: Array.isArray(prevData.allMedicationRequests) ? prevData.allMedicationRequests.filter(r => r.status && r.status.toUpperCase() === 'PENDING_APPROVAL').length : 0,
-        upcomingEventsCount: Array.isArray(prevData.allUpcomingEvents) ? prevData.allUpcomingEvents.length : 0,
-      }
-    }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChildId, dashboardData.allRecentNotifications, dashboardData.allUpcomingEvents, dashboardData.allMedicationRequests, dashboardData.children]);
-
-  // Initial fetch when component mounts and currentUser is available
-  useEffect(() => {
-    if (currentUser && currentUser.id) {
-        fetchDashboardData();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser]); // Initial fetch based on currentUser only
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -322,7 +317,7 @@ const ParentDashboard = () => {
     }
   ];
 
-  const selectedChildName = selectedChildId ? dashboardData.children.find(c => c.id === selectedChildId)?.fullName : '' ;
+  const selectedChildName = selectedChildId ? dashboardData.children.find(c => c.studentCode === selectedChildId)?.fullName : '' ; // Changed c.id to c.studentCode
 
   return (
     <Box sx={{ p: 3, backgroundColor: '#f4f6f8', minHeight: '100vh' }}>
@@ -350,7 +345,7 @@ const ParentDashboard = () => {
                   <em>All Children / Overview</em>
                 </MenuItem>
                 {dashboardData.children.map((child) => (
-                  <MenuItem key={child.id} value={child.id}>{child.fullName}</MenuItem>
+                  <MenuItem key={child.studentCode} value={child.studentCode}>{child.fullName}</MenuItem> // Changed child.id to child.studentCode
                 ))}
               </Select>
             </FormControl>
@@ -419,7 +414,7 @@ const ParentDashboard = () => {
                   variant="contained" 
                   fullWidth 
                   onClick={() => {
-                    navigate(action.path, { state: { studentId: selectedChildId } });
+                    navigate(action.path, { state: { studentCode: selectedChildId } }); // Changed studentId to studentCode
                   }}
                   sx={{ 
                     borderTopLeftRadius: 0, 
@@ -529,7 +524,7 @@ const ParentDashboard = () => {
         {dashboardData.children.length > 0 ? (
           <Grid container spacing={2}>
             {dashboardData.children.map((child) => (
-              <Grid item xs={12} sm={6} md={4} key={child.id}>
+              <Grid item xs={12} sm={6} md={4} key={child.studentCode}> // Changed child.id to child.studentCode
                 <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -589,7 +584,7 @@ const ParentDashboard = () => {
                     size="small"
                     onClick={() => {
                         setChildDetailsOpen(false);
-                        navigate('/parent/health-declaration', { state: { studentId: selectedChildForDialog.id } });
+                        navigate('/parent/health-declaration', { state: { studentCode: selectedChildForDialog.studentCode } }); // Changed studentId to studentCode and used studentCode
                     }}
                 >View Health Declaration</Button>
                 <Button 
@@ -597,7 +592,7 @@ const ParentDashboard = () => {
                     size="small"
                     onClick={() => {
                         setChildDetailsOpen(false);
-                        navigate('/parent/medication-submission', { state: { studentId: selectedChildForDialog.id } });
+                        navigate('/parent/medication-submission', { state: { studentCode: selectedChildForDialog.studentCode } }); // Changed studentId to studentCode and used studentCode
                     }}
                 >Manage Medications</Button>
               </Box>

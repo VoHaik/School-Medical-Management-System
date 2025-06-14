@@ -12,12 +12,6 @@ public interface ParentRepository extends JpaRepository<Parent, Integer> {
     // Find parent by parent code
     Optional<Parent> findByParentCode(String parentCode);
     
-    // Find parent by user ID
-    Optional<Parent> findByUserUserId(Integer userId);
-    
     // Check if parent exists by parent code
     boolean existsByParentCode(String parentCode);
-    
-    // Check if parent exists by user ID
-    boolean existsByUserUserId(Integer userId);
 }

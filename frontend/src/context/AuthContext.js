@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
 
       if (token && userJson) {
         try {
-          const user = JSON.parse(userJson);
+          // const user = JSON.parse(userJson); // User from localStorage might be stale
 
           // Create an axios instance with the token
           const instance = axios.create({
@@ -36,25 +36,27 @@ export const AuthProvider = ({ children }) => {
               username,
               email,
               fullName,
-              roles
+              roles,
+              accessToken: token // Include the token in the currentUser object
             };
-            console.log('Token validation successful, user data:', updatedUser);
-            localStorage.setItem('user', JSON.stringify(updatedUser));
+            // console.log('Token validation successful, user data:', updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser)); // Store updated user (with token)
             setCurrentUser(updatedUser);
           } catch (error) {
             console.error('Token validation failed:', error);
             // If the request fails with 401, the token is invalid or expired
             if (error.response && error.response.status === 401) {
-              console.log('Token expired or invalid, clearing storage');
+              // console.log('Token expired or invalid, clearing storage');
               localStorage.removeItem('token');
               localStorage.removeItem('user');
               setCurrentUser(null);
             }
           }
         } catch (error) {
-          console.error('Error parsing user data:', error);
+          console.error('Error processing stored user data during token validation:', error);
           localStorage.removeItem('token');
           localStorage.removeItem('user');
+          setCurrentUser(null); // Clear user if there's an error
         }
       }
 
@@ -84,14 +86,15 @@ export const AuthProvider = ({ children }) => {
         username: userName,
         email,
         fullName,
-        roles
+        roles,
+        accessToken: token // Include the token in the currentUser object
       };
 
-      console.log('Login successful, user data:', user);
-      localStorage.setItem('user', JSON.stringify(user));
+      // console.log('Login successful, user data:', user);
+      localStorage.setItem('user', JSON.stringify(user)); // Store user (with token)
       setCurrentUser(user);
 
-      return { success: true, user: user }; // MODIFIED: return user object
+      return { success: true, user }; // MODIFIED: return user object
     } catch (error) {
       setError(error.response?.data?.message || 'Login failed. Please check your credentials.');
       return { 

@@ -2,7 +2,7 @@ package com.swp391_8.schoolhealth.controller;
 
 import com.swp391_8.schoolhealth.dto.MessageResponse;
 import com.swp391_8.schoolhealth.model.Nurse;
-import com.swp391_8.schoolhealth.model.User;
+import com.swp391_8.schoolhealth.repository.UserRepository;
 import com.swp391_8.schoolhealth.service.NurseService;
 import com.swp391_8.schoolhealth.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +24,9 @@ public class NurseController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -48,6 +51,7 @@ public class NurseController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    /*
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasRole('ADMIN') or authentication.principal.id == #userId")
     public ResponseEntity<?> getNurseByUserId(@PathVariable Integer userId) {
@@ -55,43 +59,59 @@ public class NurseController {
         return nurse.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
+    */
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createNurse(@RequestBody Map<String, Object> nurseData) {
         try {
-            // Extract user_id from nurse data
-            Integer userId = (Integer) nurseData.get("userId");
-            if (userId == null) {
-                return ResponseEntity.badRequest().body(new MessageResponse("User ID is required", false));
+            // Expect userCode instead of userId
+            String userCode = (String) nurseData.get("userCode");
+            if (userCode == null || userCode.isEmpty()) {
+                return ResponseEntity.badRequest().body(new MessageResponse("userCode is required", false));
             }
 
-            // Find the user
-            Optional<User> userOptional = userService.findById(userId); // Changed from getUserById to findById
+            // Find the user by userCode
+            Optional<com.swp391_8.schoolhealth.model.User> userOptional = userRepository.findByUserCode(userCode);
             if (!userOptional.isPresent()) {
-                return ResponseEntity.badRequest().body(new MessageResponse("User not found", false));
+                return ResponseEntity.badRequest().body(new MessageResponse("User not found with userCode: " + userCode, false));
+            }
+            com.swp391_8.schoolhealth.model.User user = userOptional.get();
+
+            // Verify the user has the SchoolNurse role (optional, but good practice)
+            if (user.getRole() == null || !"SchoolNurse".equals(user.getRole().getRoleName())) {
+                 return ResponseEntity.badRequest().body(new MessageResponse("User with userCode: " + userCode + " is not a SchoolNurse.", false));
+            }
+
+            // Check if a Nurse profile already exists for this user_code
+            if (nurseService.getNurseByCode(user.getUserCode()).isPresent()) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Nurse profile already exists for userCode: " + user.getUserCode(), false));
             }
 
             // Create nurse object
             Nurse nurse = new Nurse();
-            nurse.setUser(userOptional.get());
-
-            // Set nurse code if provided
-            String nurseCode = (String) nurseData.get("nurseCode");
-            if (nurseCode != null && !nurseCode.isEmpty()) {
-                nurse.setNurseCode(nurseCode);
-            }
+            nurse.setNurseCode(user.getUserCode()); // Set nurse_code from User's user_code
 
             // Set other fields
-            nurse.setProfessionalId((String) nurseData.get("professionalId"));
+            String professionalId = (String) nurseData.get("professionalId");
+            if (professionalId == null || professionalId.isEmpty()) {
+                return ResponseEntity.badRequest().body(new MessageResponse("professionalId is required for Nurse", false));
+            }
+            nurse.setProfessionalId(professionalId);
             nurse.setSpecialization((String) nurseData.get("specialization"));
             nurse.setQualification((String) nurseData.get("qualification"));
+            
+            nurse.setFullName(user.getFullName()); 
+            nurse.setPhoneNumber(user.getPhoneNumber());
 
             // Save the nurse
             Nurse savedNurse = nurseService.createNurse(nurse);
             return ResponseEntity.ok(savedNurse);
 
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) { // Catch specific exceptions from service
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage(), false));
+        } 
+        catch (Exception e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error creating nurse: " + e.getMessage(), false));
         }
     }

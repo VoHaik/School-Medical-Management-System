@@ -16,8 +16,7 @@ public interface StudentRepository extends JpaRepository<Student, String> { // C
     Optional<Student> findByUser(com.swp391_8.schoolhealth.model.User user); // Added for direct entity reference
     Optional<Student> findByStudentCode(String studentCode); // Added findByStudentCode
     
-    // Find students by parent ID using the relationship table
-    // This query might need to be updated or removed if StudentService.getStudentsByParentId is preferred
-    @Query("SELECT s FROM Student s JOIN ParentStudentRelationship psr ON s.studentCode = psr.student.studentCode WHERE psr.parent.user.userId = :parentId") // Changed to studentCode and psr.parent.user.userId
-    List<Student> findByParentId(@Param("parentId") Integer parentId);
+    // Find students by parent code using the relationship table
+    @Query("SELECT s FROM Student s JOIN ParentStudentRelationship psr ON s.studentCode = psr.student.studentCode WHERE psr.parent.parentCode = :parentCode")
+    List<Student> findByParentCode(@Param("parentCode") String parentCode);
 }

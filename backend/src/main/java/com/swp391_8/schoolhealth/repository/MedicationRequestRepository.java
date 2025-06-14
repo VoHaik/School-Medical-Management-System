@@ -12,13 +12,13 @@ public interface MedicationRequestRepository extends JpaRepository<MedicationReq
 
     List<MedicationRequest> findByStudentStudentCode(String studentCode);
 
-    List<MedicationRequest> findByParentUserId(Integer parentId);
+    List<MedicationRequest> findByParentParentCode(String parentCode);
 
-    List<MedicationRequest> findByStudentStudentCodeAndParentUserId(String studentCode, Integer parentId);
+    List<MedicationRequest> findByStudentStudentCodeAndParentParentCode(String studentCode, String parentCode);
 
     // Add more specific queries if needed, e.g., by status
     List<MedicationRequest> findByStudentStudentCodeAndStatus(String studentCode, MedicationRequestStatus status);
-    List<MedicationRequest> findByParentUserIdAndStatus(Integer parentId, MedicationRequestStatus status);
+    List<MedicationRequest> findByParentParentCodeAndStatus(String parentCode, MedicationRequestStatus status);
     List<MedicationRequest> findByStatus(MedicationRequestStatus status);
 
 }

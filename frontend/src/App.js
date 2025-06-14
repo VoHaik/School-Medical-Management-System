@@ -6,7 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import StudentProfile from './pages/StudentProfile';
+
 import StudentBlog from './pages/StudentBlog';
 import AuthDebug from './pages/AuthDebug';
 import DashboardNew from './pages/DashboardNew';
@@ -57,22 +57,24 @@ import { ThemeProvider } from './context/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
 console.log('--- App.js MODULE LOADED - V3 ---');
-console.log('[App.js] ProtectedRoute module imported:', ProtectedRoute); // New log
+// console.log('[App.js] ProtectedRoute module imported:', ProtectedRoute); // New log
 
 // Prevent direct execution with Node.js
 if (typeof window === 'undefined') {
-  console.error(
-    'Error: This file contains JSX and is intended to be run with React.\n' +
-    'Please use the correct method to run this application:\n' +
-    '1. Navigate to the frontend directory: cd frontend\n' +
-    '2. Run the React development server: npm start\n' +
-    'For more information, please refer to the README.md file.'
-  );
-  process.exit(1);
+  // console.error(
+  //   'Error: This file contains JSX and is intended to be run with React.\n' +
+  //   'Please use the correct method to run this application:\n' +
+  //   '1. Navigate to the frontend directory: cd frontend\n' +
+  //   '2. Run the React development server: npm start\n' +
+  //   'For more information, please refer to the README.md file.'
+  // );
+  if (process && typeof process.exit === 'function') {
+    process.exit(1);
+  }
 }
 
 function App() {
-  console.log('[App.js] App function component rendering'); // New log
+  // console.log('[App.js] App function component rendering'); // New log
   return (
     <ErrorBoundary>
       <AuthProvider>
@@ -149,17 +151,17 @@ function App() {
                     <ChildInformationForm />
                   </ProtectedRoute>
                 } />
-                <Route path="/parent/child/:childId/edit" element={
+                <Route path="/parent/child/:studentCode/edit" element={ // Changed :childId to :studentCode
                   <ProtectedRoute allowedRoles={['ROLE_PARENT']}>
                     <ChildInformationForm />
                   </ProtectedRoute>
                 } />
-                <Route path="/parent/child/:childId/profile" element={
+                <Route path="/parent/child/:studentCode/profile" element={ // Changed :childId to :studentCode
                   <ProtectedRoute allowedRoles={['ROLE_PARENT']}>
                     <ChildProfileView />
                   </ProtectedRoute>
                 } />
-                <Route path="/parent/child/:childId/medical-history" element={ // Add this new route
+                <Route path="/parent/child/:studentCode/medical-history" element={ // Changed :childId to :studentCode
                   <ProtectedRoute allowedRoles={['ROLE_PARENT']}>
                     <ChildMedicalHistory />
                   </ProtectedRoute>
@@ -249,7 +251,9 @@ function App() {
                   <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
                     <DataExport />
                   </ProtectedRoute>
-                } />                {/* Student Routes */}
+                } />
+
+                {/* Student Routes */}
                 <Route path="/student/profile" element={
                   <ProtectedRoute allowedRoles={['ROLE_STUDENT']}>
                     <Profile />
@@ -269,16 +273,12 @@ function App() {
                   <ProtectedRoute allowedRoles={['ROLE_STUDENT']}>
                     <VaccinationRecord />
                   </ProtectedRoute>
-                } />                <Route path="/student/health-resources" element={
+                } />
+                <Route path="/student/health-resources" element={
                   <ProtectedRoute allowedRoles={['ROLE_STUDENT']}>
                     <HealthResources />
                   </ProtectedRoute>
                 } />
-                {/* <Route path="/student/profile" element={
-                  <ProtectedRoute allowedRoles={['ROLE_STUDENT']}>
-                    <Profile />
-                  </ProtectedRoute>
-                } /> */}
 
                 {/* Catch all route */}
                 <Route path="*" element={<Navigate to="/" replace />} />

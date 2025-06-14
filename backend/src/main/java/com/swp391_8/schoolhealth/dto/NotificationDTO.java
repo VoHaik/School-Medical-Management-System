@@ -14,6 +14,7 @@ public class NotificationDTO {
     private Integer userId; // ID of the recipient user
     private Integer studentId; // Optional: ID of the related student
     private String studentName; // Optional: For display
+    private String studentCode; // Added studentCode
     private String message;
     private String type;
     private boolean isRead;
@@ -53,6 +54,14 @@ public class NotificationDTO {
 
     public void setStudentName(String studentName) {
         this.studentName = studentName;
+    }
+
+    public String getStudentCode() {
+        return studentCode;
+    }
+
+    public void setStudentCode(String studentCode) {
+        this.studentCode = studentCode;
     }
 
     public String getMessage() {

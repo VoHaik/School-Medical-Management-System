@@ -16,6 +16,7 @@ public class UserDetailsImpl implements UserDetails {
     private String email;
     private String fullName;
     private String phoneNumber;
+    private String userCode; // Added userCode field
 
     @JsonIgnore
     private String password;
@@ -25,7 +26,7 @@ public class UserDetailsImpl implements UserDetails {
     private boolean isActive;
 
     public UserDetailsImpl(Integer id, String username, String email, String fullName, String phoneNumber, String password,
-                           Collection<? extends GrantedAuthority> authorities, boolean isActive) {
+                           Collection<? extends GrantedAuthority> authorities, boolean isActive, String userCode) { // Added userCode to constructor
         this.id = id;
         this.username = username;
         this.email = email;
@@ -34,6 +35,7 @@ public class UserDetailsImpl implements UserDetails {
         this.password = password;
         this.authorities = authorities;
         this.isActive = isActive;
+        this.userCode = userCode; // Initialize userCode
     }    public static UserDetailsImpl build(User user) {
         // Create authorities based on the user\'s role
         List<GrantedAuthority> authorities = new ArrayList<>();
@@ -56,7 +58,8 @@ public class UserDetailsImpl implements UserDetails {
                 user.getPhoneNumber(),
                 user.getPassword(),
                 authorities,
-                user.getIsActive());
+                user.getIsActive(),
+                user.getUserCode()); // Pass userCode to constructor
     }
 
     @Override
@@ -78,6 +81,10 @@ public class UserDetailsImpl implements UserDetails {
 
     public boolean getIsActive() {
         return isActive;
+    }
+
+    public String getUserCode() { // Added getter for userCode
+        return userCode;
     }
 
     @Override

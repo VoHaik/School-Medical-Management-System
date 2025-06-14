@@ -13,13 +13,13 @@ const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false); // State to control menu visibility
 
   // Debug authentication state
-  console.log('Header render - Authentication state:', {
-    isAuthenticated: isAuthenticated(),
-    currentUser,
-    userRoles: currentUser?.roles,
-    hasStudentRole: currentUser?.roles?.includes('ROLE_STUDENT'),
-    hasParentRole: currentUser?.roles?.includes('ROLE_PARENT')
-  });
+  // console.log('Header render - Authentication state:', {
+  //   isAuthenticated: isAuthenticated(),
+  //   currentUser,
+  //   userRoles: currentUser?.roles,
+  //   hasStudentRole: currentUser?.roles?.includes('ROLE_STUDENT'),
+  //   hasParentRole: currentUser?.roles?.includes('ROLE_PARENT')
+  // });
 
   const handleMenuToggle = () => {
     setMenuOpen(!menuOpen);
@@ -33,6 +33,7 @@ const Header = () => {
     e.preventDefault();
     logout();
     navigate('/');
+    handleCloseMenu(); // Close menu after logout
   };
 
   return (

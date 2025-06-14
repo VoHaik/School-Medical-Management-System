@@ -17,4 +17,5 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     // Or if Notification has a direct userId field for the recipient:
     List<Notification> findByUser_UserIdAndIsReadFalseOrderByCreatedAtDesc(Long userId); // Example: find unread for a user
     List<Notification> findByUser_UserIdOrderByCreatedAtDesc(Long userId); // Example: find all for a user
+    List<Notification> findByUser_UserIdAndStudent_StudentCodeOrderByCreatedAtDesc(Long userId, String studentCode);
 }

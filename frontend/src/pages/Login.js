@@ -119,7 +119,7 @@ const Login = () => {
       setSnackbarMessage('Login failed due to a system error. Please try again later.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
-      console.error('Login error:', error);
+      // console.error('Login error:', error);
     }
   };
 

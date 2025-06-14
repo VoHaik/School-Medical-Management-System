@@ -9,9 +9,10 @@ import ChronicIllnessItem from '../../components/parent/ChronicIllnessItem';
 import MedicationItem from '../../components/parent/MedicationItem';
 import EmergencyContactItem from '../../components/parent/EmergencyContactItem';
 import VaccinationItem from '../../components/parent/VaccinationItem';
+import { useLocation } from 'react-router-dom'; // Added useLocation
 
 const schema = yup.object().shape({
-  studentId: yup.string().required("Child selection is required"),
+  studentCode: yup.string().required("Child selection is required"), // Changed studentId to studentCode
   allergies: yup.array().of(yup.string().nullable()), // Allow null or empty strings initially
   chronicIllnesses: yup.array().of(yup.string().nullable()), // Allow null or empty strings initially
   medications: yup.array().of(yup.object().shape({
@@ -42,8 +43,9 @@ const schema = yup.object().shape({
 
 const HealthDeclaration = () => {
   const { currentUser } = useContext(AuthContext);
+  const location = useLocation(); // Added to get state from navigation
   const [children, setChildren] = useState([]);
-  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [selectedStudentCode, setSelectedStudentCode] = useState(''); // Changed selectedStudentId to selectedStudentCode
   const [initialLoading, setInitialLoading] = useState(true); // For children list
   const [isFetchingDeclaration, setIsFetchingDeclaration] = useState(false); // For health data for a selected child
   const [submitting, setSubmitting] = useState(false); // For form submission (save/submit)
@@ -51,7 +53,7 @@ const HealthDeclaration = () => {
   const { control, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
-      studentId: '',
+      studentCode: '', // Changed studentId to studentCode
       allergies: [],
       chronicIllnesses: [],
       medications: [],
@@ -70,14 +72,21 @@ const HealthDeclaration = () => {
   // Effect to fetch parent's children
   useEffect(() => {
     const fetchChildren = async () => {
-      if (currentUser && currentUser.id) {
+      if (currentUser && currentUser.username) { // Use username (parent_code)
         setInitialLoading(true);
         try {
           const token = localStorage.getItem('token');
-          const childrenResponse = await axios.get(`/api/students/parent/${currentUser.id}`, {
+          // Assuming /api/parent/students returns children with studentCode
+          const childrenResponse = await axios.get(`/api/parent/students`, { 
             headers: { Authorization: `Bearer ${token}` }
           });
           setChildren(childrenResponse.data || []);
+          // If studentCode is passed via navigation state, set it
+          if (location.state?.studentCode) {
+            setSelectedStudentCode(location.state.studentCode);
+            setValue('studentCode', location.state.studentCode); // Also set in RHF
+          }
+
         } catch (error) {
           console.error('Error fetching children:', error);
           setChildren([]);
@@ -92,11 +101,11 @@ const HealthDeclaration = () => {
       }
     };
     fetchChildren();
-  }, [currentUser]);
+  }, [currentUser, location.state]); // Added location.state to dependencies
 
-  const resetFormToDefaults = useCallback((studentIdToKeep = '') => {
+  const resetFormToDefaults = useCallback((studentCodeToKeep = '') => { // Changed studentIdToKeep to studentCodeToKeep
     reset({
-      studentId: studentIdToKeep, // Keep the selected student ID if provided
+      studentCode: studentCodeToKeep, // Changed studentId to studentCode
       allergies: [],
       chronicIllnesses: [],
       medications: [],
@@ -112,16 +121,16 @@ const HealthDeclaration = () => {
     });
   }, [reset]);
 
-  // Effect to fetch health declaration when selectedStudentId changes
-  const fetchHealthDeclaration = useCallback(async (studentIdToFetch) => {
-    if (!studentIdToFetch) {
+  // Effect to fetch health declaration when selectedStudentCode changes
+  const fetchHealthDeclaration = useCallback(async (studentCodeToFetch) => { // Changed studentIdToFetch to studentCodeToFetch
+    if (!studentCodeToFetch) {
       resetFormToDefaults(); // Reset if no student is selected
       return;
     }
     setIsFetchingDeclaration(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/health-declaration?studentId=${studentIdToFetch}`, {
+      const response = await axios.get(`/api/health-declaration?studentCode=${studentCodeToFetch}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -129,7 +138,7 @@ const HealthDeclaration = () => {
         const declarationData = response.data;
         const formData = {
           ...declarationData,
-          studentId: studentIdToFetch, // Ensure this is the currently selected student
+          studentCode: declarationData.studentCode || studentCodeToFetch, // Ensure studentCode is set
           allergies: declarationData.allergies || [],
           chronicIllnesses: declarationData.chronicIllnesses || [],
           medications: declarationData.medications || [],
@@ -147,31 +156,37 @@ const HealthDeclaration = () => {
         reset(formData); 
       } else {
         // This case might not be hit if backend returns 404, which goes to catch block.
-        resetFormToDefaults(studentIdToFetch);
+        resetFormToDefaults(studentCodeToFetch);
       }
     } catch (error) {
-      console.error('Error fetching health declaration for student:', studentIdToFetch, error);
+      console.error('Error fetching health declaration for student:', studentCodeToFetch, error);
       // If it's a 404 (declaration not found) or any other error, reset the form for this student
-      resetFormToDefaults(studentIdToFetch);
+      resetFormToDefaults(studentCodeToFetch);
     } finally {
       setIsFetchingDeclaration(false);
     }
-  }, [reset, resetFormToDefaults]); // `setValue` removed as `reset` handles full form update
+  }, [reset, resetFormToDefaults]);
 
-  // This useEffect listens to selectedStudentId and calls fetchHealthDeclaration
+  // This useEffect listens to selectedStudentCode and calls fetchHealthDeclaration
   useEffect(() => {
-    fetchHealthDeclaration(selectedStudentId);
-  }, [selectedStudentId, fetchHealthDeclaration]);
+    fetchHealthDeclaration(selectedStudentCode);
+  }, [selectedStudentCode, fetchHealthDeclaration]);
 
 
   const onSubmit = async (formData) => {
-    if (!selectedStudentId) {
+    if (!selectedStudentCode) { // Changed selectedStudentId to selectedStudentCode
       alert("Please select a child first.");
       return;
     }
     setSubmitting(true);
-    // Ensure the studentId in the form data is the one selected, not from a stale previous load
-    const dataToSubmit = { ...formData, studentId: selectedStudentId, isDraft: false };
+    
+    const dataToSubmit = {
+      ...formData,
+      // studentCode is already in formData from RHF
+      isDraft: false
+    };
+    // delete dataToSubmit.studentId; // No longer needed as RHF uses studentCode
+
     try {
       const token = localStorage.getItem('token');
       await axios.post('/api/health-declaration', dataToSubmit, {
@@ -189,12 +204,19 @@ const HealthDeclaration = () => {
   };
 
   const handleSaveAsDraft = async () => {
-    const formData = watch(); // Get all form data
-    if (!selectedStudentId) {
+    const formDataFromWatch = watch(); // Get all form data
+    if (!selectedStudentCode) { // Changed selectedStudentId to selectedStudentCode
         alert("Please select a child before saving a draft.");
         return;
     }
-    const dataToSubmit = { ...formData, studentId: selectedStudentId, isDraft: true }; 
+
+    const dataToSubmit = {
+      ...formDataFromWatch,
+      // studentCode is already in formDataFromWatch from RHF
+      isDraft: true
+    };
+    // delete dataToSubmit.studentId; // No longer needed
+    
     setSubmitting(true);
     try {
       const token = localStorage.getItem('token');
@@ -283,47 +305,47 @@ const HealthDeclaration = () => {
             <h1 className="text-2xl font-bold text-gray-900">Health Declaration</h1>
             {/* Child Selector */}
             <div className="mt-4">
-              <label htmlFor="studentIdSelect" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="studentCodeSelect" className="block text-sm font-medium text-gray-700 mb-1">
                 Select Child
               </label>
               {initialLoading && children.length === 0 ? (
                 <div className="h-10 bg-gray-300 rounded animate-pulse w-full p-2 border border-gray-300"></div>
               ) : (
                 <select
-                  id="studentIdSelect"
-                  value={selectedStudentId}
+                  id="studentCodeSelect" // Changed id
+                  value={selectedStudentCode} // Changed selectedStudentId to selectedStudentCode
                   onChange={(e) => {
-                    const newStudentId = e.target.value;
-                    setSelectedStudentId(newStudentId);
-                    // setValue('studentId', newStudentId); // RHF's studentId is updated by reset/fetchHealthDeclaration
+                    const newStudentCode = e.target.value; // Changed newStudentId to newStudentCode
+                    setSelectedStudentCode(newStudentCode); // Changed setSelectedStudentId to setSelectedStudentCode
+                    setValue('studentCode', newStudentCode); // Update RHF studentCode field
                   }}
-                  className={`w-full p-2 border ${errors.studentId ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500`}
+                  className={`w-full p-2 border ${errors.studentCode ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500`} // Changed errors.studentId to errors.studentCode
                   disabled={children.length === 0 || initialLoading || isFetchingDeclaration}
                 >
                   <option value="">-- Select a child --</option>
                   {children.map(child => (
-                    <option key={child.student_id || child.id} value={child.student_id || child.id}> 
+                    <option key={child.studentCode} value={child.studentCode}> // Changed child.id to child.studentCode
                       {child.fullName}
                     </option>
                   ))}
                 </select>
               )}
-              {/* This error refers to the RHF studentId, which should be set by fetch/reset */}
-              {errors.studentId && <p className="text-red-600 text-sm mt-1">{errors.studentId.message}</p>}
+              {/* This error refers to the RHF studentCode */}
+              {errors.studentCode && <p className="text-red-600 text-sm mt-1">{errors.studentCode.message}</p>} // Changed errors.studentId to errors.studentCode
               {!initialLoading && children.length === 0 && <p className="text-sm text-gray-500 mt-1">No children found for your account.</p>}
             </div>
           </div>
 
-          {isFetchingDeclaration && selectedStudentId ? (
+          {isFetchingDeclaration && selectedStudentCode ? ( // Changed selectedStudentId to selectedStudentCode
             <FormSkeleton />
-          ) : !selectedStudentId && !initialLoading ? (
+          ) : !selectedStudentCode && !initialLoading ? ( // Changed selectedStudentId to selectedStudentCode
             // Message to show if children are loaded but none is selected yet
             <p className="p-6 text-gray-600 text-center">Please select a child to view or complete their health declaration.</p>
-          ) : selectedStudentId && !isFetchingDeclaration ? (
+          ) : selectedStudentCode && !isFetchingDeclaration ? ( // Changed selectedStudentId to selectedStudentCode
             // Only render form if a child is selected and data is not being fetched
             <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-8">
-              {/* Hidden studentId field for react-hook-form validation, value set by fetch/reset */}
-              <Controller name="studentId" control={control} render={({ field }) => <input type="hidden" {...field} />} />
+              {/* Hidden studentCode field for react-hook-form validation, value set by fetch/reset */}
+              <Controller name="studentCode" control={control} render={({ field }) => <input type="hidden" {...field} />} />
 
               {/* Allergies Section */}
               <div className="space-y-4">
@@ -576,14 +598,14 @@ const HealthDeclaration = () => {
                 <button
                   type="button"
                   onClick={handleSaveAsDraft}
-                  disabled={submitting || isFetchingDeclaration || !selectedStudentId || initialLoading}
+                  disabled={submitting || isFetchingDeclaration || !selectedStudentCode || initialLoading}
                   className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
                 >
                   Save as Draft
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting || isFetchingDeclaration || !selectedStudentId || initialLoading}
+                  disabled={submitting || isFetchingDeclaration || !selectedStudentCode || initialLoading}
                   className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                 >
                   {submitting ? 'Submitting...' : 'Submit Declaration'}
@@ -592,10 +614,10 @@ const HealthDeclaration = () => {
             </form>
           ) : null} 
           {/* Fallback for when no child is selected and children have loaded, or initial child loading is still in progress and no child selected */}
-          { !selectedStudentId && !initialLoading && children.length > 0 &&
+          { !selectedStudentCode && !initialLoading && children.length > 0 &&
              <p className="p-6 text-gray-600 text-center">Please select a child to continue.</p>
           }
-          { !selectedStudentId && initialLoading &&
+          { !selectedStudentCode && initialLoading &&
              <p className="p-6 text-gray-600 text-center">Loading children...</p> // This might briefly show if children array is empty during initial load
           }
 

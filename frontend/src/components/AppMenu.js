@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { Box, List, ListItem, ListItemButton, ListItemText, ListItemIcon, Divider, Typography, Button } from '@mui/material';
-import { ExitToApp as ExitToAppIcon, AccountCircle as AccountCircleIcon } from '@mui/icons-material';
+import { ExitToApp as ExitToAppIcon } from '@mui/icons-material';
 
 // Helper to convert Font Awesome class to a component if needed, or just use <i>
 const IconRenderer = ({ iconClass }) => <i className={iconClass} style={{ marginRight: '8px', fontSize: '1.25em' }} />;

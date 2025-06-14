@@ -32,26 +32,10 @@ public class ParentController {
         return ResponseEntity.ok(parents);
     }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SCHOOLNURSE') or @securityService.isParent(authentication, #id)")
-    public ResponseEntity<?> getParentById(@PathVariable Integer id) {
-        Optional<Parent> parent = parentService.getParentById(id);
-        return parent.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @GetMapping("/code/{parentCode}")
+    @GetMapping("/{parentCode}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SCHOOLNURSE') or @securityService.isParentByCode(authentication, #parentCode)")
     public ResponseEntity<?> getParentByCode(@PathVariable String parentCode) {
         Optional<Parent> parent = parentService.getParentByCode(parentCode);
-        return parent.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SCHOOLNURSE') or authentication.principal.id == #userId")
-    public ResponseEntity<?> getParentByUserId(@PathVariable Integer userId) {
-        Optional<Parent> parent = parentService.getParentByUserId(userId);
         return parent.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -60,34 +44,35 @@ public class ParentController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('SCHOOLNURSE')")
     public ResponseEntity<?> createParent(@RequestBody Map<String, Object> parentData) {
         try {
-            // Extract user_id from parent data
-            Integer userId = (Integer) parentData.get("userId");
-            if (userId == null) {
-                return ResponseEntity.badRequest().body(new MessageResponse("User ID is required", false));
+            String userCode = (String) parentData.get("userCode");
+            if (userCode == null || userCode.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(new MessageResponse("User code is required", false));
             }
 
-            // Find the user
-            Optional<User> userOptional = userService.findById(userId); // Changed from getUserById to findById
+            Optional<User> userOptional = userService.findByUserCode(userCode);
             if (!userOptional.isPresent()) {
-                return ResponseEntity.badRequest().body(new MessageResponse("User not found", false));
+                return ResponseEntity.badRequest().body(new MessageResponse("User not found with code: " + userCode, false));
+            }
+            User user = userOptional.get();
+
+            // Validate if a parent profile already exists for this user code
+            if (parentService.getParentByCode(user.getUserCode()).isPresent()) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Parent profile already exists for user code: " + user.getUserCode(), false));
             }
 
-            // Create parent object
             Parent parent = new Parent();
-            parent.setUser(userOptional.get());
+            parent.setParentCode(user.getUserCode()); // Set parentCode from User's userCode
 
-            // Set parent code if provided
-            String parentCode = (String) parentData.get("parentCode");
-            if (parentCode != null && !parentCode.isEmpty()) {
-                parent.setParentCode(parentCode);
+            // Optional: Validate parentCode from request body if provided
+            String requestParentCode = (String) parentData.get("parentCode");
+            if (requestParentCode != null && !requestParentCode.isEmpty() && !requestParentCode.equals(user.getUserCode())) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Provided parentCode in request body does not match user's userCode.", false));
             }
-
-            // Set other fields
+            
             parent.setAddress((String) parentData.get("address"));
             parent.setEmergencyContact((String) parentData.get("emergencyContact"));
             parent.setRelationshipWithStudent((String) parentData.get("relationshipWithStudent"));
 
-            // Save the parent
             Parent savedParent = parentService.createParent(parent);
             return ResponseEntity.ok(savedParent);
 
@@ -96,18 +81,16 @@ public class ParentController {
         }
     }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SCHOOLNURSE') or @securityService.isParent(authentication, #id)")
-    public ResponseEntity<?> updateParent(@PathVariable Integer id, @RequestBody Map<String, Object> parentData) {
+    @PutMapping("/{parentCode}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SCHOOLNURSE') or @securityService.isParentByCode(authentication, #parentCode)")
+    public ResponseEntity<?> updateParent(@PathVariable String parentCode, @RequestBody Map<String, Object> parentData) {
         try {
-            // Create parent object for update
             Parent parentDetails = new Parent();
             parentDetails.setAddress((String) parentData.get("address"));
             parentDetails.setEmergencyContact((String) parentData.get("emergencyContact"));
             parentDetails.setRelationshipWithStudent((String) parentData.get("relationshipWithStudent"));
 
-            // Update the parent
-            Optional<Parent> updatedParent = parentService.updateParent(id, parentDetails);
+            Optional<Parent> updatedParent = parentService.updateParentByCode(parentCode, parentDetails);
             return updatedParent.map(ResponseEntity::ok)
                     .orElseGet(() -> ResponseEntity.notFound().build());
 
@@ -116,12 +99,12 @@ public class ParentController {
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{parentCode}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> deleteParent(@PathVariable Integer id) {
-        boolean deleted = parentService.deleteParent(id);
+    public ResponseEntity<?> deleteParent(@PathVariable String parentCode) {
+        boolean deleted = parentService.deleteParentByCode(parentCode);
         if (deleted) {
-            return ResponseEntity.ok(new MessageResponse("Parent deleted successfully", true));
+            return ResponseEntity.ok(new MessageResponse("Parent deleted successfully with code: " + parentCode, true));
         } else {
             return ResponseEntity.notFound().build();
         }

@@ -50,9 +50,9 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
         User parentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
                 
-        // Find the parent record associated with this user
-        Parent parent = parentRepository.findByUserUserId(parentUser.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("Parent", "userId", parentUser.getUserId()));
+        // Find the parent record associated with this user's userCode
+        Parent parent = parentRepository.findByParentCode(parentUser.getUserCode()) // Changed from findByUserUserId
+                .orElseThrow(() -> new ResourceNotFoundException("Parent", "userCode", parentUser.getUserCode()));
 
         // Verify parent has relationship with this student using ParentStudentRelationshipRepository
         if (!parentStudentRelationshipRepository.existsByParentParentCodeAndStudentStudentCode(

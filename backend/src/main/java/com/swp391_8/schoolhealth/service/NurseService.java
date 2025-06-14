@@ -1,7 +1,6 @@
 package com.swp391_8.schoolhealth.service;
 
 import com.swp391_8.schoolhealth.model.Nurse;
-import com.swp391_8.schoolhealth.model.User;
 import com.swp391_8.schoolhealth.repository.NurseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,23 +27,26 @@ public class NurseService {
         return nurseRepository.findByNurseCode(nurseCode);
     }
 
-    public Optional<Nurse> getNurseByUserId(Integer userId) {
-        return nurseRepository.findByUserUserId(userId);
-    }
-
     @Transactional
     public Nurse createNurse(Nurse nurse) {
-        // Generate a unique nurse code if not provided
+        // The nurseCode is now expected to be set by the caller,
+        // as it should correspond to the User's user_code.
+        // If nurse.getNurseCode() is null or empty, it indicates an issue with
+        // how the Nurse object is being prepared before calling this service method.
+        // For example, a User object should be created first, its user_code generated,
+        // and then that user_code used as the nurseCode.
         if (nurse.getNurseCode() == null || nurse.getNurseCode().isEmpty()) {
-            // Use user code if available, otherwise generate a new one
-            User user = nurse.getUser();
-            if (user != null && user.getUserCode() != null) {
-                nurse.setNurseCode("NURSE_" + user.getUserCode());
-            } else {
-                nurse.setNurseCode("NURSE_" + System.currentTimeMillis());
-            }
+            // This situation should ideally be prevented by the calling code.
+            // Throwing an exception or logging a warning might be appropriate.
+            // For now, we'll proceed assuming it might be set, or rely on database constraints if it's mandatory.
+            // Consider adding validation: throw new IllegalArgumentException("Nurse code cannot be null or empty.");
         }
         
+        // Ensure professionalId is not null or empty, as it's a required field.
+        if (nurse.getProfessionalId() == null || nurse.getProfessionalId().isEmpty()) {
+            throw new IllegalArgumentException("Professional ID cannot be null or empty.");
+        }
+
         return nurseRepository.save(nurse);
     }
 

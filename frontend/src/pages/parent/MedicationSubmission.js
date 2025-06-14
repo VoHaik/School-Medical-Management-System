@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react'; // Added useContext
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form'; // Added useWatch
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import axios from 'axios';
 import { AuthContext } from '../../context/AuthContext'; // Added AuthContext import
+import { useLocation } from 'react-router-dom'; // Added useLocation
 
 const schema = yup.object().shape({
-  studentId: yup.string().required('Child selection is required'), // Added studentId
+  studentCode: yup.string().required('Child selection is required'), // Changed studentId to studentCode
   medicationName: yup.string().required('Medication name is required'),
   dosage: yup.string().required('Dosage is required'),
   frequency: yup.string().required('Frequency is required'),
@@ -24,8 +25,9 @@ const schema = yup.object().shape({
 
 const MedicationSubmission = () => {
   const { currentUser } = useContext(AuthContext); // Get currentUser
+  const location = useLocation(); // Added to get state from navigation
   const [children, setChildren] = useState([]);
-  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [selectedStudentCode, setSelectedStudentCode] = useState(''); // Changed selectedStudentId to selectedStudentCode
   const [loadingChildren, setLoadingChildren] = useState(false);
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true); // This will now be for submissions
@@ -35,27 +37,41 @@ const MedicationSubmission = () => {
   const { control, handleSubmit, reset, formState: { errors }, setValue } = useForm({ // Added setValue
     resolver: yupResolver(schema),
     defaultValues: {
-      studentId: '', // Added studentId
+      studentCode: '', // Changed studentId to studentCode
       administrationTime: [],
-      parentSignature: false
+      parentSignature: false,
+      frequency: '', // Ensure frequency has a default value
+      otherTimes: '' // Add otherTimes to defaultValues
     }
+  });
+
+  const frequencyValue = useWatch({ // Use useWatch
+    control,
+    name: 'frequency', // The field to watch
   });
 
   // Effect to fetch children
   useEffect(() => {
     const fetchChildren = async () => {
-      if (currentUser && currentUser.id) {
+      if (currentUser && currentUser.username) { // Use username (parent_code)
         setLoadingChildren(true);
         try {
           const token = localStorage.getItem('token');
-          const response = await axios.get(`/api/students/parent/${currentUser.id}`, {
+          // Assuming /api/parent/students returns children with studentCode
+          const response = await axios.get(`/api/parent/students`, { 
             headers: { Authorization: `Bearer ${token}` }
           });
           setChildren(response.data || []);
           if (response.data && response.data.length > 0) {
-            // Optionally, auto-select the first child or leave it for user selection
-            // setSelectedStudentId(response.data[0].id); 
-            // setValue('studentId', response.data[0].id);
+            // If studentCode is passed via navigation state, set it
+            if (location.state?.studentCode) {
+              setSelectedStudentCode(location.state.studentCode);
+              setValue('studentCode', location.state.studentCode); // Also set in RHF
+            } else {
+              // Optionally, auto-select the first child if no specific child is passed
+              // setSelectedStudentCode(response.data[0].studentCode); 
+              // setValue('studentCode', response.data[0].studentCode);
+            }
           }
         } catch (error) {
           console.error('Error fetching children:', error);
@@ -66,24 +82,25 @@ const MedicationSubmission = () => {
       }
     };
     fetchChildren();
-  }, [currentUser]);
+  }, [currentUser, location.state, setValue]); // Added location.state and setValue to dependencies
 
   // Effect to fetch medication submissions for the selected child
   useEffect(() => {
-    if (selectedStudentId) {
+    if (selectedStudentCode) { // Changed selectedStudentId to selectedStudentCode
       fetchMedicationSubmissions();
     } else {
       setSubmissions([]); // Clear submissions if no child is selected
       setLoading(false); // Stop loading if no child selected
     }
-  }, [selectedStudentId]); // Re-run when selectedStudentId changes
+  }, [selectedStudentCode]); // Re-run when selectedStudentCode changes
 
   const fetchMedicationSubmissions = async () => {
-    if (!selectedStudentId) return; // Don't fetch if no child is selected
+    if (!selectedStudentCode) return; // Don't fetch if no child is selected // Changed selectedStudentId to selectedStudentCode
     setLoading(true); // For submissions loading
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/medication-submissions?studentId=${selectedStudentId}`, { // Use selectedStudentId
+      // API endpoint should use studentCode
+      const response = await axios.get(`/api/medication-submissions/student/${selectedStudentCode}`, { // Changed API endpoint and parameter
         headers: { Authorization: `Bearer ${token}` }
       });
       setSubmissions(response.data);
@@ -95,7 +112,7 @@ const MedicationSubmission = () => {
   };
 
   const onSubmit = async (data) => {
-    if (!selectedStudentId) {
+    if (!selectedStudentCode) { // Changed selectedStudentId to selectedStudentCode
       alert('Please select a child first.');
       return;
     }
@@ -104,32 +121,25 @@ const MedicationSubmission = () => {
       const token = localStorage.getItem('token');
       const formData = new FormData();
 
-      // Create a submission DTO object (or ensure `data` matches the DTO structure)
-      // The backend controller expects a @RequestPart("submission") MedicationSubmissionDTO
-      // and @RequestPart("doctorNote") MultipartFile
-      const submissionData = { ...data };
-      delete submissionData.doctorNote; // Remove file from the main data object
+      const submissionData = { ...data }; 
+      // studentCode is already in submissionData from RHF
+      delete submissionData.doctorNote; 
 
-      // Append the DTO as a JSON string part
       formData.append('submission', new Blob([JSON.stringify(submissionData)], { type: 'application/json' }));
 
-      // Append the file if it exists
       if (data.doctorNote && data.doctorNote[0]) {
         formData.append('doctorNote', data.doctorNote[0]);
       }
 
-      // studentId is already in submissionData from react-hook-form
-
       await axios.post('/api/medication-submissions', formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
-          // Content-Type is automatically set by browser for FormData
         }
       });
       
       alert('Medication submission successful!');
       reset({ 
-        studentId: selectedStudentId, // Keep selected studentId
+        studentCode: selectedStudentCode, // Keep selected studentCode
         medicationName: '',
         dosage: '',
         frequency: '',
@@ -155,10 +165,10 @@ const MedicationSubmission = () => {
   };
 
   const handleChildChange = (e) => {
-    const studentId = e.target.value;
-    setSelectedStudentId(studentId);
-    setValue('studentId', studentId); // Update form state
-    if (!studentId) {
+    const studentCodeValue = e.target.value; // Changed studentId to studentCodeValue
+    setSelectedStudentCode(studentCodeValue); // Changed setSelectedStudentId to setSelectedStudentCode
+    setValue('studentCode', studentCodeValue); // Update form state with studentCode
+    if (!studentCodeValue) {
         setShowForm(false); // Hide form if no child is selected
     }
   };
@@ -209,26 +219,26 @@ const MedicationSubmission = () => {
                     <select
                         id="child-select"
                         name="child-select"
-                        value={selectedStudentId}
+                        value={selectedStudentCode} // Changed selectedStudentId to selectedStudentCode
                         onChange={handleChildChange}
                         disabled={loadingChildren || children.length === 0}
                         className="w-full sm:w-auto p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     >
                         <option value="">{loadingChildren ? 'Loading children...' : '-- Select a Child --'}</option>
                         {children.map(child => (
-                        <option key={child.id} value={child.id}>{child.fullName}</option>
+                        <option key={child.studentCode} value={child.studentCode}>{child.fullName}</option> // Changed child.id to child.studentCode
                         ))}
                     </select>
-                    {errors.studentId && !selectedStudentId && ( // Show error if studentId is required and not selected
-                        <p className="text-red-600 text-sm mt-1">{errors.studentId.message}</p>
+                    {errors.studentCode && !selectedStudentCode && ( // Show error if studentCode is required and not selected
+                        <p className="text-red-600 text-sm mt-1">{errors.studentCode.message}</p> // Changed errors.studentId to errors.studentCode
                     )}
                 </div>
             </div>
-            {selectedStudentId && (
+            {selectedStudentCode && (
                 <div className="mt-4 flex justify-end">
                     <button
                         onClick={() => setShowForm(!showForm)}
-                        disabled={!selectedStudentId}
+                        disabled={!selectedStudentCode} // Changed selectedStudentId to selectedStudentCode
                         className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
                     >
                         <i className={`fas ${showForm ? 'fa-times' : 'fa-plus'} mr-2`}></i>
@@ -240,7 +250,7 @@ const MedicationSubmission = () => {
         </div>
 
         {/* Medication Submission Form */}
-        {showForm && selectedStudentId && (
+        {showForm && selectedStudentCode && ( // Changed selectedStudentId to selectedStudentCode
           <div className="bg-white rounded-lg shadow mb-6">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">Submit New Medication Request</h2>
@@ -373,7 +383,7 @@ const MedicationSubmission = () => {
                       ))}
 
                       {/* Additional time slots for "Other" frequency */}
-                      {control.getValues('frequency') === 'other' && (
+                      {frequencyValue === 'other' && ( // Use frequencyValue here
                         <>
                           <div className="col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -588,7 +598,7 @@ const MedicationSubmission = () => {
                   type="button"
                   onClick={() => {
                     setShowForm(false);
-                    reset({ studentId: selectedStudentId, administrationTime: [], parentSignature: false }); // Reset form but keep studentId
+                    reset({ studentCode: selectedStudentCode, administrationTime: [], parentSignature: false }); // Reset form but keep studentId
                   }}
                   className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                 >
@@ -607,11 +617,11 @@ const MedicationSubmission = () => {
         )}
 
         {/* Submissions List */}
-        {selectedStudentId && ( // Only show submissions list if a child is selected
+        {selectedStudentCode && ( // Only show submissions list if a child is selected
             <div className="bg-white rounded-lg shadow">
                 <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900">
-                    Previous Submissions for {children.find(c => c.id === selectedStudentId)?.fullName || 'Selected Child'}
+                    Previous Submissions for {children.find(c => c.studentCode === selectedStudentCode)?.fullName || 'Selected Child'}
                 </h2>
                 </div>
                 
