@@ -1,6 +1,7 @@
 package com.swp391_8.schoolhealth.service;
 
 import com.swp391_8.schoolhealth.model.BlogPost;
+import com.swp391_8.schoolhealth.model.ERole;
 import com.swp391_8.schoolhealth.repository.BlogPostRepository;
 import com.swp391_8.schoolhealth.repository.ParentRepository;
 import com.swp391_8.schoolhealth.repository.NurseRepository;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 @Service("securityService") // Added bean name
@@ -142,6 +144,27 @@ public class SecurityService {
                 .orElse(false);
     }
     
+    // Overloaded method for checking if the authenticated user is a nurse
+    // without requiring a specific nurseId.
+    // This is useful for general role checks.
+    public boolean isNurse(Authentication authentication) {
+        if (authentication == null) {
+            return false;
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof UserDetailsImpl)) {
+            return false;
+        }
+        UserDetailsImpl userDetails = (UserDetailsImpl) principal;
+        
+        // Check if the user has the NURSE role
+        // This assumes UserDetailsImpl has a method like getAuthorities() or getRoles()
+        // and that roles are prefixed with "ROLE_"
+        return userDetails.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> ERole.ROLE_SCHOOLNURSE.name().equals(grantedAuthority.getAuthority()));
+    }
+    
     public boolean isNurse(Authentication authentication, Integer nurseId) {
         if (authentication == null || nurseId == null) {
             return false;
@@ -184,5 +207,61 @@ public class SecurityService {
         return nurseRepository.findByNurseCode(nurseCode)
                 .map(nurse -> nurse.getNurseCode() != null && nurse.getNurseCode().equals(authenticatedUserCode))
                 .orElse(false);
+    }
+
+    // New method to check relationship using studentCode and parentId (Integer)
+    public boolean isParentOfStudent(Integer parentUserId, String studentCode) {
+        if (parentUserId == null || studentCode == null || studentCode.isEmpty()) {
+            return false;
+        }
+        // Corrected method name to match the one in ParentStudentRelationshipRepository
+        return parentStudentRelationshipRepository.existsByParentUserUserIdAndStudentStudentCode(parentUserId, studentCode);
+    }
+
+    // New method to check relationship using studentCode (String)
+    public boolean isParentOfStudent(Authentication authentication, String studentCode) {
+        if (authentication == null || studentCode == null || studentCode.isEmpty()) {
+            return false;
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof UserDetailsImpl)) {
+            return false;
+        }
+        UserDetailsImpl userDetails = (UserDetailsImpl) principal;
+        String parentUserCode = userDetails.getUserCode(); // Use getUserCode() which should return user_code
+
+        if (parentUserCode == null || parentUserCode.isEmpty()) {
+            return false;
+        }
+        // Use the correct repository method that takes parentUserCode and studentCode
+        return parentStudentRelationshipRepository.existsByParent_User_UserCodeAndStudent_StudentCode(parentUserCode, studentCode);
+    }
+
+    // Overload for isAdmin to accept Authentication only
+    public boolean isAdmin(Authentication authentication) {
+        if (authentication == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> ERole.ROLE_ADMIN.name().equals(grantedAuthority.getAuthority()));
+    }
+
+    // Overload for isParent to accept Authentication only
+    public boolean isParent(Authentication authentication) {
+        if (authentication == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> ERole.ROLE_PARENT.name().equals(grantedAuthority.getAuthority()));
+    }
+
+    public boolean hasAnyRole(Authentication authentication, ERole... roles) {
+        if (authentication == null || roles == null || roles.length == 0) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .map(grantedAuthority -> ERole.valueOf(grantedAuthority.getAuthority())) // Convert String to ERole
+                .anyMatch(userRole -> Arrays.asList(roles).contains(userRole));
     }
 }

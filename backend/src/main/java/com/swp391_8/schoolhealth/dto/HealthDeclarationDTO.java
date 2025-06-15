@@ -4,16 +4,17 @@ import java.time.LocalDate;
 import java.util.List;
 
 public class HealthDeclarationDTO {
-    private Integer declarationId; // Added
-    private boolean isDraft; // Added
-    private String studentCode; // Changed from Integer studentId to String studentCode
+    private Integer declarationId;
+    private String studentCode;
+    // parentUsername is not directly part of HealthDeclaration, it's contextual from the service call
+    // private String parentUsername; 
     private String emergencyContactName;
     private String emergencyContactPhone;
     private String physicianName;
     private String physicianPhone;
     private List<String> allergies;
     private List<String> medicalConditions;
-    private List<VaccinationRecordDTO> vaccinations; // Changed from VaccinationDTO
+    private List<DeclaredVaccinationRecordDTO> vaccinations;
     private String visionScreeningResult;
     private LocalDate visionScreeningDate;
     private String hearingScreeningResult;
@@ -23,31 +24,23 @@ public class HealthDeclarationDTO {
     private String scoliosisScreeningResult;
     private LocalDate scoliosisScreeningDate;
     private String notes;
-    private Boolean consentSignature; // Representing the checkbox
+    private Boolean consentSignature;
     private LocalDate declarationDate;
+    private boolean isDraft;
     private String symptoms;
     private boolean hasSymptoms;
     private boolean closeContact;
     private boolean travelHistory;
     private String additionalInfo;
-    // Add other fields as necessary from HealthDeclaration.js
 
     // Getters and Setters
 
-    public Integer getDeclarationId() { // Added
+    public Integer getDeclarationId() {
         return declarationId;
     }
 
-    public void setDeclarationId(Integer declarationId) { // Added
+    public void setDeclarationId(Integer declarationId) {
         this.declarationId = declarationId;
-    }
-
-    public boolean isDraft() { // Added
-        return isDraft;
-    }
-
-    public void setDraft(boolean isDraft) { // Added
-        this.isDraft = isDraft;
     }
 
     public String getStudentCode() {
@@ -106,11 +99,11 @@ public class HealthDeclarationDTO {
         this.medicalConditions = medicalConditions;
     }
 
-    public List<VaccinationRecordDTO> getVaccinations() { // Changed from VaccinationDTO
+    public List<DeclaredVaccinationRecordDTO> getVaccinations() {
         return vaccinations;
     }
 
-    public void setVaccinations(List<VaccinationRecordDTO> vaccinations) { // Changed from VaccinationDTO
+    public void setVaccinations(List<DeclaredVaccinationRecordDTO> vaccinations) {
         this.vaccinations = vaccinations;
     }
 
@@ -202,6 +195,14 @@ public class HealthDeclarationDTO {
         this.declarationDate = declarationDate;
     }
 
+    public boolean isDraft() {
+        return isDraft;
+    }
+
+    public void setDraft(boolean isDraft) {
+        this.isDraft = isDraft;
+    }
+
     public String getSymptoms() {
         return symptoms;
     }
@@ -241,6 +242,4 @@ public class HealthDeclarationDTO {
     public void setAdditionalInfo(String additionalInfo) {
         this.additionalInfo = additionalInfo;
     }
-
-    // Removed Inner DTO for Vaccinations - It should be a top-level class com.swp391_8.schoolhealth.dto.VaccinationRecordDTO
 }

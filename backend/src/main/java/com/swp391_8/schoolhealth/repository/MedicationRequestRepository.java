@@ -10,15 +10,30 @@ import java.util.List;
 @Repository
 public interface MedicationRequestRepository extends JpaRepository<MedicationRequest, Integer> {
 
-    List<MedicationRequest> findByStudentStudentCode(String studentCode);
+    List<MedicationRequest> findByStudent_StudentCode(String studentCode); // Corrected field name
 
-    List<MedicationRequest> findByParentParentCode(String parentCode);
+    // For parents viewing their requests
+    List<MedicationRequest> findByRequestedBy_UsernameOrderByRequestDateDesc(String username);
 
-    List<MedicationRequest> findByStudentStudentCodeAndParentParentCode(String studentCode, String parentCode);
+    // For parents viewing requests for a specific student they are associated with
+    List<MedicationRequest> findByStudent_StudentCodeAndRequestedBy_UsernameOrderByRequestDateDesc(String studentCode, String username);
 
-    // Add more specific queries if needed, e.g., by status
-    List<MedicationRequest> findByStudentStudentCodeAndStatus(String studentCode, MedicationRequestStatus status);
-    List<MedicationRequest> findByParentParentCodeAndStatus(String parentCode, MedicationRequestStatus status);
-    List<MedicationRequest> findByStatus(MedicationRequestStatus status);
+    // For nurses/admins viewing all requests
+    List<MedicationRequest> findAllByOrderByRequestDateDesc();
+
+    // For nurses/admins viewing requests for a specific student
+    List<MedicationRequest> findByStudent_StudentCodeOrderByRequestDateDesc(String studentCode);
+    
+    // For nurses/admins viewing requests by status
+    List<MedicationRequest> findByStatusOrderByRequestDateDesc(MedicationRequestStatus status);
+
+    // For nurses/admins viewing requests by multiple statuses (e.g., for a dashboard)
+    List<MedicationRequest> findByStatusInOrderByRequestDateDesc(List<MedicationRequestStatus> statuses);
+
+    // For nurses/admins viewing requests for a specific student and status
+    List<MedicationRequest> findByStudent_StudentCodeAndStatusOrderByRequestDateDesc(String studentCode, MedicationRequestStatus status);
+
+    // If you need a method to find requests by parent user and status:
+    List<MedicationRequest> findByRequestedBy_UsernameAndStatusOrderByRequestDateDesc(String username, MedicationRequestStatus status);
 
 }

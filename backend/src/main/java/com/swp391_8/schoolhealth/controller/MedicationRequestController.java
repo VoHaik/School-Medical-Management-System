@@ -1,19 +1,22 @@
 package com.swp391_8.schoolhealth.controller;
 
 import com.swp391_8.schoolhealth.dto.MedicationRequestDTO;
-import com.swp391_8.schoolhealth.model.MedicationRequest;
-import com.swp391_8.schoolhealth.model.User; // Assuming UserDetailsImpl or similar holds the ID
+import com.swp391_8.schoolhealth.dto.MedicationRequestResponseDTO; // Added
+// import com.swp391_8.schoolhealth.model.MedicationRequest; // No longer returning entity directly
+// import com.swp391_8.schoolhealth.model.User; // Not directly used here
 import com.swp391_8.schoolhealth.service.MedicationRequestService;
-import com.swp391_8.schoolhealth.service.SecurityService;
+import com.swp391_8.schoolhealth.service.SecurityService; // Keep for @PreAuthorize if complex checks remain
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException; // Added
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails; // For casting principal
+// import org.springframework.security.core.userdetails.UserDetails; // Not directly used here
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map; // For simple request bodies like rejection reason
 
 @RestController
 @RequestMapping("/api/medication-requests")
@@ -22,131 +25,152 @@ public class MedicationRequestController {
     @Autowired
     private MedicationRequestService medicationRequestService;
 
-    @Autowired
-    private SecurityService securityService;
+    // @Autowired
+    // private SecurityService securityService; // Can be removed if all auth handled by @PreAuthorize and service layer
 
-    // Helper to get current user ID from Authentication principal
-    // This assumes your UserDetails implementation (e.g., UserDetailsImpl) has a getId() method.
-    private Integer getCurrentUserId(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new SecurityException("User not authenticated");
-        }
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof UserDetails) {
-            // Attempt to cast to a known UserDetails implementation that holds the ID
-            // Replace 'com.swp391_8.schoolhealth.security.services.UserDetailsImpl' 
-            // with your actual UserDetails implementation class if different,
-            // or adapt to how user ID is stored.
-            try {
-                // This is a common pattern, adjust if your UserDetailsImpl is different
-                // or if SecurityService provides a direct method like securityService.getUserId(authentication)
-                Class<?> userDetailsImplClass = Class.forName("com.swp391_8.schoolhealth.security.services.UserDetailsImpl");
-                if (userDetailsImplClass.isInstance(principal)) {
-                    return (Integer) userDetailsImplClass.getMethod("getId").invoke(principal);
-                }
-            } catch (Exception e) {
-                // Fallback or rethrow if ID cannot be obtained
-                // For now, relying on a hypothetical SecurityService method or direct User model
-                 if (principal instanceof com.swp391_8.schoolhealth.model.User) {
-                    return ((com.swp391_8.schoolhealth.model.User) principal).getUserId();
-                 }
-                 // If SecurityService has a method like getCurrentAuthenticatedUser() that returns your User model
-                 // User currentUser = securityService.getCurrentAuthenticatedUser();
-                 // if (currentUser != null) return currentUser.getUserId();
-
-                System.err.println("Error retrieving user ID from principal: " + e.getMessage());
-                // As a last resort, if securityService has a direct method not requiring Authentication object
-                // return securityService.getCurrentUserId(); // if such a method exists and is appropriate
-                throw new RuntimeException("Could not determine user ID from Authentication principal. Please check UserDetails implementation.", e);
-            }
-        }
-        // Fallback if principal is not UserDetails or ID extraction failed
-        // This part needs to be robust based on your actual security setup.
-        // Consider adding a method to SecurityService: Integer getUserId(Authentication auth);
-        throw new SecurityException("Cannot determine user ID from principal of type: " + (principal != null ? principal.getClass().getName() : "null"));
-    }
+    // The helper getCurrentUserId is no longer needed as Authentication object is passed to service
 
     // Parent endpoints
     @PostMapping("/")
     @PreAuthorize("hasRole('PARENT')")
     public ResponseEntity<?> createMedicationRequest(@RequestBody MedicationRequestDTO requestDTO, Authentication authentication) {
-        // The service method createMedicationRequest now takes Authentication directly
         try {
-            MedicationRequest newRequest = medicationRequestService.createMedicationRequest(requestDTO, authentication);
+            MedicationRequestResponseDTO newRequest = medicationRequestService.createMedicationRequest(requestDTO, authentication);
             return ResponseEntity.status(HttpStatus.CREATED).body(newRequest);
         } catch (SecurityException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) { // Catch more general runtime exceptions from service
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
     @GetMapping("/student/{studentCode}")
-    @PreAuthorize("hasRole('PARENT') and @securityService.isParentOfStudentByCode(authentication, #studentCode)")
-    public ResponseEntity<List<MedicationRequest>> getMedicationRequestsForStudent(
+    @PreAuthorize("hasRole('PARENT')") // Service layer will do fine-grained check
+    public ResponseEntity<?> getMedicationRequestsForStudent(
             @PathVariable String studentCode, Authentication authentication) {
-        // Service method signature is getMedicationRequestsForStudentByParent(String studentCode, Authentication authentication)
-        List<MedicationRequest> requests = medicationRequestService.getMedicationRequestsForStudentByParent(studentCode, authentication);
-        return ResponseEntity.ok(requests);
+        try {
+            List<MedicationRequestResponseDTO> requests = medicationRequestService.getMedicationRequestsForStudentByParent(studentCode, authentication);
+            return ResponseEntity.ok(requests);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
     }
 
     @GetMapping("/mine")
     @PreAuthorize("hasRole('PARENT')")
-    public ResponseEntity<List<MedicationRequest>> getMyMedicationRequests(Authentication authentication) {
-        // Service method signature is getMedicationRequestsByParent(Authentication authentication)
-        List<MedicationRequest> requests = medicationRequestService.getMedicationRequestsByParent(authentication);
-        return ResponseEntity.ok(requests);
+    public ResponseEntity<?> getMyMedicationRequests(Authentication authentication) {
+        try {
+            List<MedicationRequestResponseDTO> requests = medicationRequestService.getMedicationRequestsByAuthenticatedParent(authentication);
+            return ResponseEntity.ok(requests);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    @GetMapping("/{requestId}")
+    @PreAuthorize("hasAnyRole('PARENT', 'SCHOOLNURSE', 'ADMIN')") // Broader check, service layer refines
+    public ResponseEntity<?> getMedicationRequestById(@PathVariable Integer requestId, Authentication authentication) {
+        try {
+            MedicationRequestResponseDTO request = medicationRequestService.getMedicationRequestById(requestId, authentication);
+            return ResponseEntity.ok(request);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PutMapping("/{requestId}/cancel")
-    @PreAuthorize("hasRole('PARENT')")
+    @PreAuthorize("hasRole('PARENT')") // Service layer will verify ownership
     public ResponseEntity<?> cancelMedicationRequest(@PathVariable Integer requestId, Authentication authentication) {
-        // Service method signature is cancelMedicationRequest(Integer requestId, Authentication authentication)
         try {
-            MedicationRequest cancelledRequest = medicationRequestService.cancelMedicationRequest(requestId, authentication);
+            MedicationRequestResponseDTO cancelledRequest = medicationRequestService.cancelMedicationRequest(requestId, authentication);
             return ResponseEntity.ok(cancelledRequest);
-        } catch (SecurityException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage()); // Or BadRequest
+        } catch (SecurityException | AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
 
     // Nurse/Staff endpoints
-    @GetMapping("/all")
+    @GetMapping("/nurse/dashboard")
     @PreAuthorize("hasAnyRole('SCHOOLNURSE', 'ADMIN')")
-    public ResponseEntity<List<MedicationRequest>> getAllMedicationRequests() {
-        List<MedicationRequest> requests = medicationRequestService.getAllMedicationRequests();
-        return ResponseEntity.ok(requests);
+    public ResponseEntity<?> getNurseDashboardRequests(Authentication authentication) {
+        try {
+            List<MedicationRequestResponseDTO> requests = medicationRequestService.getAllMedicationRequestsForNurseDashboard(authentication);
+            return ResponseEntity.ok(requests);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        }
     }
 
     @GetMapping("/pending")
     @PreAuthorize("hasAnyRole('SCHOOLNURSE', 'ADMIN')")
-    public ResponseEntity<List<MedicationRequest>> getPendingMedicationRequests() {
-        List<MedicationRequest> requests = medicationRequestService.getPendingMedicationRequests();
-        return ResponseEntity.ok(requests);
+    public ResponseEntity<?> getPendingMedicationRequests(Authentication authentication) {
+        try {
+            List<MedicationRequestResponseDTO> requests = medicationRequestService.getAllPendingMedicationRequests(authentication);
+            return ResponseEntity.ok(requests);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PutMapping("/{requestId}/approve")
     @PreAuthorize("hasAnyRole('SCHOOLNURSE', 'ADMIN')")
-    public ResponseEntity<MedicationRequest> approveMedicationRequest(@PathVariable Integer requestId, @RequestBody(required = false) String notes, Authentication authentication) {
-        // Service method signature is approveMedicationRequest(Integer requestId, Authentication authentication, String notes)
-        MedicationRequest updatedRequest = medicationRequestService.approveMedicationRequest(requestId, authentication, notes);
-        return ResponseEntity.ok(updatedRequest);
+    public ResponseEntity<?> approveMedicationRequest(@PathVariable Integer requestId, Authentication authentication) {
+        try {
+            MedicationRequestResponseDTO updatedRequest = medicationRequestService.approveMedicationRequest(requestId, authentication);
+            return ResponseEntity.ok(updatedRequest);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PutMapping("/{requestId}/reject")
     @PreAuthorize("hasAnyRole('SCHOOLNURSE', 'ADMIN')")
-    public ResponseEntity<?> rejectMedicationRequest(@PathVariable Integer requestId, @RequestBody String rejectionReason, Authentication authentication) {
-        // Service method signature is rejectMedicationRequest(Integer requestId, Authentication authentication, String rejectionReason)
+    public ResponseEntity<?> rejectMedicationRequest(@PathVariable Integer requestId, 
+                                                   @RequestBody Map<String, String> payload, 
+                                                   Authentication authentication) {
         try {
-            MedicationRequest rejectedRequest = medicationRequestService.rejectMedicationRequest(requestId, authentication, rejectionReason);
+            String rejectionReason = payload.get("rejectionReason");
+            MedicationRequestResponseDTO rejectedRequest = medicationRequestService.rejectMedicationRequest(requestId, rejectionReason, authentication);
             return ResponseEntity.ok(rejectedRequest);
-        } catch (IllegalArgumentException e) {
-            // Return the message from the exception, which might be "Medication request not found..." or similar
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (SecurityException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) { // Covers NotFoundException from service
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{requestId}/administer")
+    @PreAuthorize("hasAnyRole('SCHOOLNURSE', 'ADMIN')")
+    public ResponseEntity<?> recordMedicationAdministration(@PathVariable Integer requestId, 
+                                                            @RequestBody Map<String, String> payload,
+                                                            Authentication authentication) {
+        try {
+            String administrationNotes = payload.get("administrationNotes");
+            // Corrected service method name
+            MedicationRequestResponseDTO administeredRequest = medicationRequestService.recordMedicationAdministrationAndUpdateStatus(requestId, administrationNotes, authentication);
+            return ResponseEntity.ok(administeredRequest);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) { // Covers NotFoundException from service
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
 }

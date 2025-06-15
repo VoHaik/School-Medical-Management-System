@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import com.swp391_8.schoolhealth.model.DeclaredVaccinationRecord;
 
 @Entity
 @Table(name = "health_declaration")
@@ -17,10 +18,6 @@ public class HealthDeclaration {
     @ManyToOne
     @JoinColumn(name = "student_code", referencedColumnName = "student_code", nullable = false)
     private Student student;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_code", referencedColumnName = "parent_code") 
-    private Parent parent;
 
     @Column(name = "emergency_contact_name")
     private String emergencyContactName;
@@ -45,7 +42,7 @@ public class HealthDeclaration {
     private List<String> medicalConditions;
 
     @OneToMany(mappedBy = "healthDeclaration", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<VaccinationRecord> vaccinations = new ArrayList<>(); // Assuming VaccinationRecord entity
+    private List<DeclaredVaccinationRecord> vaccinations = new ArrayList<>(); // Assuming DeclaredVaccinationRecord entity
 
     @Column(name = "vision_screening_result")
     private String visionScreeningResult;
@@ -117,14 +114,6 @@ public class HealthDeclaration {
         this.student = student;
     }
 
-    public Parent getParent() {
-        return parent;
-    }
-
-    public void setParent(Parent parent) {
-        this.parent = parent;
-    }
-
     public String getEmergencyContactName() {
         return emergencyContactName;
     }
@@ -173,17 +162,12 @@ public class HealthDeclaration {
         this.medicalConditions = medicalConditions;
     }
 
-    public List<VaccinationRecord> getVaccinations() {
+    public List<DeclaredVaccinationRecord> getVaccinations() {
         return vaccinations;
     }
 
-    public void setVaccinations(List<VaccinationRecord> vaccinations) {
+    public void setVaccinations(List<DeclaredVaccinationRecord> vaccinations) {
         this.vaccinations = vaccinations;
-        if (vaccinations != null) {
-            for (VaccinationRecord vr : vaccinations) {
-                vr.setHealthDeclaration(this);
-            }
-        }
     }
 
     public String getVisionScreeningResult() {

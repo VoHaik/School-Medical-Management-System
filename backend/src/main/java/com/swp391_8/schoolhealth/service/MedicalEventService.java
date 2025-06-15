@@ -7,6 +7,7 @@ import com.swp391_8.schoolhealth.model.User;
 import com.swp391_8.schoolhealth.repository.MedicalEventRepository;
 import com.swp391_8.schoolhealth.repository.StudentRepository;
 import com.swp391_8.schoolhealth.repository.UserRepository;
+import com.swp391_8.schoolhealth.exception.ResourceNotFoundException; // Added import
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +29,7 @@ public class MedicalEventService {
     @Autowired
     private UserRepository userRepository;
 
-    public List<MedicalEventDTO> getAllMedicalEvents(String studentCode, LocalDate startDate, LocalDate endDate, String severity, String eventType, String status) {
+    public List<MedicalEventDTO> getAllMedicalEvents(String studentCode, LocalDate startDate, LocalDate endDate, String severity, String eventTypeName, String status) {
         LocalDateTime startDateTime = null;
         LocalDateTime endDateTime = null;
         if (startDate != null) {
@@ -37,13 +38,14 @@ public class MedicalEventService {
         if (endDate != null) {
             endDateTime = endDate.atTime(23, 59, 59); // End of the day
         }
-        return medicalEventRepository.findAllFiltered(studentCode, startDateTime, endDateTime, severity, eventType, status).stream()
+        // Corrected repository method name and passed status
+        return medicalEventRepository.findMedicalEventsByCriteria(studentCode, startDateTime, endDateTime, severity, eventTypeName, status).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     public List<MedicalEventDTO> getMedicalEventsByStudentStudentCode(String studentCode) {
-        return medicalEventRepository.findByStudentStudentCode(studentCode).stream()
+        return medicalEventRepository.findByStudent_StudentCode(studentCode).stream() // Corrected repository method name
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -51,18 +53,19 @@ public class MedicalEventService {
     @Transactional
     public MedicalEventDTO createMedicalEvent(MedicalEventDTO medicalEventDTO, String creatorUsername) {
         Student student = studentRepository.findByStudentCode(medicalEventDTO.getStudentCode())
-                .orElseThrow(() -> new RuntimeException("Student not found with code: " + medicalEventDTO.getStudentCode()));
-        User handledBy = userRepository.findByUsername(creatorUsername)
-                .orElseThrow(() -> new RuntimeException("User not found with username: " + creatorUsername));
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with code: " + medicalEventDTO.getStudentCode()));
+        User recordedByUser = userRepository.findByUsername(creatorUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + creatorUsername));
 
         MedicalEvent medicalEvent = new MedicalEvent();
         medicalEvent.setStudent(student);
-        medicalEvent.setEventType(medicalEventDTO.getEventType().name()); // Use .name() for enum to string
+        if (medicalEventDTO.getEventType() != null) {
+            medicalEvent.setEventType(medicalEventDTO.getEventType().name());
+        }
         medicalEvent.setDescription(medicalEventDTO.getDescription());
         medicalEvent.setEventDatetime(medicalEventDTO.getEventDate() != null ? medicalEventDTO.getEventDate() : LocalDateTime.now());
-        medicalEvent.setRecordedBy(handledBy); // Corrected from setHandledBy
+        medicalEvent.setRecordedBy(recordedByUser);
 
-        // Map new fields from DTO to entity
         medicalEvent.setSymptoms(medicalEventDTO.getSymptoms());
         medicalEvent.setSeverity(medicalEventDTO.getSeverity());
         medicalEvent.setActionTaken(medicalEventDTO.getActionTaken());
@@ -72,7 +75,7 @@ public class MedicalEventService {
         medicalEvent.setFollowUpRequired(medicalEventDTO.getFollowUpRequired());
         medicalEvent.setFollowUpDate(medicalEventDTO.getFollowUpDate());
         medicalEvent.setStatus(medicalEventDTO.getStatus());
-
+        // createdAt is handled by @PrePersist
 
         MedicalEvent savedEvent = medicalEventRepository.save(medicalEvent);
         return convertToDTO(savedEvent);
@@ -81,23 +84,23 @@ public class MedicalEventService {
     @Transactional
     public MedicalEventDTO updateMedicalEvent(Integer eventId, MedicalEventDTO medicalEventDTO, String updaterUsername) {
         MedicalEvent existingEvent = medicalEventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("MedicalEvent not found with id: " + eventId));
-        User handledBy = userRepository.findByUsername(updaterUsername)
-                .orElseThrow(() -> new RuntimeException("User not found with username: " + updaterUsername));
+                .orElseThrow(() -> new ResourceNotFoundException("MedicalEvent not found with id: " + eventId));
+        User recordedByUser = userRepository.findByUsername(updaterUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + updaterUsername));
 
-        // Update student if changed
         if (medicalEventDTO.getStudentCode() != null && !medicalEventDTO.getStudentCode().equals(existingEvent.getStudent().getStudentCode())) {
             Student student = studentRepository.findByStudentCode(medicalEventDTO.getStudentCode())
-                    .orElseThrow(() -> new RuntimeException("Student not found with code: " + medicalEventDTO.getStudentCode()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Student not found with code: " + medicalEventDTO.getStudentCode()));
             existingEvent.setStudent(student);
         }
 
-        existingEvent.setEventType(medicalEventDTO.getEventType().name()); // Use .name() for enum to string
+        if (medicalEventDTO.getEventType() != null) {
+            existingEvent.setEventType(medicalEventDTO.getEventType().name());
+        }
         existingEvent.setDescription(medicalEventDTO.getDescription());
         existingEvent.setEventDatetime(medicalEventDTO.getEventDate() != null ? medicalEventDTO.getEventDate() : existingEvent.getEventDatetime());
-        existingEvent.setRecordedBy(handledBy); // Corrected from setHandledBy, and update who last handled it
+        existingEvent.setRecordedBy(recordedByUser); // Update who last modified/recorded it
 
-        // Map new fields from DTO to entity
         existingEvent.setSymptoms(medicalEventDTO.getSymptoms());
         existingEvent.setSeverity(medicalEventDTO.getSeverity());
         existingEvent.setActionTaken(medicalEventDTO.getActionTaken());
@@ -115,43 +118,46 @@ public class MedicalEventService {
     @Transactional
     public void deleteMedicalEvent(Integer eventId) {
         if (!medicalEventRepository.existsById(eventId)) {
-            throw new RuntimeException("MedicalEvent not found with id: " + eventId);
+            throw new ResourceNotFoundException("MedicalEvent not found with id: " + eventId);
         }
         medicalEventRepository.deleteById(eventId);
     }
 
-    private MedicalEventDTO convertToDTO(MedicalEvent medicalEvent) {
+    private MedicalEventDTO convertToDTO(MedicalEvent event) {
+        if (event == null) return null;
         MedicalEventDTO dto = new MedicalEventDTO();
-        dto.setId(medicalEvent.getId());
-        if (medicalEvent.getStudent() != null) {
-            dto.setStudentCode(medicalEvent.getStudent().getStudentCode());
+        dto.setId(event.getId()); // Corrected: Use getId() from MedicalEvent and setId() for MedicalEventDTO
+        if (event.getStudent() != null) {
+            dto.setStudentCode(event.getStudent().getStudentCode());
+            // Assuming StudentDTO or direct student name access is handled elsewhere or not needed here
+            // dto.setStudentName(event.getStudent().getFullName()); // If Student has getFullName()
         }
         try {
-            // Use MedicalEvent.EventType directly as it's defined in the MedicalEvent entity
-            dto.setEventType(MedicalEvent.EventType.valueOf(medicalEvent.getEventType()));
+            if (event.getEventType() != null) {
+                // The DTO's eventType is already MedicalEvent.EventType, direct assignment is fine if entity stores it as String
+                // If entity stores as Enum, then direct assignment is also fine.
+                // The DTO uses com.swp391_8.schoolhealth.model.MedicalEvent.EventType
+                // The Entity uses String eventType. So conversion is needed.
+                dto.setEventType(MedicalEvent.EventType.valueOf(event.getEventType().toUpperCase()));
+            }
         } catch (IllegalArgumentException e) {
-            // Handle the case where the string from the entity doesn't match any enum constant
-            // For example, log a warning or set a default value
-            // For now, we'll leave it null or re-throw if strict mapping is required.
+            dto.setEventType(null); 
         }
-        dto.setDescription(medicalEvent.getDescription());
-        dto.setEventDate(medicalEvent.getEventDatetime()); // Corrected from getEventDate
-        if (medicalEvent.getRecordedBy() != null) { // Corrected from getHandledBy
-            dto.setHandledByUsername(medicalEvent.getRecordedBy().getUsername()); // Corrected from getHandledBy
+        dto.setDescription(event.getDescription());
+        dto.setEventDate(event.getEventDatetime());
+        if (event.getRecordedBy() != null) {
+            dto.setHandledByUsername(event.getRecordedBy().getUsername()); // Corrected: setHandledByUsername
         }
-        // dto.setCreatedAt(medicalEvent.getCreatedAt()); // This line was noted to be removed.
-
-        // Map new fields from entity to DTO
-        dto.setSymptoms(medicalEvent.getSymptoms());
-        dto.setSeverity(medicalEvent.getSeverity());
-        dto.setActionTaken(medicalEvent.getActionTaken());
-        dto.setMedicationGiven(medicalEvent.getMedicationGiven());
-        dto.setParentNotified(medicalEvent.getParentNotified());
-        dto.setReferredTo(medicalEvent.getReferredTo());
-        dto.setFollowUpRequired(medicalEvent.getFollowUpRequired());
-        dto.setFollowUpDate(medicalEvent.getFollowUpDate());
-        dto.setStatus(medicalEvent.getStatus());
-
+        dto.setSymptoms(event.getSymptoms());
+        dto.setSeverity(event.getSeverity());
+        dto.setActionTaken(event.getActionTaken());
+        dto.setMedicationGiven(event.getMedicationGiven());
+        dto.setParentNotified(event.getParentNotified());
+        dto.setReferredTo(event.getReferredTo());
+        dto.setFollowUpRequired(event.getFollowUpRequired());
+        dto.setFollowUpDate(event.getFollowUpDate());
+        dto.setStatus(event.getStatus());
+        // dto.setCreatedAt(event.getCreatedAt()); // MedicalEventDTO does not have createdAt
         return dto;
     }
 }

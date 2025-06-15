@@ -22,8 +22,8 @@ public class Consultation {    @Id
     private Student student;
 
     @ManyToOne
-    @JoinColumn(name = "checkup_id")
-    private HealthCheckup checkup;
+    @JoinColumn(name = "student_checkup_id") // Updated column name for clarity
+    private StudentHealthCheckup studentHealthCheckup; // Changed from HealthCheckup to StudentHealthCheckup
 
     @Column(name = "consultation_date", nullable = false)
     private LocalDateTime consultationDate;

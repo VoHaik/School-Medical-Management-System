@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "Users")
@@ -118,4 +120,12 @@ public class User {
 
     public String getFullName() { return fullName; } // Added getter
     public void setFullName(String fullName) { this.fullName = fullName; } // Added setter
+
+    public Set<Role> getRoles() {
+        Set<Role> roles = new HashSet<>();
+        if (this.role != null) {
+            roles.add(this.role);
+        }
+        return roles;
+    }
 }

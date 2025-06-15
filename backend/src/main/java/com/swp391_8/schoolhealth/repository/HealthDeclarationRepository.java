@@ -20,4 +20,10 @@ public interface HealthDeclarationRepository extends JpaRepository<HealthDeclara
     Optional<HealthDeclaration> findByStudent_StudentCodeAndIsDraft(String studentCode, boolean isDraft);
 
     List<HealthDeclaration> findAllByStudent_StudentCodeAndIsDraft(String studentCode, boolean isDraft);
+
+    // Find the latest (by declarationDate) non-draft declaration for a student
+    Optional<HealthDeclaration> findFirstByStudent_StudentCodeAndIsDraftOrderByDeclarationDateDesc(String studentCode, boolean isDraft);
+
+    // Find all declarations for a student, ordered by date
+    List<HealthDeclaration> findAllByStudent_StudentCodeOrderByDeclarationDateDesc(String studentCode);
 }

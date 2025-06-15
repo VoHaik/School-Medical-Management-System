@@ -1,11 +1,11 @@
 package com.swp391_8.schoolhealth.controller;
 
 import com.swp391_8.schoolhealth.dto.EventDTO;
-import com.swp391_8.schoolhealth.dto.MedicationSubmissionDTO;
+import com.swp391_8.schoolhealth.dto.MedicationRequestResponseDTO; // Use new DTO
 import com.swp391_8.schoolhealth.dto.NotificationDTO;
 import com.swp391_8.schoolhealth.dto.StudentDTO;
 import com.swp391_8.schoolhealth.service.EventService;
-import com.swp391_8.schoolhealth.service.MedicationSubmissionService;
+import com.swp391_8.schoolhealth.service.MedicationRequestService; // Use new service
 import com.swp391_8.schoolhealth.service.NotificationService;
 import com.swp391_8.schoolhealth.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ public class ParentDashboardController {
     private EventService eventService;
 
     @Autowired
-    private MedicationSubmissionService medicationSubmissionService; // For medication summaries
+    private MedicationRequestService medicationRequestService; // Use new service
 
     @Autowired // Added StudentService
     private StudentService studentService; // Added StudentService
@@ -69,12 +69,13 @@ public class ParentDashboardController {
 
     // Endpoint to get medication submission summaries for a specific student of the parent.
     // studentId is crucial here.
-    @GetMapping("/medication-submissions/summary/student/{studentCode}") // Changed from studentId to studentCode
+    @GetMapping("/medication-requests/summary/student/{studentCode}") // Changed path and from studentId to studentCode
     @PreAuthorize("hasRole('PARENT')")
     // Ensure that the security context or service layer checks if the authenticated parent can view this studentCode
-    public ResponseEntity<List<MedicationSubmissionDTO>> getMedicationSummaryForStudent(@PathVariable String studentCode) { // Changed from Long studentId to String studentCode
+    public ResponseEntity<List<MedicationRequestResponseDTO>> getMedicationSummaryForStudent(@PathVariable String studentCode, Authentication authentication) { // Changed from Long studentId to String studentCode, added Authentication
         System.out.println("Fetching medication summary for studentCode: " + studentCode);
-        List<MedicationSubmissionDTO> medicationSummaries = medicationSubmissionService.getMedicationSubmissionsByStudentCode(studentCode); // Changed from getMedicationSubmissionsByStudentId to getMedicationSubmissionsByStudentCode
+        List<MedicationRequestResponseDTO> medicationSummaries = medicationRequestService.getMedicationRequestsByStudentCodeForParent(studentCode, authentication);
+
         if (medicationSummaries.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
