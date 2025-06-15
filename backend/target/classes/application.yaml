@@ -3,24 +3,49 @@ spring:
     name: school-health
   
   datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=HealthSchoolDB;encrypt=true;trustServerCertificate=true
+    url: jdbc:sqlserver://localhost:1433;databaseName=HealthSchoolDB;encrypt=true;trustServerCertificate=true;characterEncoding=UTF-8;useUnicode=true # Added UTF-8 params from properties
     username: sa
     password: 123456
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: update # Note: ddl-auto=update is also in properties, ensure consistency
     properties:
       hibernate:
         dialect: org.hibernate.dialect.SQLServerDialect
         format_sql: true
+        # Copied from application.properties, ensure these are desired
+        connection.characterEncoding: UTF-8
+        connection.useUnicode: true
+        # connection.CharSet: utf8mb4 # This might be MySQL specific, SQL Server handles Unicode differently. Review if needed.
+  jackson:
+    default-property-inclusion: NON_NULL
+    serialization:
+      write_dates_as_timestamps: false
 
 server:
   port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 
-# JWT Configuration
+# JWT Configuration (using values from application.properties as they seemed more specific)
+# Please review and use the correct secret and expiration for your application
 schoolhealth:
   app:
-    jwtSecret: schoolHealthSecretKeyForJwtTokenGenerationAndValidationProcess
-    jwtExpirationMs: 86400000  # 24 hours
+    jwtSecret: mySecretKey123456789012345678901234567890123456789012345678901234567890 # From properties
+    jwtExpirationMs: 86400000 # 24 hours, consistent in both files
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.http.converter: DEBUG
+    org.springframework.beans.TypeConverterDelegate: DEBUG
+    com.swp391_8.schoolhealth.controller: DEBUG
+    com.swp391_8.schoolhealth: DEBUG # General log for your app's packages
+    org.springframework.security: DEBUG
+    # org.hibernate.SQL: DEBUG # Uncomment to see SQL statements
+    # org.hibernate.type.descriptor.sql: TRACE # Uncomment to see SQL parameter binding (very verbose)

@@ -49,9 +49,11 @@ public class Student {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Nationalized // Added @Nationalized
     @Column(name = "first_name")
     private String firstName;
 
+    @Nationalized // Added @Nationalized
     @Column(name = "last_name")
     private String lastName;
 

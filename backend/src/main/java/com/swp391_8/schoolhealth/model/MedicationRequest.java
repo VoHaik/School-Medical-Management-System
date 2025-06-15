@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Nationalized; // Added import
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,12 +30,15 @@ public class MedicationRequest {
     @JoinColumn(name = "requested_by_user_id", referencedColumnName = "user_id", nullable = false)
     private User requestedBy; // User (Parent) who submitted the request
 
+    @Nationalized // Added annotation
     @Column(name = "medication_name", nullable = false, length = 255)
     private String medicationName;
 
+    @Nationalized // Added annotation
     @Column(nullable = false, length = 100)
     private String dosage;
 
+    @Nationalized // Added annotation
     @Column(nullable = false, length = 100)
     private String frequency; // e.g., "Twice a day", "Every 4 hours"
 
@@ -45,6 +49,7 @@ public class MedicationRequest {
     private LocalDate endDate;
 
     @Lob // For longer text
+    @Nationalized // Added annotation
     @Column(name = "reason", nullable = false)
     private String reason;
 
@@ -66,6 +71,7 @@ public class MedicationRequest {
     private LocalDateTime approvalDate;
 
     @Lob
+    @Nationalized // Added annotation
     @Column(name = "notes") // General notes from school nurse or admin
     private String notes;
 
@@ -78,6 +84,7 @@ public class MedicationRequest {
     private LocalDateTime administeredAt;
 
     @Lob
+    @Nationalized // Added annotation
     @Column(name = "administration_notes") // Specific notes related to medication administration
     private String administrationNotes;
 

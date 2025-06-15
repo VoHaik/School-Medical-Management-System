@@ -6,6 +6,8 @@ import com.swp391_8.schoolhealth.dto.MedicationRequestResponseDTO; // Added
 // import com.swp391_8.schoolhealth.model.User; // Not directly used here
 import com.swp391_8.schoolhealth.service.MedicationRequestService;
 import com.swp391_8.schoolhealth.service.SecurityService; // Keep for @PreAuthorize if complex checks remain
+import org.slf4j.Logger; // Added for logging
+import org.slf4j.LoggerFactory; // Added for logging
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,8 @@ import java.util.Map; // For simple request bodies like rejection reason
 @RequestMapping("/api/medication-requests")
 public class MedicationRequestController {
 
+    private static final Logger logger = LoggerFactory.getLogger(MedicationRequestController.class); // Added logger instance
+
     @Autowired
     private MedicationRequestService medicationRequestService;
 
@@ -31,9 +35,11 @@ public class MedicationRequestController {
     // The helper getCurrentUserId is no longer needed as Authentication object is passed to service
 
     // Parent endpoints
-    @PostMapping("/")
+    @PostMapping("")
     @PreAuthorize("hasRole('PARENT')")
     public ResponseEntity<?> createMedicationRequest(@RequestBody MedicationRequestDTO requestDTO, Authentication authentication) {
+        logger.info(">>> createMedicationRequest: Received payload for studentCode: {}, medicationName: {}", requestDTO.getStudentCode(), requestDTO.getMedicationName()); // Log specific fields
+        logger.debug(">>> createMedicationRequest: Full payload: {}", requestDTO); // Log full DTO if toString() is well-defined
         try {
             MedicationRequestResponseDTO newRequest = medicationRequestService.createMedicationRequest(requestDTO, authentication);
             return ResponseEntity.status(HttpStatus.CREATED).body(newRequest);

@@ -24,6 +24,8 @@ import ChildMedicalHistory from './pages/parent/ChildMedicalHistory'; // Add thi
 import MedicationRequestDetailPage from './pages/parent/MedicationRequestDetailPage'; // Add this line
 import ParentHealthCheckupOverview from './pages/parent/ParentHealthCheckupOverview'; // Added for parent
 import ParentHealthCheckupResultPage from './pages/parent/ParentHealthCheckupResultPage'; // Added for parent result view
+import SubmitMedicationPage from './pages/parent/SubmitMedicationPage'; // <<< IMPORT MỚI
+import ViewMedicationRequestsPage from './pages/parent/ViewMedicationRequestsPage'; // <<< IMPORT FOR VIEWING REQUESTS
 
 // Medical Staff Pages
 import MedicationManagement from './pages/medical/MedicationManagement';
@@ -132,6 +134,8 @@ function App() {
                 <Route path="/parent/child-medical-history/:childId" element={<ProtectedRoute roles={['ROLE_PARENT']}><ChildMedicalHistory /></ProtectedRoute>} />
                 <Route path="/parent/health-checkups" element={<ProtectedRoute roles={['ROLE_PARENT']}><ParentHealthCheckupOverview /></ProtectedRoute>} />
                 <Route path="/parent/health-checkup-result/:resultId" element={<ProtectedRoute roles={['ROLE_PARENT']}><ParentHealthCheckupResultPage /></ProtectedRoute>} />
+                <Route path="/parent/medication-submission" element={<ProtectedRoute roles={['ROLE_PARENT']}><SubmitMedicationPage /></ProtectedRoute>} /> {/* <<< ROUTE MỚI */}
+                <Route path="/parent/my-requests" element={<ProtectedRoute roles={['ROLE_PARENT']}><ViewMedicationRequestsPage /></ProtectedRoute>} /> {/* <<< ROUTE FOR VIEWING REQUESTS */}
 
                 {/* Medical Staff (Nurse/Doctor) Routes */}
                 <Route path="/medical/medication-management" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_DOCTOR']}><MedicationManagement /></ProtectedRoute>} />
