@@ -1,60 +1,115 @@
 import React from 'react';
+import {
+  ListItem, 
+  ListItemText, 
+  ListItemAvatar, 
+  Avatar, 
+  Typography, 
+  Chip, 
+  Button, 
+  Paper, 
+  Box 
+} from '@mui/material';
+import MedicationIcon from '@mui/icons-material/Medication';
+import PersonIcon from '@mui/icons-material/Person';
+import ViewIcon from '@mui/icons-material/Visibility';
+import CancelIcon from '@mui/icons-material/Cancel'; // Assuming you might add cancel here too
+import { useNavigate } from 'react-router-dom';
 
-const MedicationItem = React.memo(({ medication, index, onChange, onRemove }) => {
-  // console.log(`Rendering MedicationItem: ${index}`, medication);
+const getChipColor = (status) => {
+  switch (status) {
+    case 'PENDING': return 'warning';
+    case 'APPROVED': return 'info';
+    case 'ADMINISTERED': return 'success';
+    case 'REJECTED': return 'error';
+    case 'CANCELLED': return 'default';
+    default: return 'default';
+  }
+};
 
-  const handleChange = (e) => {
-    // Pass the entire event to the parent onChange handler
-    // The parent handler (handleNestedObjectArrayItemChange) expects the event
-    // and will use e.target.name and e.target.value
-    onChange(index, e); 
-  };
+const getStatusColor = (status) => { // For Avatar background
+  switch (status) {
+    case 'PENDING': return 'warning.main';
+    case 'APPROVED': return 'info.main';
+    case 'ADMINISTERED': return 'success.main';
+    case 'REJECTED': return 'error.main';
+    case 'CANCELLED': return 'grey.500';
+    default: return 'grey.500';
+  }
+};
+
+const MedicationItem = ({ request, onCancelRequest }) => {
+  const navigate = useNavigate();
+
+  if (!request) {
+    return null; // Or some placeholder if a request is expected but missing
+  }
 
   return (
-    <div className="p-3 border border-gray-200 rounded-md space-y-3 bg-gray-50">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <input
-          type="text"
-          name="name" // Field name for the parent handler
-          value={medication.name || ''}
-          onChange={handleChange}
-          className="w-full p-2 border border-gray-300 rounded-md"
-          placeholder="Medication Name (e.g., Paracetamol)"
+    <Paper component="li" elevation={2} sx={{ mb: 2, borderRadius: 2, '&:hover': { boxShadow: 5 } }}>
+      <ListItem alignItems="flex-start" sx={{ p: 2 }}>
+        <ListItemAvatar sx={{ mr: 2, mt: 0.5 }}>
+          <Avatar sx={{ bgcolor: getStatusColor(request.status), width: 48, height: 48 }}>
+            <MedicationIcon />
+          </Avatar>
+        </ListItemAvatar>
+        <ListItemText
+          primaryTypographyProps={{ variant: 'h6', fontWeight: 'medium', mb: 0.5 }}
+          primary={`${request.medicationName || 'N/A'}`}
+          secondary={
+            <>
+              <Typography component="div" variant="body2" color="text.primary">
+                Student: <Chip label={request.studentName || request.studentCode || 'N/A'} size="small" icon={<PersonIcon />} sx={{mr:1}}/>
+                Status: <Chip label={request.status || 'N/A'} size="small" color={getChipColor(request.status)} />
+              </Typography>
+              <Typography component="div" variant="body2" color="text.secondary" sx={{mt: 0.5}}>
+                Requested: {request.requestDate ? new Date(request.requestDate).toLocaleDateString() : 'N/A'}
+              </Typography>
+              {request.reason && (
+                <Typography component="div" variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, fontStyle: 'italic' }}>
+                  Reason: {request.reason}
+                </Typography>
+              )}
+              {/* Display more fields as needed, e.g., dosage, frequency */}
+              {request.dosage && (
+                <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                  Dosage: {request.dosage}
+                </Typography>
+              )}
+              {request.frequency && (
+                <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                  Frequency: {request.frequency}
+                </Typography>
+              )}
+            </>
+          }
         />
-        <input
-          type="text"
-          name="dosage" // Field name for the parent handler
-          value={medication.dosage || ''}
-          onChange={handleChange}
-          className="w-full p-2 border border-gray-300 rounded-md"
-          placeholder="Dosage (e.g., 500mg)"
-        />
-      </div>
-      <input
-        type="text"
-        name="frequency" // Field name for the parent handler
-        value={medication.frequency || ''}
-        onChange={handleChange}
-        className="w-full p-2 border border-gray-300 rounded-md"
-        placeholder="Frequency (e.g., Twice a day)"
-      />
-      <textarea
-        name="instructions" // Field name for the parent handler
-        value={medication.instructions || ''}
-        onChange={handleChange}
-        className="w-full p-2 border border-gray-300 rounded-md"
-        placeholder="Instructions (e.g., Take with food)"
-        rows="2"
-      />
-      <button
-        type="button"
-        onClick={() => onRemove(index)}
-        className="px-3 py-1 text-sm text-red-600 hover:text-red-800 font-medium"
-      >
-        <i className="fas fa-trash mr-1"></i> Remove Medication
-      </button>
-    </div>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'row', sm: 'column' }, alignItems: 'center', gap: 1, pt: {xs: 1, sm: 0}, ml: 'auto', mt: {xs:1, sm:0.5} }}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<ViewIcon />}
+            onClick={() => navigate(`/parent/medication-request/${request.requestId}`)} // Ensure this route exists
+            sx={{minWidth: '105px', mb: {sm: 0.5}}}
+          >
+            Details
+          </Button>
+          {(request.status === 'PENDING' || request.status === 'SUBMITTED') && onCancelRequest && (
+            <Button
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<CancelIcon />}
+              onClick={() => onCancelRequest(request.requestId)}
+              sx={{minWidth: '105px'}}
+            >
+              Cancel
+            </Button>
+          )}
+        </Box>
+      </ListItem>
+    </Paper>
   );
-});
+};
 
 export default MedicationItem;

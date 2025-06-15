@@ -47,7 +47,8 @@ import {
   Warning as WarningIcon,
   Schedule as ScheduleIcon,
   CalendarToday as CalendarIcon,
-  TrendingUp as TrendingIcon
+  TrendingUp as TrendingIcon,
+  Cancel as CancelIcon, // Add CancelIcon
 } from '@mui/icons-material';
 import { AuthContext } from '../../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -158,82 +159,71 @@ const ParentDashboard = () => {
     if (!currentUser || !currentUser.accessToken) {
       console.error("fetchDashboardData: Cannot fetch data, currentUser or accessToken is missing.", currentUser);
       setLoading(false);
-      setDashboardData(prevData => ({ // Keep existing children if any, clear others
-        ...prevData,
-        children: prevData.children || [], // Attempt to preserve children if already fetched by a previous valid call
+      setDashboardData(prevData => ({
+        children: prevData.children || [],
         allRecentNotifications: [],
         allUpcomingEvents: [],
-        allMedicationRequests: [],
-        // healthSummary will be recalculated or can be reset here
+        allMedicationRequests: [], // Clear medication requests
+        healthSummary: { totalChildren: prevData.children?.length || 0, activeAlerts: 0, pendingRequests: 0, upcomingEventsCount: 0 }
       }));
       return;
     }
 
     try {
-      console.log(`Fetching children for parent: ${currentUser.username} with token: ${currentUser.accessToken ? currentUser.accessToken.substring(0, 15) + '...' : 'No Token'}`);
-      const childrenResponse = await axios.get(`/api/parent/students`, {
-        headers: { Authorization: `Bearer ${currentUser.accessToken}` },
-      });
+      const headers = { Authorization: `Bearer ${currentUser.accessToken}` };
+      console.log(`Fetching children for parent: ${currentUser.username}`);
+      const childrenResponse = await axios.get(`/api/parent/students`, { headers });
       const fetchedChildren = childrenResponse.data || [];
-      console.log("Fetched children:", fetchedChildren);
-      setDashboardData(prev => ({ ...prev, children: fetchedChildren }));
+      // console.log("Fetched children:", fetchedChildren); // Already logged
 
       const studentCodeParam = selectedChildId ? `?studentCode=${selectedChildId}` : '';
 
       if (!currentUser.username) {
-        console.error("Parent code (currentUser.username) is not available for fetching notifications/events.");
-        // Potentially set parts of dashboard data to empty or show an error
-        setLoading(false); 
+        console.error("Parent code (currentUser.username) is not available for fetching dependent data.");
+        setLoading(false);
+        setDashboardData({
+          children: fetchedChildren, // Keep children if fetched
+          allRecentNotifications: [],
+          allUpcomingEvents: [],
+          allMedicationRequests: [],
+          healthSummary: { totalChildren: fetchedChildren.length, activeAlerts: 0, pendingRequests: 0, upcomingEventsCount: 0 }
+        });
         return;
       }
       
       console.log(`Fetching notifications for parent: ${currentUser.username}, student: ${selectedChildId || 'All'}`);
-      const notificationsResponse = await axios.get(`/api/notifications/parent/${currentUser.username}${studentCodeParam}`, {
-        headers: { Authorization: `Bearer ${currentUser.accessToken}` },
-      });
+      const notificationsResponse = await axios.get(`/api/notifications/parent/${currentUser.username}${studentCodeParam}`, { headers });
       const fetchedNotifications = notificationsResponse.data || [];
-      console.log("Fetched notifications:", fetchedNotifications);
-
+      // console.log("Fetched notifications:", fetchedNotifications); // Already logged
 
       console.log(`Fetching events for parent: ${currentUser.username}, student: ${selectedChildId || 'All'}`);
-      const eventsResponse = await axios.get(`/api/events/parent/${currentUser.username}${studentCodeParam}`, {
-        headers: { Authorization: `Bearer ${currentUser.accessToken}` },
-      });
+      const eventsResponse = await axios.get(`/api/events/parent/${currentUser.username}${studentCodeParam}`, { headers });
       const fetchedEvents = eventsResponse.data || [];
-      console.log("Fetched events:", fetchedEvents);
+      // console.log("Fetched events:", fetchedEvents);
 
-      let fetchedMedicationRequests = [];
-      if (selectedChildId) {
-        console.log(`Fetching medication requests for student: ${selectedChildId}`);
-        const medicationResponse = await axios.get(`/api/medication-submissions/summary/student/${selectedChildId}`, {
-          headers: { Authorization: `Bearer ${currentUser.accessToken}` },
-        });
-        fetchedMedicationRequests = medicationResponse.data || [];
-        console.log("Fetched medication requests:", fetchedMedicationRequests);
-      } else {
-        console.log("No child selected, skipping medication requests fetch for a specific child.");
-      }
+      // Fetch medication requests for the parent (no studentCodeParam here, filtered on frontend)
+      console.log(`Fetching medication requests for parent: ${currentUser.username}`);
+      const medicationRequestsResponse = await axios.get(`/api/medication-requests/parent/${currentUser.username}`, { headers });
+      const fetchedMedicationRequests = medicationRequestsResponse.data || [];
+      // console.log("Fetched medication requests:", fetchedMedicationRequests);
 
-      setDashboardData(prevData => ({
-        ...prevData,
+      setDashboardData({ // Single update with all fetched data
         children: fetchedChildren,
         allRecentNotifications: fetchedNotifications,
         allUpcomingEvents: fetchedEvents,
-        allMedicationRequests: fetchedMedicationRequests,
-      }));
+        allMedicationRequests: fetchedMedicationRequests, // Add this
+        // healthSummary will be recalculated by the other useEffect based on this new data
+      });
 
     } catch (error) {
-      console.error('Error fetching dashboard data:', error.response ? error.response.data : error.message, error.config);
-      if (error.response && error.response.status === 401) {
-        console.error("Received 401 Unauthorized. Token might be invalid or expired. CurrentUser:", currentUser);
-        // Potentially trigger logout or token refresh logic here if AuthContext supports it
-      }
-      setDashboardData(prevData => ({
-        ...prevData,
-        children: prevData.children || [], // Preserve children if fetched before error
-        allRecentNotifications: [],
-        allUpcomingEvents: [],
-        allMedicationRequests: [],
+      console.error('Error fetching dashboard data:', error);
+      // Preserve children if fetched, clear others
+      setDashboardData(prev => ({
+          children: prev.children || [], // Keep previously fetched children if any
+          allRecentNotifications: [],
+          allUpcomingEvents: [],
+          allMedicationRequests: [],
+          healthSummary: { totalChildren: prev.children?.length || 0, activeAlerts: 0, pendingRequests: 0, upcomingEventsCount: 0 }
       }));
     } finally {
       setLoading(false);
@@ -272,6 +262,17 @@ const ParentDashboard = () => {
     }
   };
 
+  const getChipColor = (status) => {
+    switch (status) {
+      case 'PENDING': return 'warning';
+      case 'APPROVED': return 'info';
+      case 'ADMINISTERED': return 'success';
+      case 'REJECTED': return 'error';
+      case 'CANCELLED': return 'default'; // Or 'secondary'
+      default: return 'default';
+    }
+  };
+
   const TabPanel = ({ children, value, index, ...other }) => (
     <div
       role="tabpanel"
@@ -287,6 +288,30 @@ const ParentDashboard = () => {
       )}
     </div>
   );
+
+  const handleCancelRequest = async (requestId) => {
+    if (!currentUser || !currentUser.accessToken) {
+      alert("Authentication required. Please log in.");
+      // Optionally navigate to login or show a modal
+      return;
+    }
+    if (!window.confirm("Are you sure you want to cancel this medication request?")) {
+      return;
+    }
+    try {
+      setLoading(true); // Indicate loading state during cancellation
+      await axios.delete(`/api/medication-requests/${requestId}`, {
+        headers: { Authorization: `Bearer ${currentUser.accessToken}` },
+      });
+      // alert("Medication request cancelled successfully."); // Consider using a Snackbar for notifications
+      fetchDashboardData(); // Refetch data to update the list
+    } catch (error) {
+      console.error("Error cancelling medication request:", error);
+      alert(`Failed to cancel medication request: ${error.response?.data?.message || error.message}`);
+      setLoading(false); // Reset loading state on error
+    }
+    // setLoading(false) will be called in fetchDashboardData's finally block
+  };
 
   if (loading) {
     return (
@@ -500,18 +525,60 @@ const ParentDashboard = () => {
       <TabPanel value={activeTab} index={2}>
         <Typography variant="h5" gutterBottom>Medication Requests {selectedChildName ? `for ${selectedChildName}` : ''}</Typography>
         {displayData.medicationRequests.length > 0 ? (
-          <List>
+          <List sx={{ width: '100%' }}>
             {displayData.medicationRequests.map((request) => (
-              <ListItem key={request.id} divider sx={{mb: 1, p:2, borderRadius: 1, boxShadow: 1}}>
-                <ListItemIcon>
-                  <PharmacyIcon color={getStatusColor(request.status)} />
-                </ListItemIcon>
-                <ListItemText 
-                  primary={`${request.medicationName} ${request.student ? '('+request.student+')' : ''}`}
-                  secondary={`Submitted: ${new Date(request.submittedDate).toLocaleDateString()} ${request.approvedDate ? '- Approved: ' + new Date(request.approvedDate).toLocaleDateString() : ''}`}
-                />
-                <Chip label={request.status} color={getStatusColor(request.status)} />
-              </ListItem>
+              <Paper component="li" key={request.requestId} elevation={2} sx={{ mb: 2, borderRadius: 2, '&:hover': { boxShadow: 5 } }}>
+                <ListItem alignItems="flex-start" sx={{ p: 2 }}>
+                  <ListItemAvatar sx={{ mr: 2, mt: 0.5 }}>
+                    <Avatar sx={{ bgcolor: getStatusColor(request.status), width: 48, height: 48 }}>
+                      <MedicationIcon />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primaryTypographyProps={{ variant: 'h6', fontWeight: 'medium', mb: 0.5 }}
+                    primary={`${request.medicationName || 'N/A'}`}
+                    secondary={
+                      <>
+                        <Typography component="div" variant="body2" color="text.primary">
+                          Student: <Chip label={request.studentName || 'N/A'} size="small" icon={<PersonIcon />} sx={{mr:1}}/>
+                          Status: <Chip label={request.status || 'N/A'} size="small" color={getChipColor(request.status)} />
+                        </Typography>
+                        <Typography component="div" variant="body2" color="text.secondary" sx={{mt: 0.5}}>
+                          Requested: {request.requestDate ? new Date(request.requestDate).toLocaleDateString() : 'N/A'}
+                        </Typography>
+                        {request.reason && (
+                          <Typography component="div" variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, fontStyle: 'italic' }}>
+                            Reason: {request.reason}
+                          </Typography>
+                        )}
+                      </>
+                    }
+                  />
+                  <Box sx={{ display: 'flex', flexDirection: { xs: 'row', sm: 'column' }, alignItems: 'center', gap: 1, pt: {xs: 1, sm: 0}, ml: 'auto', mt: {xs:1, sm:0.5} }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<ViewIcon />}
+                      onClick={() => navigate(`/parent/medication-request/${request.requestId}`)} // Ensure this route exists or will be created
+                      sx={{minWidth: '105px', mb: {sm: 0.5}}}
+                    >
+                      Details
+                    </Button>
+                    {(request.status === 'PENDING' || request.status === 'SUBMITTED') && ( // SUBMITTED if that's a possible initial status
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color="error"
+                        startIcon={<CancelIcon />}
+                        onClick={() => handleCancelRequest(request.requestId)}
+                        sx={{minWidth: '105px'}}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </Box>
+                </ListItem>
+              </Paper>
             ))}
           </List>
         ) : (

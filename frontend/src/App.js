@@ -13,15 +13,17 @@ import DashboardNew from './pages/DashboardNew';
 
 // Parent Pages
 import HealthDeclaration from './pages/parent/HealthDeclaration';
-import MedicationSubmission from './pages/parent/MedicationSubmission';
 import VaccinationConsent from './pages/parent/VaccinationConsent';
 import CheckupHistory from './pages/parent/CheckupHistory';
-import Notifications from './pages/parent/Notifications';
+// import Notifications from './pages/parent/Notifications'; // To be replaced by common notifications page
 import EmergencyContacts from './pages/parent/EmergencyContacts';
 import ParentDashboard from './pages/parent/ParentDashboard';
 import ChildInformationForm from './pages/parent/ChildInformationForm';
 import ChildProfileView from './pages/parent/ChildProfileView';
 import ChildMedicalHistory from './pages/parent/ChildMedicalHistory'; // Add this line
+import MedicationRequestDetailPage from './pages/parent/MedicationRequestDetailPage'; // Add this line
+import ParentHealthCheckupOverview from './pages/parent/ParentHealthCheckupOverview'; // Added for parent
+import ParentHealthCheckupResultPage from './pages/parent/ParentHealthCheckupResultPage'; // Added for parent result view
 
 // Medical Staff Pages
 import MedicationManagement from './pages/medical/MedicationManagement';
@@ -30,6 +32,8 @@ import HealthCheckups from './pages/medical/HealthCheckups';
 import StudentManagement from './pages/medical/StudentManagement';
 import MedicalReports from './pages/medical/Reports';
 import MedicalEvents from './pages/medical/MedicalEvents';
+import HealthCheckupEventManagement from './pages/nurse/HealthCheckupEventManagement'; // Added for nurse/admin
+import HealthCheckupEventStudentManagement from './pages/nurse/HealthCheckupEventStudentManagement'; // Added for nurse/admin
 
 // Manager Pages
 import ManagerDashboard from './pages/manager/ManagerDashboard';
@@ -51,6 +55,10 @@ import MedicalHistory from './pages/student/MedicalHistory';
 import VaccinationRecord from './pages/student/VaccinationRecord';
 import HealthResources from './pages/student/HealthResources';
 import Profile from './pages/student/Profile';
+import StudentHealthCheckupHistory from './pages/student/StudentHealthCheckupHistory'; // Added for student
+
+// Common Pages
+import NotificationsPage from './pages/common/NotificationsPage'; // Import the new common notifications page
 
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -92,195 +100,64 @@ function App() {
                 {/* Dashboard */}
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
-                    <ErrorBoundary fallbackMessage="There was an error loading the dashboard.">
-                      <DashboardNew />
-                    </ErrorBoundary>
+                    <DashboardNew />
                   </ProtectedRoute>
                 } />
 
-                {/* Legacy Routes */}
-                <Route path="/student-profile" element={
+                {/* Common Protected Routes */}
+                <Route path="/notifications" element={
                   <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } />
-                <Route path="/student-blog" element={
-                  <ProtectedRoute>
-                    <StudentBlog />
-                  </ProtectedRoute>
-                } />
-
-                {/* Parent Routes */}
-                <Route path="/parent/health-declaration" element={
-                  <ProtectedRoute allowedRoles={['ROLE_PARENT']}>
-                    <HealthDeclaration />
-                  </ProtectedRoute>
-                } />
-                <Route path="/parent/medication-submission" element={
-                  <ProtectedRoute allowedRoles={['ROLE_PARENT']}>
-                    <MedicationSubmission />
-                  </ProtectedRoute>
-                } />
-                <Route path="/parent/vaccination-consent" element={
-                  <ProtectedRoute allowedRoles={['ROLE_PARENT']}>
-                    <VaccinationConsent />
-                  </ProtectedRoute>
-                } />
-                <Route path="/parent/checkup-history" element={
-                  <ProtectedRoute allowedRoles={['ROLE_PARENT']}>
-                    <CheckupHistory />
-                  </ProtectedRoute>
-                } />
-                <Route path="/parent/notifications" element={
-                  <ProtectedRoute allowedRoles={['ROLE_PARENT']}>
-                    <Notifications />
-                  </ProtectedRoute>
-                } />
-                <Route path="/parent/emergency-contacts" element={
-                  <ProtectedRoute allowedRoles={['ROLE_PARENT']}>
-                    <EmergencyContacts />
-                  </ProtectedRoute>
-                } />
-                <Route path="/parent/dashboard" element={
-                  <ProtectedRoute allowedRoles={['ROLE_PARENT']}>
-                    <ParentDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/parent/child-registration" element={
-                  <ProtectedRoute allowedRoles={['ROLE_PARENT']}>
-                    <ChildInformationForm />
-                  </ProtectedRoute>
-                } />
-                <Route path="/parent/child/:studentCode/edit" element={ // Changed :childId to :studentCode
-                  <ProtectedRoute allowedRoles={['ROLE_PARENT']}>
-                    <ChildInformationForm />
-                  </ProtectedRoute>
-                } />
-                <Route path="/parent/child/:studentCode/profile" element={ // Changed :childId to :studentCode
-                  <ProtectedRoute allowedRoles={['ROLE_PARENT']}>
-                    <ChildProfileView />
-                  </ProtectedRoute>
-                } />
-                <Route path="/parent/child/:studentCode/medical-history" element={ // Changed :childId to :studentCode
-                  <ProtectedRoute allowedRoles={['ROLE_PARENT']}>
-                    <ChildMedicalHistory />
-                  </ProtectedRoute>
-                } />
-
-                {/* Medical Staff Routes */}
-                <Route path="/medical/medication-management" element={
-                  <ProtectedRoute allowedRoles={['ROLE_SCHOOLNURSE']}>
-                    <MedicationManagement />
-                  </ProtectedRoute>
-                } />
-                <Route path="/medical/vaccination-management" element={
-                  <ProtectedRoute allowedRoles={['ROLE_SCHOOLNURSE']}>
-                    <VaccinationManagement />
-                  </ProtectedRoute>
-                } />
-                <Route path="/medical/health-checkups" element={
-                  <ProtectedRoute allowedRoles={['ROLE_SCHOOLNURSE']}>
-                    <HealthCheckups />
-                  </ProtectedRoute>
-                } />
-                <Route path="/medical/student-management" element={
-                  <ProtectedRoute allowedRoles={['ROLE_SCHOOLNURSE']}>
-                    <StudentManagement />
-                  </ProtectedRoute>
-                } />
-                <Route path="/medical/reports" element={
-                  <ProtectedRoute allowedRoles={['ROLE_SCHOOLNURSE']}>
-                    <MedicalReports />
-                  </ProtectedRoute>
-                } />
-                <Route path="/medical/events" element={
-                  <ProtectedRoute allowedRoles={['ROLE_SCHOOLNURSE']}>
-                    <MedicalEvents />
-                  </ProtectedRoute>
-                } />
-
-                {/* Manager Routes */}
-                <Route path="/manager/dashboard" element={
-                  <ProtectedRoute allowedRoles={['ROLE_TEACHER']}>
-                    <ManagerDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/manager/reports" element={
-                  <ProtectedRoute allowedRoles={['ROLE_TEACHER']}>
-                    <ReportsAnalytics />
-                  </ProtectedRoute>
-                } />
-                <Route path="/manager/user-management" element={
-                  <ProtectedRoute allowedRoles={['ROLE_TEACHER']}>
-                    <ManagerUserManagement />
-                  </ProtectedRoute>
-                } />
-                <Route path="/manager/health-programs" element={
-                  <ProtectedRoute allowedRoles={['ROLE_TEACHER']}>
-                    <ManagerHealthPrograms />
-                  </ProtectedRoute>
-                } />
-                <Route path="/manager/content" element={
-                  <ProtectedRoute allowedRoles={['ROLE_TEACHER']}>
-                    <ContentManagement />
-                  </ProtectedRoute>
-                } />
-
-                {/* Admin Routes */}
-                <Route path="/admin/user-management" element={
-                  <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
-                    <UserManagement />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/system-configuration" element={
-                  <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
-                    <SystemConfiguration />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/analytics-reports" element={
-                  <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
-                    <AnalyticsReports />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/health-programs" element={
-                  <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
-                    <HealthPrograms />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/data-export" element={
-                  <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
-                    <DataExport />
+                    <NotificationsPage />
                   </ProtectedRoute>
                 } />
 
                 {/* Student Routes */}
-                <Route path="/student/profile" element={
-                  <ProtectedRoute allowedRoles={['ROLE_STUDENT']}>
-                    <Profile />
-                  </ProtectedRoute>
-                } />
-                <Route path="/student/health-profile" element={
-                  <ProtectedRoute allowedRoles={['ROLE_STUDENT']}>
-                    <HealthProfile />
-                  </ProtectedRoute>
-                } />
-                <Route path="/student/medical-history" element={
-                  <ProtectedRoute allowedRoles={['ROLE_STUDENT']}>
-                    <MedicalHistory />
-                  </ProtectedRoute>
-                } />
-                <Route path="/student/vaccination-record" element={
-                  <ProtectedRoute allowedRoles={['ROLE_STUDENT']}>
-                    <VaccinationRecord />
-                  </ProtectedRoute>
-                } />
-                <Route path="/student/health-resources" element={
-                  <ProtectedRoute allowedRoles={['ROLE_STUDENT']}>
-                    <HealthResources />
-                  </ProtectedRoute>
-                } />
+                <Route path="/student/blog" element={<ProtectedRoute roles={['ROLE_STUDENT']}><StudentBlog /></ProtectedRoute>} />
+                <Route path="/student/health-profile" element={<ProtectedRoute roles={['ROLE_STUDENT']}><HealthProfile /></ProtectedRoute>} />
+                <Route path="/student/medical-history" element={<ProtectedRoute roles={['ROLE_STUDENT']}><MedicalHistory /></ProtectedRoute>} />
+                <Route path="/student/vaccination-record" element={<ProtectedRoute roles={['ROLE_STUDENT']}><VaccinationRecord /></ProtectedRoute>} />
+                <Route path="/student/health-resources" element={<ProtectedRoute roles={['ROLE_STUDENT']}><HealthResources /></ProtectedRoute>} />
+                <Route path="/student/profile" element={<ProtectedRoute roles={['ROLE_STUDENT']}><Profile /></ProtectedRoute>} />
+                <Route path="/student/health-checkups" element={<ProtectedRoute roles={['ROLE_STUDENT']}><StudentHealthCheckupHistory /></ProtectedRoute>} />
 
-                {/* Catch all route */}
+                {/* Parent Routes */}
+                <Route path="/parent/dashboard" element={<ProtectedRoute roles={['ROLE_PARENT']}><ParentDashboard /></ProtectedRoute>} />
+                <Route path="/parent/health-declaration" element={<ProtectedRoute roles={['ROLE_PARENT']}><HealthDeclaration /></ProtectedRoute>} />
+                <Route path="/parent/vaccination-consent" element={<ProtectedRoute roles={['ROLE_PARENT']}><VaccinationConsent /></ProtectedRoute>} />
+                <Route path="/parent/checkup-history" element={<ProtectedRoute roles={['ROLE_PARENT']}><CheckupHistory /></ProtectedRoute>} />
+                {/* <Route path="/parent/notifications" element={<ProtectedRoute roles={['ROLE_PARENT']}><Notifications /></ProtectedRoute>} /> */}
+                <Route path="/parent/emergency-contacts" element={<ProtectedRoute roles={['ROLE_PARENT']}><EmergencyContacts /></ProtectedRoute>} />
+                <Route path="/parent/child-information" element={<ProtectedRoute roles={['ROLE_PARENT']}><ChildInformationForm /></ProtectedRoute>} />
+                <Route path="/parent/child-profile/:childId" element={<ProtectedRoute roles={['ROLE_PARENT']}><ChildProfileView /></ProtectedRoute>} />
+                <Route path="/parent/child-medical-history/:childId" element={<ProtectedRoute roles={['ROLE_PARENT']}><ChildMedicalHistory /></ProtectedRoute>} />
+                <Route path="/parent/health-checkups" element={<ProtectedRoute roles={['ROLE_PARENT']}><ParentHealthCheckupOverview /></ProtectedRoute>} />
+                <Route path="/parent/health-checkup-result/:resultId" element={<ProtectedRoute roles={['ROLE_PARENT']}><ParentHealthCheckupResultPage /></ProtectedRoute>} />
+
+                {/* Medical Staff (Nurse/Doctor) Routes */}
+                <Route path="/medical/medication-management" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_DOCTOR']}><MedicationManagement /></ProtectedRoute>} />
+                <Route path="/medical/vaccination-management" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_DOCTOR']}><VaccinationManagement /></ProtectedRoute>} />
+                <Route path="/medical/health-checkups" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_DOCTOR']}><HealthCheckups /></ProtectedRoute>} />
+                <Route path="/medical/student-management" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_DOCTOR']}><StudentManagement /></ProtectedRoute>} />
+                <Route path="/medical/reports" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_DOCTOR']}><MedicalReports /></ProtectedRoute>} />
+                <Route path="/medical/events" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_DOCTOR']}><MedicalEvents /></ProtectedRoute>} />
+                <Route path="/nurse/health-checkup-events" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_ADMIN']}><HealthCheckupEventManagement /></ProtectedRoute>} />
+                <Route path="/nurse/health-checkup-events/:eventId/students" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_ADMIN']}><HealthCheckupEventStudentManagement /></ProtectedRoute>} />
+
+                {/* Manager Routes */}
+                <Route path="/manager/dashboard" element={<ProtectedRoute roles={['ROLE_MANAGER']}><ManagerDashboard /></ProtectedRoute>} />
+                <Route path="/manager/reports-analytics" element={<ProtectedRoute roles={['ROLE_MANAGER']}><ReportsAnalytics /></ProtectedRoute>} />
+                <Route path="/manager/user-management" element={<ProtectedRoute roles={['ROLE_MANAGER']}><ManagerUserManagement /></ProtectedRoute>} />
+                <Route path="/manager/health-programs" element={<ProtectedRoute roles={['ROLE_MANAGER']}><ManagerHealthPrograms /></ProtectedRoute>} />
+                <Route path="/manager/content-management" element={<ProtectedRoute roles={['ROLE_MANAGER']}><ContentManagement /></ProtectedRoute>} />
+
+                {/* Admin Routes */}
+                <Route path="/admin/user-management" element={<ProtectedRoute roles={['ROLE_ADMIN']}><UserManagement /></ProtectedRoute>} />
+                <Route path="/admin/system-configuration" element={<ProtectedRoute roles={['ROLE_ADMIN']}><SystemConfiguration /></ProtectedRoute>} />
+                <Route path="/admin/analytics-reports" element={<ProtectedRoute roles={['ROLE_ADMIN']}><AnalyticsReports /></ProtectedRoute>} />
+                <Route path="/admin/health-programs" element={<ProtectedRoute roles={['ROLE_ADMIN']}><HealthPrograms /></ProtectedRoute>} />
+                <Route path="/admin/data-export" element={<ProtectedRoute roles={['ROLE_ADMIN']}><DataExport /></ProtectedRoute>} />
+
+                {/* Fallback for unmatched routes - consider a 404 page */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>

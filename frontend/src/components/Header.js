@@ -3,9 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import DarkModeToggle from './DarkModeToggle';
 import AppMenu from './AppMenu'; // Import the new AppMenu component
-import { IconButton, Badge } from '@mui/material'; // For menu button
+import { IconButton } from '@mui/material'; // For menu button. Removed Badge as NotificationBell handles it.
 import MenuIcon from '@mui/icons-material/Menu'; // Standard menu icon
-import NotificationsIcon from '@mui/icons-material/Notifications'; // Example for a notification icon
+// import NotificationsIcon from '@mui/icons-material/Notifications'; // Removed, NotificationBell handles its own icon
+import NotificationBell from './NotificationBell'; // Import NotificationBell
 
 const Header = () => {
   const { currentUser, logout, isAuthenticated } = useContext(AuthContext);
@@ -48,12 +49,8 @@ const Header = () => {
           
           {isAuthenticated() ? (
             <>
-              {/* Notification Icon - Example */}
-              <IconButton color="inherit" onClick={() => navigate('/parent/notifications')} sx={{ mr: 1}}>
-                <Badge badgeContent={currentUser?.notificationCount || 0} color="error"> {/* Assuming notificationCount is available */}
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
+              {/* Integrate NotificationBell */}
+              <NotificationBell />
 
               {/* User Menu Button */}
               <IconButton
