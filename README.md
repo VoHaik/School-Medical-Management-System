@@ -220,6 +220,61 @@ If you encounter database connection issues:
    CREATE DATABASE school_health_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
 
+## Known Issues and Fixes
+
+### Database Character Encoding Issue
+
+Some users might encounter a "conversion from varchar to NCHAR" database error when accessing medication requests. This is a known issue with character encoding in the database schema.
+
+#### Symptoms
+- Error messages containing "conversion from varchar to NCHAR is unsupported"
+- Error messages containing "Could not extract column [8] from JDBC ResultSet"
+- Data not displaying correctly in medication requests views
+
+#### Fix
+We've included a fix script to address this issue. Follow these steps:
+
+1. Navigate to the scripts directory:
+   ```bash
+   cd scripts
+   ```
+
+2. Run the database fix script (as administrator):
+   ```powershell
+   .\fix-database-conversion-issues.ps1
+   ```
+
+3. Restart the backend service after applying the fix:
+   ```bash
+   cd ..
+   cd backend
+   mvn spring-boot:run
+   ```
+
+The script converts the varchar columns to nvarchar/NCHAR in the SQL Server database to support Unicode characters correctly.
+
+If you're still experiencing issues after running the script, please contact the system administrator.
+
+# Unicode Support (Vietnamese Character Support)
+
+The application has been updated to fully support Unicode characters, including Vietnamese. This includes:
+
+- Database columns converted from VARCHAR to NVARCHAR
+- Java entities updated with `@Nationalized` annotations
+- Proper UTF-8 encoding across all application layers
+
+If you encounter any issues with character display, please run the conversion script:
+
+```powershell
+# Navigate to scripts directory
+cd scripts
+
+# Run the full Unicode conversion script
+.\full-unicode-conversion.ps1
+```
+
+For detailed information about the Unicode implementation, see [Unicode Support Implementation Guide](docs/unicode-support-implementation-guide.md).
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.

@@ -389,4 +389,79 @@ public class MedicationRequestService {
         MedicationRequest updatedRequest = medicationRequestRepository.save(request);
         return convertToResponseDTO(updatedRequest);
     }
+
+    /**
+     * Updates a medication request by a parent
+     * Only allows updates if the request is in PENDING status
+     */
+    @Transactional
+    public MedicationRequestResponseDTO updateMedicationRequestByParent(Integer requestId, MedicationRequestDTO requestDTO, Authentication authentication) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Integer userId = userDetails.getId();
+
+        // Check if the request exists
+        MedicationRequest request = medicationRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Medication request not found with ID: " + requestId));
+
+        // Check if the authenticated user is the owner of this request
+        if (!request.getRequestedBy().getId().equals(userId)) {
+            throw new AccessDeniedException("You are not authorized to update this medication request");
+        }
+
+        // Only allow updates if the request is still PENDING
+        if (request.getStatus() != MedicationRequest.MedicationRequestStatus.PENDING) {
+            throw new IllegalStateException("Cannot update a medication request that has already been processed");
+        }        // Update fields that are allowed to be changed
+        if (requestDTO.getMedicationName() != null) {
+            request.setMedicationName(requestDTO.getMedicationName());
+        }
+        if (requestDTO.getDosage() != null) {
+            request.setDosage(requestDTO.getDosage());
+        }
+        if (requestDTO.getFrequency() != null) {
+            request.setFrequency(requestDTO.getFrequency());
+        }
+        if (requestDTO.getStartDate() != null) {
+            request.setStartDate(requestDTO.getStartDate());
+        }
+        if (requestDTO.getEndDate() != null) {
+            request.setEndDate(requestDTO.getEndDate());
+        }
+        if (requestDTO.getReason() != null) {
+            request.setReason(requestDTO.getReason());
+        }
+
+        // Save the updated request
+        MedicationRequest updatedRequest = medicationRequestRepository.save(request);
+        
+        // Return the response DTO
+        return convertToResponseDTO(updatedRequest);
+    }
+
+    /**
+     * Deletes a medication request by a parent
+     * Only allows deletion if the request is in PENDING status
+     */
+    @Transactional
+    public void deleteMedicationRequest(Integer requestId, Authentication authentication) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Integer userId = userDetails.getId();
+
+        // Check if the request exists
+        MedicationRequest request = medicationRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Medication request not found with ID: " + requestId));
+
+        // Check if the authenticated user is the owner of this request
+        if (!request.getRequestedBy().getId().equals(userId)) {
+            throw new AccessDeniedException("You are not authorized to delete this medication request");
+        }
+
+        // Only allow deletion if the request is still PENDING
+        if (request.getStatus() != MedicationRequest.MedicationRequestStatus.PENDING) {
+            throw new IllegalStateException("Cannot delete a medication request that has already been processed");
+        }
+
+        // Delete the request
+        medicationRequestRepository.delete(request);
+    }
 }

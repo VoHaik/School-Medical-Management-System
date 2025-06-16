@@ -12,7 +12,7 @@ import VaccinationItem from '../../components/parent/VaccinationItem';
 import { useLocation } from 'react-router-dom'; // Added useLocation
 
 const schema = yup.object().shape({
-  studentCode: yup.string().required("Child selection is required"), // Changed studentId to studentCode
+  studentCode: yup.string().required("Child selection is required"),
   allergies: yup.array().of(yup.string().nullable()), // Allow null or empty strings initially
   chronicIllnesses: yup.array().of(yup.string().nullable()), // Allow null or empty strings initially
   medications: yup.array().of(yup.object().shape({
@@ -45,7 +45,7 @@ const HealthDeclaration = () => {
   const { currentUser } = useContext(AuthContext);
   const location = useLocation(); // Added to get state from navigation
   const [children, setChildren] = useState([]);
-  const [selectedStudentCode, setSelectedStudentCode] = useState(''); // Changed selectedStudentId to selectedStudentCode
+  const [selectedStudentCode, setSelectedStudentCode] = useState('');
   const [initialLoading, setInitialLoading] = useState(true); // For children list
   const [isFetchingDeclaration, setIsFetchingDeclaration] = useState(false); // For health data for a selected child
   const [submitting, setSubmitting] = useState(false); // For form submission (save/submit)
@@ -53,7 +53,7 @@ const HealthDeclaration = () => {
   const { control, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
-      studentCode: '', // Changed studentId to studentCode
+      studentCode: '',
       allergies: [],
       chronicIllnesses: [],
       medications: [],
@@ -103,9 +103,9 @@ const HealthDeclaration = () => {
     fetchChildren();
   }, [currentUser, location.state]); // Added location.state to dependencies
 
-  const resetFormToDefaults = useCallback((studentCodeToKeep = '') => { // Changed studentIdToKeep to studentCodeToKeep
+  const resetFormToDefaults = useCallback((studentCodeToKeep = '') => {
     reset({
-      studentCode: studentCodeToKeep, // Changed studentId to studentCode
+      studentCode: studentCodeToKeep,
       allergies: [],
       chronicIllnesses: [],
       medications: [],
@@ -122,7 +122,7 @@ const HealthDeclaration = () => {
   }, [reset]);
 
   // Effect to fetch health declaration when selectedStudentCode changes
-  const fetchHealthDeclaration = useCallback(async (studentCodeToFetch) => { // Changed studentIdToFetch to studentCodeToFetch
+  const fetchHealthDeclaration = useCallback(async (studentCodeToFetch) => {
     if (!studentCodeToFetch) {
       resetFormToDefaults(); // Reset if no student is selected
       return;
@@ -138,7 +138,7 @@ const HealthDeclaration = () => {
         const declarationData = response.data;
         const formData = {
           ...declarationData,
-          studentCode: declarationData.studentCode || studentCodeToFetch, // Ensure studentCode is set
+          studentCode: declarationData.studentCode || studentCodeToFetch,
           allergies: declarationData.allergies || [],
           chronicIllnesses: declarationData.chronicIllnesses || [],
           medications: declarationData.medications || [],
@@ -172,9 +172,8 @@ const HealthDeclaration = () => {
     fetchHealthDeclaration(selectedStudentCode);
   }, [selectedStudentCode, fetchHealthDeclaration]);
 
-
   const onSubmit = async (formData) => {
-    if (!selectedStudentCode) { // Changed selectedStudentId to selectedStudentCode
+    if (!selectedStudentCode) {
       alert("Please select a child first.");
       return;
     }
@@ -202,10 +201,9 @@ const HealthDeclaration = () => {
       setSubmitting(false);
     }
   };
-
   const handleSaveAsDraft = async () => {
     const formDataFromWatch = watch(); // Get all form data
-    if (!selectedStudentCode) { // Changed selectedStudentId to selectedStudentCode
+    if (!selectedStudentCode) {
         alert("Please select a child before saving a draft.");
         return;
     }
@@ -312,36 +310,35 @@ const HealthDeclaration = () => {
                 <div className="h-10 bg-gray-300 rounded animate-pulse w-full p-2 border border-gray-300"></div>
               ) : (
                 <select
-                  id="studentCodeSelect" // Changed id
-                  value={selectedStudentCode} // Changed selectedStudentId to selectedStudentCode
+                  id="studentCodeSelect"
+                  value={selectedStudentCode}
                   onChange={(e) => {
-                    const newStudentCode = e.target.value; // Changed newStudentId to newStudentCode
-                    setSelectedStudentCode(newStudentCode); // Changed setSelectedStudentId to setSelectedStudentCode
+                    const newStudentCode = e.target.value;
+                    setSelectedStudentCode(newStudentCode);
                     setValue('studentCode', newStudentCode); // Update RHF studentCode field
                   }}
-                  className={`w-full p-2 border ${errors.studentCode ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500`} // Changed errors.studentId to errors.studentCode
+                  className={`w-full p-2 border ${errors.studentCode ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500`}
                   disabled={children.length === 0 || initialLoading || isFetchingDeclaration}
                 >
-                  <option value="">-- Select a child --</option>
-                  {children.map(child => (
-                    <option key={child.studentCode} value={child.studentCode}> // Changed child.id to child.studentCode
+                  <option value="">-- Select a child --</option>                  {children.map(child => (
+                    <option key={child.studentCode} value={child.studentCode}>
                       {child.fullName}
                     </option>
                   ))}
                 </select>
               )}
               {/* This error refers to the RHF studentCode */}
-              {errors.studentCode && <p className="text-red-600 text-sm mt-1">{errors.studentCode.message}</p>} // Changed errors.studentId to errors.studentCode
+              {errors.studentCode && <p className="text-red-600 text-sm mt-1">{errors.studentCode.message}</p>}
               {!initialLoading && children.length === 0 && <p className="text-sm text-gray-500 mt-1">No children found for your account.</p>}
             </div>
           </div>
 
-          {isFetchingDeclaration && selectedStudentCode ? ( // Changed selectedStudentId to selectedStudentCode
+          {isFetchingDeclaration && selectedStudentCode ? (
             <FormSkeleton />
-          ) : !selectedStudentCode && !initialLoading ? ( // Changed selectedStudentId to selectedStudentCode
+          ) : !selectedStudentCode && !initialLoading ? (
             // Message to show if children are loaded but none is selected yet
             <p className="p-6 text-gray-600 text-center">Please select a child to view or complete their health declaration.</p>
-          ) : selectedStudentCode && !isFetchingDeclaration ? ( // Changed selectedStudentId to selectedStudentCode
+          ) : selectedStudentCode && !isFetchingDeclaration ? (
             // Only render form if a child is selected and data is not being fetched
             <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-8">
               {/* Hidden studentCode field for react-hook-form validation, value set by fetch/reset */}

@@ -29,11 +29,6 @@ public class MedicationRequestController {
     @Autowired
     private MedicationRequestService medicationRequestService;
 
-    // @Autowired
-    // private SecurityService securityService; // Can be removed if all auth handled by @PreAuthorize and service layer
-
-    // The helper getCurrentUserId is no longer needed as Authentication object is passed to service
-
     // Parent endpoints
     @PostMapping("")
     @PreAuthorize("hasRole('PARENT')")
@@ -176,6 +171,52 @@ public class MedicationRequestController {
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
         } catch (RuntimeException e) { // Covers NotFoundException from service
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // Added new endpoint for updating a medication request
+    @PutMapping("/{requestId}")
+    @PreAuthorize("hasRole('PARENT')")
+    public ResponseEntity<?> updateMedicationRequest(
+            @PathVariable Integer requestId, 
+            @RequestBody MedicationRequestDTO requestDTO, 
+            Authentication authentication) {
+        logger.info(">>> updateMedicationRequest: Updating request ID: {}", requestId);
+        try {
+            logger.debug("Request DTO: {}", requestDTO);
+            MedicationRequestResponseDTO updatedRequest = medicationRequestService.updateMedicationRequestByParent(
+                requestId, requestDTO, authentication);
+            logger.info("Successfully updated request ID: {}", requestId);
+            return ResponseEntity.ok(updatedRequest);
+        } catch (SecurityException | AccessDeniedException e) {
+            logger.error("Security error updating request ID {}: {}", requestId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            logger.error("State error updating request ID {}: {}", requestId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Error updating request ID {}: {}", requestId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
+        }
+    }
+
+    // Added new endpoint for deleting a medication request
+    @DeleteMapping("/{requestId}")
+    @PreAuthorize("hasRole('PARENT')")
+    public ResponseEntity<?> deleteMedicationRequest(
+            @PathVariable Integer requestId, 
+            Authentication authentication) {
+        logger.info(">>> deleteMedicationRequest: Deleting request ID: {}", requestId);
+        try {
+            medicationRequestService.deleteMedicationRequest(requestId, authentication);
+            return ResponseEntity.ok(Map.of("message", "Medication request successfully deleted"));
+        } catch (SecurityException | AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
