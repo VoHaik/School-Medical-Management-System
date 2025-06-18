@@ -1,0 +1,33 @@
+package com.swp391_8.schoolhealth.controller;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/test")
+@CrossOrigin(origins = "*", maxAge = 3600)
+public class DiagnosticController {
+
+    @GetMapping("/check")
+    public ResponseEntity<?> checkConnection() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "API is working correctly");
+        response.put("timestamp", System.currentTimeMillis());
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/credentials")
+    public ResponseEntity<?> getTestCredentials() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Use these credentials for testing");
+        response.put("username", "parent.smith");
+        response.put("password", "Password123");
+        response.put("note", "Test credentials are for development only");
+        return ResponseEntity.ok(response);
+    }
+}
