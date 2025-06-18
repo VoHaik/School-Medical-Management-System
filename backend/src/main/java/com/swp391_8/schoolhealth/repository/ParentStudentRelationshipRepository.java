@@ -23,9 +23,12 @@ public interface ParentStudentRelationshipRepository extends JpaRepository<Paren
     List<ParentStudentRelationship> findByStudentStudentCode(String studentCode);
     
     // Check if a specific parent-student relationship exists by parent's code and student's code
+    // This method is causing issues because of the entity relationship structure
+    // Replacing it with a more explicit query below
+    @Deprecated
     boolean existsByParentParentCodeAndStudentStudentCode(String parentCode, String studentCode);
     
-    // Check if a specific parent-student relationship exists by parent's code and student's code (replaces existsByParentUserIdAndStudentStudentCode)
+    // Fixed version - explicit query that matches the database structure
     @Query("SELECT CASE WHEN COUNT(psr) > 0 THEN true ELSE false END FROM ParentStudentRelationship psr WHERE psr.parent.parentCode = :parentCode AND psr.student.studentCode = :studentCode")
     boolean existsByParentCodeAndStudentStudentCode(@Param("parentCode") String parentCode, @Param("studentCode") String studentCode);
     
@@ -34,6 +37,9 @@ public interface ParentStudentRelationshipRepository extends JpaRepository<Paren
     Optional<ParentStudentRelationship> findByParentCodeAndStudentCode(@Param("parentCode") String parentCode, @Param("studentCode") String studentCode);
     
     // Check if a specific parent-student relationship exists by parent's user code and student's code
+    // This method uses User relationship, but for consistency we're preferring the direct parentCode match
+    // Kept for backward compatibility but marked deprecated
+    @Deprecated
     @Query("SELECT CASE WHEN COUNT(psr) > 0 THEN true ELSE false END FROM ParentStudentRelationship psr JOIN User u ON psr.parent.parentCode = u.userCode WHERE u.userCode = :parentUserCode AND psr.student.studentCode = :studentCode")
     boolean existsByParent_User_UserCodeAndStudent_StudentCode(@Param("parentUserCode") String parentUserCode, @Param("studentCode") String studentCode); // Corrected method name and Query
 

@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import java.util.Arrays; // For creating list of statuses
 
 @Service
+@Deprecated
 public class MedicationRequestService {
 
     @Autowired

@@ -6,7 +6,7 @@ import axios from 'axios';
 import { AuthContext } from '../../context/AuthContext';
 import AllergyItem from '../../components/parent/AllergyItem';
 import ChronicIllnessItem from '../../components/parent/ChronicIllnessItem';
-import MedicationItem from '../../components/parent/MedicationItem';
+import MedicationItemDeclaration from '../../components/parent/MedicationItemDeclaration';
 import EmergencyContactItem from '../../components/parent/EmergencyContactItem';
 import VaccinationItem from '../../components/parent/VaccinationItem';
 import { useLocation } from 'react-router-dom'; // Added useLocation
@@ -100,8 +100,7 @@ const HealthDeclaration = () => {
         setChildren([]);
       }
     };
-    fetchChildren();
-  }, [currentUser, location.state]); // Added location.state to dependencies
+    fetchChildren();  }, [currentUser, location.state, setValue]); // Added setValue to dependencies
 
   const resetFormToDefaults = useCallback((studentCodeToKeep = '') => {
     reset({
@@ -118,8 +117,7 @@ const HealthDeclaration = () => {
       mentalHealthConcerns: '',
       dietaryRestrictions: '',
       medicalHistory: ''
-    });
-  }, [reset]);
+    });  }, [reset]);
 
   // Effect to fetch health declaration when selectedStudentCode changes
   const fetchHealthDeclaration = useCallback(async (studentCodeToFetch) => {
@@ -164,14 +162,12 @@ const HealthDeclaration = () => {
       resetFormToDefaults(studentCodeToFetch);
     } finally {
       setIsFetchingDeclaration(false);
-    }
-  }, [reset, resetFormToDefaults]);
+    }  }, [reset, resetFormToDefaults]);
 
   // This useEffect listens to selectedStudentCode and calls fetchHealthDeclaration
   useEffect(() => {
     fetchHealthDeclaration(selectedStudentCode);
   }, [selectedStudentCode, fetchHealthDeclaration]);
-
   const onSubmit = async (formData) => {
     if (!selectedStudentCode) {
       alert("Please select a child first.");
@@ -179,41 +175,46 @@ const HealthDeclaration = () => {
     }
     setSubmitting(true);
     
-    const dataToSubmit = {
-      ...formData,
-      // studentCode is already in formData from RHF
-      isDraft: false
-    };
-    // delete dataToSubmit.studentId; // No longer needed as RHF uses studentCode
-
     try {
       const token = localStorage.getItem('token');
-      await axios.post('/api/health-declaration', dataToSubmit, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+        const medications = formData.medications || [];      // Prepare health declaration data - include all medications, even custom ones
+      // The backend will handle linking through medicationId for approved meds
+      const dataToSubmit = {
+        ...formData,
+        isDraft: false
+      };
+        // Submit the health declaration
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/health-declaration`, 
+        dataToSubmit,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      // Show success alert
       alert('Health declaration submitted successfully!');
+      
       // Optionally, re-fetch or clear form after successful submission
-      // fetchHealthDeclaration(selectedStudentId); // Re-fetch to show saved data (if backend returns it on POST or if GET is idempotent)
+      // fetchHealthDeclaration(selectedStudentId); // Re-fetch to show saved data
     } catch (error) {
       console.error('Error submitting health declaration:', error);
       alert('Error submitting health declaration. Please try again. ' + (error.response?.data?.message || error.message));
     } finally {
       setSubmitting(false);
     }
-  };
-  const handleSaveAsDraft = async () => {
+  };  const handleSaveAsDraft = async () => {
     const formDataFromWatch = watch(); // Get all form data
     if (!selectedStudentCode) {
         alert("Please select a child before saving a draft.");
         return;
     }
 
+    // For drafts, we'll save all medication information but not create medication requests yet
+    // This allows the parent to come back and finish the form later
     const dataToSubmit = {
       ...formDataFromWatch,
       // studentCode is already in formDataFromWatch from RHF
       isDraft: true
     };
-    // delete dataToSubmit.studentId; // No longer needed
     
     setSubmitting(true);
     try {
@@ -415,12 +416,13 @@ const HealthDeclaration = () => {
                   render={({ field }) => (
                     <div className="space-y-4">
                       {(field.value || []).map((medication, index) => (
-                        <MedicationItem
+                        <MedicationItemDeclaration
                           key={`med-${index}`}
                           medication={medication}
                           index={index}
                           onChange={(idx, e) => handleNestedObjectArrayItemChange('medications', idx, e)}
                           onRemove={() => removeArrayItem('medications', index)}
+                          studentCode={watch('studentCode')}
                         />
                       ))}
                       <button

@@ -70,13 +70,38 @@ public class SecurityService {
             return false;
         }
         UserDetailsImpl userDetails = (UserDetailsImpl) principal;
-        String parentCode = userDetails.getUsername(); // Use user_code as parent_code
+        // FIX: Use userCode instead of username because parent_code in the database matches userCode, not username
+        String parentCode = userDetails.getUserCode(); 
+        
+        if (parentCode == null || parentCode.isEmpty()) {
+            // Fallback to username if userCode is not available
+            parentCode = userDetails.getUsername();
+        }
 
         if (parentCode == null || parentCode.isEmpty()) {
             return false;
         }
 
-        return parentStudentRelationshipRepository.existsByParentParentCodeAndStudentStudentCode(parentCode, studentCode);
+        // Use the fixed method instead of the deprecated one
+        return parentStudentRelationshipRepository.existsByParentCodeAndStudentStudentCode(parentCode, studentCode);
+    }
+    
+    // Method for checking if a parent has access to a student directly with parentCode and studentCode
+    public boolean parentHasAccessToStudent(String parentCode, String studentCode) {
+        if (parentCode == null || parentCode.isEmpty() || studentCode == null || studentCode.isEmpty()) {
+            return false;
+        }
+        
+        // Get parent by username from repository to find their actual parent_code
+        Optional<com.swp391_8.schoolhealth.model.Parent> parent = parentRepository.findByParentCode(parentCode);
+        if (parent.isPresent()) {
+            // Use the actual parent_code from the Parent entity
+            String actualParentCode = parent.get().getParentCode();
+            return parentStudentRelationshipRepository.existsByParentCodeAndStudentStudentCode(actualParentCode, studentCode);
+        }
+        
+        // If parent not found by username, try direct check with provided code
+        return parentStudentRelationshipRepository.existsByParentCodeAndStudentStudentCode(parentCode, studentCode);
     }
 
     public boolean isPostAuthor(Authentication authentication, Integer postId) {
@@ -229,13 +254,26 @@ public class SecurityService {
             return false;
         }
         UserDetailsImpl userDetails = (UserDetailsImpl) principal;
-        String parentUserCode = userDetails.getUserCode(); // Use getUserCode() which should return user_code
+        // FIX: Use userCode instead of username because parent_code in the database matches userCode, not username
+        String parentCode = userDetails.getUserCode(); 
+        
+        if (parentCode == null || parentCode.isEmpty()) {
+            // Fallback to username if userCode is not available
+            parentCode = userDetails.getUsername();
+        }
 
-        if (parentUserCode == null || parentUserCode.isEmpty()) {
+        if (parentCode == null || parentCode.isEmpty()) {
             return false;
         }
-        // Use the correct repository method that takes parentUserCode and studentCode
-        return parentStudentRelationshipRepository.existsByParent_User_UserCodeAndStudent_StudentCode(parentUserCode, studentCode);
+        
+        // Try both methods to increase chance of success
+        boolean directCheck = parentStudentRelationshipRepository.existsByParentCodeAndStudentStudentCode(parentCode, studentCode);
+        if (directCheck) {
+            return true;
+        }
+        
+        // Fallback to the original method for backward compatibility
+        return parentStudentRelationshipRepository.existsByParentParentCodeAndStudentStudentCode(parentCode, studentCode);
     }
 
     // Overload for isAdmin to accept Authentication only

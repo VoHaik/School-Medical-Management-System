@@ -36,4 +36,11 @@ public interface MedicationRequestRepository extends JpaRepository<MedicationReq
     // If you need a method to find requests by parent user and status:
     List<MedicationRequest> findByRequestedBy_UsernameAndStatusOrderByRequestDateDesc(String username, MedicationRequestStatus status);
 
+    // For getting approved medications for health declaration
+    List<MedicationRequest> findByStudent_StudentCodeAndStatusInOrderByStartDateDesc(String studentCode, List<MedicationRequestStatus> statuses);
+
+    // Additional methods required by the service implementations
+    List<MedicationRequest> findByStatus(MedicationRequestStatus status);
+    
+    List<MedicationRequest> findByStudent_StudentCodeAndStatusIn(String studentCode, List<MedicationRequestStatus> statuses);
 }

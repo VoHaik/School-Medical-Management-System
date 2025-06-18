@@ -9,9 +9,9 @@ import java.util.List;
 public class MedicalEventDTO {
     private Integer id;
     private String studentCode; // Changed from studentId
-    private EventType eventType;
+    private String eventType; // Changed to String to match entity
     private String description;
-    private LocalDateTime eventDate;
+    private LocalDateTime eventDatetime; // Changed from eventDate to eventDatetime to match entity
     private String handledByUsername; // Username of the User who handled the event
     private List<String> symptoms; // Assuming symptoms are stored as a list of strings
     private String severity;
@@ -23,5 +23,29 @@ public class MedicalEventDTO {
     private LocalDateTime followUpDate;
     private String status; // e.g., active, resolved, follow_up
 
-    // Constructors, getters, and setters are handled by Lombok @Data
+    // Additional method to convert string to enum for convenience
+    public EventType getEventTypeEnum() {
+        if (eventType == null) return null;
+        try {
+            return EventType.valueOf(eventType);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+    
+    // Setter for convenience when working with enum
+    public void setEventTypeEnum(EventType eventTypeEnum) {
+        if (eventTypeEnum != null) {
+            this.eventType = eventTypeEnum.name();
+        }
+    }
+
+    // Compatibility method for older code
+    public LocalDateTime getEventDate() {
+        return eventDatetime;
+    }
+    
+    public void setEventDate(LocalDateTime date) {
+        this.eventDatetime = date;
+    }
 }

@@ -26,4 +26,13 @@ public interface HealthDeclarationRepository extends JpaRepository<HealthDeclara
 
     // Find all declarations for a student, ordered by date
     List<HealthDeclaration> findAllByStudent_StudentCodeOrderByDeclarationDateDesc(String studentCode);
+    
+    // Tìm khai báo sức khỏe theo trạng thái
+    List<HealthDeclaration> findByStatus(HealthDeclaration.HealthDeclarationStatus status);
+    
+    // Tìm khai báo sức khỏe theo trạng thái và sắp xếp theo ngày khai báo (mới nhất lên đầu)
+    List<HealthDeclaration> findByStatusOrderByDeclarationDateDesc(HealthDeclaration.HealthDeclarationStatus status);
+    
+    // Tìm khai báo sức khỏe theo học sinh và trạng thái
+    List<HealthDeclaration> findByStudent_StudentCodeAndStatus(String studentCode, HealthDeclaration.HealthDeclarationStatus status);
 }
