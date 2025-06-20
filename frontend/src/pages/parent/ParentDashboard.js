@@ -674,6 +674,86 @@ const ParentDashboard = () => {
           </Card>
         </Grid>
         
+        {/* Health Records Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column',
+            borderRadius: 1,
+            boxShadow: 2,
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: 6
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', flexGrow: 1 }}>
+              <Box sx={{ color: '#4caf50', fontSize: '48px', mb: 2 }}>
+                <HealthAndSafety fontSize="inherit" />
+              </Box>
+              <Typography variant="h6">Health Records</Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                View your child's health records.
+              </Typography>
+            </CardContent>
+            <Button 
+              variant="contained" 
+              fullWidth 
+              onClick={() => navigate('/parent/health-records')}
+              sx={{ 
+                mt: 'auto', 
+                borderTopLeftRadius: 0, 
+                borderTopRightRadius: 0,
+                py: 1.5,
+                bgcolor: '#4caf50'
+              }}
+            >
+              VIEW HEALTH RECORDS
+            </Button>
+          </Card>
+        </Grid>
+        
+        {/* Student Health Profile Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column',
+            borderRadius: 1,
+            boxShadow: 2,
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: 6
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', flexGrow: 1 }}>
+              <Box sx={{ color: '#9c27b0', fontSize: '48px', mb: 2 }}>
+                <ChildCareIcon fontSize="inherit" />
+              </Box>
+              <Typography variant="h6">Health Profile</Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                View comprehensive health profile of your child.
+              </Typography>
+            </CardContent>
+            <Button 
+              variant="contained" 
+              fullWidth 
+              onClick={() => navigate('/parent/student-health-profile')}
+              sx={{ 
+                mt: 'auto', 
+                borderTopLeftRadius: 0, 
+                borderTopRightRadius: 0,
+                py: 1.5,
+                bgcolor: '#9c27b0'
+              }}
+            >
+              VIEW HEALTH PROFILE
+            </Button>
+          </Card>
+        </Grid>
+        
         {/* Medication Submission Card */}
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ 

@@ -46,6 +46,8 @@ const AppMenu = ({ isOpen, closeMenu }) => {
         items = [
           { path: '/parent/dashboard', label: 'Parent Dashboard', icon: 'fas fa-tachometer-alt' },
           { path: '/parent/health-declaration', label: 'Health Declaration', icon: 'fas fa-file-medical-alt' },
+          { path: '/parent/health-records', label: 'Health Records', icon: 'fas fa-heartbeat' },
+          { path: '/parent/student-health-profile', label: 'Health Profile', icon: 'fas fa-user-md' },
           { path: '/parent/medication-submission', label: 'Submit Medication', icon: 'fas fa-pills' },
           { path: '/parent/my-requests', label: 'View Medication Requests', icon: 'fas fa-list-alt' },
           { path: '/parent/vaccination-consent', label: 'Vaccination Consent', icon: 'fas fa-syringe' },

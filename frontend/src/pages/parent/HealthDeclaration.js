@@ -6,21 +6,14 @@ import axios from 'axios';
 import { AuthContext } from '../../context/AuthContext';
 import AllergyItem from '../../components/parent/AllergyItem';
 import ChronicIllnessItem from '../../components/parent/ChronicIllnessItem';
-import MedicationItemDeclaration from '../../components/parent/MedicationItemDeclaration';
 import EmergencyContactItem from '../../components/parent/EmergencyContactItem';
 import VaccinationItem from '../../components/parent/VaccinationItem';
-import { useLocation } from 'react-router-dom'; // Added useLocation
+import { useLocation, Link } from 'react-router-dom'; // Added Link
 
 const schema = yup.object().shape({
   studentCode: yup.string().required("Child selection is required"),
   allergies: yup.array().of(yup.string().nullable()), // Allow null or empty strings initially
   chronicIllnesses: yup.array().of(yup.string().nullable()), // Allow null or empty strings initially
-  medications: yup.array().of(yup.object().shape({
-    name: yup.string().required("Medication name is required"),
-    dosage: yup.string().required("Dosage is required"),
-    frequency: yup.string().required("Frequency is required"),
-    instructions: yup.string().nullable()
-  })),
   medicalHistory: yup.string().nullable(),
   emergencyContacts: yup.array().of(yup.object().shape({
     name: yup.string().required("Contact name is required"),
@@ -49,14 +42,12 @@ const HealthDeclaration = () => {
   const [initialLoading, setInitialLoading] = useState(true); // For children list
   const [isFetchingDeclaration, setIsFetchingDeclaration] = useState(false); // For health data for a selected child
   const [submitting, setSubmitting] = useState(false); // For form submission (save/submit)
-  
-  const { control, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm({
+    const { control, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
       studentCode: '',
       allergies: [],
       chronicIllnesses: [],
-      medications: [],
       emergencyContacts: [{ name: '', relationship: '', phone: '', isEmergency: true }],
       vaccinations: [],
       visionStatus: '',
@@ -100,14 +91,12 @@ const HealthDeclaration = () => {
         setChildren([]);
       }
     };
-    fetchChildren();  }, [currentUser, location.state, setValue]); // Added setValue to dependencies
-
+    fetchChildren();  }, [currentUser, location.state, setValue]); // Added setValue to dependencies  // Reset form to empty defaults with optionally keeping the student code
   const resetFormToDefaults = useCallback((studentCodeToKeep = '') => {
     reset({
       studentCode: studentCodeToKeep,
       allergies: [],
       chronicIllnesses: [],
-      medications: [],
       emergencyContacts: [{ name: '', relationship: '', phone: '', isEmergency: true }],
       vaccinations: [],
       visionStatus: '',
@@ -118,57 +107,23 @@ const HealthDeclaration = () => {
       dietaryRestrictions: '',
       medicalHistory: ''
     });  }, [reset]);
-
-  // Effect to fetch health declaration when selectedStudentCode changes
+  // Effect to handle student code changes (but not fetch previous declaration data)
   const fetchHealthDeclaration = useCallback(async (studentCodeToFetch) => {
     if (!studentCodeToFetch) {
-      resetFormToDefaults(); // Reset if no student is selected
+      resetFormToDefaults(''); // Reset with empty student code
       return;
     }
-    setIsFetchingDeclaration(true);
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/health-declaration?studentCode=${studentCodeToFetch}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (response.data) {
-        const declarationData = response.data;
-        const formData = {
-          ...declarationData,
-          studentCode: declarationData.studentCode || studentCodeToFetch,
-          allergies: declarationData.allergies || [],
-          chronicIllnesses: declarationData.chronicIllnesses || [],
-          medications: declarationData.medications || [],
-          emergencyContacts: declarationData.emergencyContacts && declarationData.emergencyContacts.length > 0 
-            ? declarationData.emergencyContacts 
-            : [{ name: '', relationship: '', phone: '', isEmergency: true }],
-          vaccinations: (declarationData.vaccinations || []).map(v => ({
-            ...v,
-            vaccineName: v.vaccineName || '',
-            vaccinationDate: v.vaccinationDate ? new Date(v.vaccinationDate).toISOString().split('T')[0] : '',
-            notes: v.notes || '' 
-          })),
-        };
-        // Reset the form with new data
-        reset(formData); 
-      } else {
-        // This case might not be hit if backend returns 404, which goes to catch block.
-        resetFormToDefaults(studentCodeToFetch);
-      }
-    } catch (error) {
-      console.error('Error fetching health declaration for student:', studentCodeToFetch, error);
-      // If it's a 404 (declaration not found) or any other error, reset the form for this student
-      resetFormToDefaults(studentCodeToFetch);
-    } finally {
-      setIsFetchingDeclaration(false);
-    }  }, [reset, resetFormToDefaults]);
+    
+    // Just set the form to defaults with the selected student code
+    resetFormToDefaults(studentCodeToFetch);
+    setIsFetchingDeclaration(false);
+    
+  }, [resetFormToDefaults]);
 
   // This useEffect listens to selectedStudentCode and calls fetchHealthDeclaration
   useEffect(() => {
     fetchHealthDeclaration(selectedStudentCode);
-  }, [selectedStudentCode, fetchHealthDeclaration]);
-  const onSubmit = async (formData) => {
+  }, [selectedStudentCode, fetchHealthDeclaration]);  const onSubmit = async (formData) => {
     if (!selectedStudentCode) {
       alert("Please select a child first.");
       return;
@@ -176,58 +131,41 @@ const HealthDeclaration = () => {
     setSubmitting(true);
     
     try {
-      const token = localStorage.getItem('token');
-        const medications = formData.medications || [];      // Prepare health declaration data - include all medications, even custom ones
-      // The backend will handle linking through medicationId for approved meds
+      const token = localStorage.getItem('token');      
+      // Prepare health declaration data
       const dataToSubmit = {
         ...formData,
-        isDraft: false
+        studentCode: selectedStudentCode // Ensure student code is included
       };
-        // Submit the health declaration
-      await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/health-declaration`, 
+        // Submit the health declaration to the correct endpoint
+      const response = await axios.post(
+        `/api/health-declaration`, 
         dataToSubmit,
         { headers: { Authorization: `Bearer ${token}` } }
-      );
+      );        
       
-      // Show success alert
-      alert('Health declaration submitted successfully!');
+      // Show success alert with information about viewing the health declaration and checking status
+      alert('Health declaration submitted successfully!\n\n' + 
+            'Your declaration will be reviewed by the school medical staff. ' +
+            'You can view the status of your declaration (Pending, Approved, or Rejected) ' +
+            'in the Health Records section.');
       
-      // Optionally, re-fetch or clear form after successful submission
-      // fetchHealthDeclaration(selectedStudentId); // Re-fetch to show saved data
+      // Reset form and clear student selection after successful submission
+      resetFormToDefaults('');
+      setSelectedStudentCode('');
     } catch (error) {
       console.error('Error submitting health declaration:', error);
       alert('Error submitting health declaration. Please try again. ' + (error.response?.data?.message || error.message));
     } finally {
       setSubmitting(false);
     }
-  };  const handleSaveAsDraft = async () => {
-    const formDataFromWatch = watch(); // Get all form data
-    if (!selectedStudentCode) {
-        alert("Please select a child before saving a draft.");
-        return;
-    }
-
-    // For drafts, we'll save all medication information but not create medication requests yet
-    // This allows the parent to come back and finish the form later
-    const dataToSubmit = {
-      ...formDataFromWatch,
-      // studentCode is already in formDataFromWatch from RHF
-      isDraft: true
-    };
-    
-    setSubmitting(true);
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post('/api/health-declaration', dataToSubmit, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      alert('Health declaration saved as draft successfully!');
-    } catch (error) {
-      console.error('Error saving health declaration as draft:', error);
-      alert('Error saving draft. Please try again. ' + (error.response?.data?.message || error.message));
-    } finally {
-      setSubmitting(false);
+  };  const handleCancel = () => {
+    // Confirm before cancelling
+    if (window.confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
+      // Reset the form to defaults and clear student selection
+      resetFormToDefaults('');
+      // Clear student selection
+      setSelectedStudentCode('');
     }
   };
 
@@ -299,9 +237,25 @@ const HealthDeclaration = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-900">Health Declaration</h1>
+        <div className="bg-white rounded-lg shadow-lg">          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold text-gray-900">Health Declaration</h1>
+              <div className="space-x-2">
+                <Link 
+                  to="/parent/student-health-profile" 
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                >
+                  View Health Profile
+                </Link>
+                <Link 
+                  to="/parent/health-records" 
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  View Health Records
+                </Link>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500 mt-1">Submit a new health declaration for your child. You can view all submitted declarations in the Health Records section.</p>
             {/* Child Selector */}
             <div className="mt-4">
               <label htmlFor="studentCodeSelect" className="block text-sm font-medium text-gray-700 mb-1">
@@ -374,9 +328,7 @@ const HealthDeclaration = () => {
                   )}
                 />
                  {errors.allergies?.map((err, i) => err && <p key={`err-allergy-${i}`} className="text-red-600 text-sm mt-1">{err.message || "Allergy entry cannot be empty."}</p>)}
-              </div>
-
-              {/* Chronic Illnesses Section */}
+              </div>              {/* Chronic Illnesses Section */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900">Chronic Illnesses</h3>
                 <Controller
@@ -405,38 +357,6 @@ const HealthDeclaration = () => {
                   )}
                 />
                 {errors.chronicIllnesses?.map((err, i) => err && <p key={`err-chronic-${i}`} className="text-red-600 text-sm mt-1">{err.message || "Chronic illness entry cannot be empty."}</p>)}
-              </div>
-
-              {/* Current Medications Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Current Medications</h3>
-                <Controller
-                  name="medications"
-                  control={control}
-                  render={({ field }) => (
-                    <div className="space-y-4">
-                      {(field.value || []).map((medication, index) => (
-                        <MedicationItemDeclaration
-                          key={`med-${index}`}
-                          medication={medication}
-                          index={index}
-                          onChange={(idx, e) => handleNestedObjectArrayItemChange('medications', idx, e)}
-                          onRemove={() => removeArrayItem('medications', index)}
-                          studentCode={watch('studentCode')}
-                        />
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => addArrayItem('medications', { name: '', dosage: '', frequency: '', instructions: '' })}
-                        className="text-indigo-600 hover:text-indigo-800 text-sm"
-                        disabled={isFetchingDeclaration || submitting}
-                      >
-                        <i className="fas fa-plus mr-1"></i> Add Medication
-                      </button>
-                    </div>
-                  )}
-                />
-                {errors.medications && <p className="text-red-600 text-sm mt-1">Please ensure all medication fields are correctly filled (name, dosage, frequency are required).</p>}
               </div>
               
               {/* Medical History Section */}
@@ -590,17 +510,15 @@ const HealthDeclaration = () => {
                         {errors.dietaryRestrictions && <p className="text-red-600 text-sm mt-1">{errors.dietaryRestrictions.message}</p>}
                     </div>
                 </div>
-              </div>
-
-              {/* Submission Buttons */}
+              </div>              {/* Submission Buttons */}
               <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={handleSaveAsDraft}
-                  disabled={submitting || isFetchingDeclaration || !selectedStudentCode || initialLoading}
-                  className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
+                  onClick={handleCancel}
+                  disabled={submitting}
+                  className="px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                 >
-                  Save as Draft
+                  Cancel
                 </button>
                 <button
                   type="submit"

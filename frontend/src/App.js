@@ -13,6 +13,9 @@ import DashboardNew from './pages/DashboardNew';
 
 // Parent Pages
 import HealthDeclaration from './pages/parent/HealthDeclaration';
+import HealthRecordsPage from './pages/parent/HealthRecordsPage'; // Add import for Health Records page
+import HealthDeclarationDetailPage from './pages/parent/HealthDeclarationDetailPage'; // Add import for Health Declaration Detail page
+import StudentHealthProfilePage from './pages/parent/StudentHealthProfilePage'; // Import for Student Health Profile page
 import VaccinationConsent from './pages/parent/VaccinationConsent';
 import CheckupHistory from './pages/parent/CheckupHistory';
 // import Notifications from './pages/parent/Notifications'; // To be replaced by common notifications page
@@ -126,6 +129,9 @@ function App() {
                 {/* Parent Routes */}
                 <Route path="/parent/dashboard" element={<ProtectedRoute roles={['ROLE_PARENT']}><ParentDashboard /></ProtectedRoute>} />
                 <Route path="/parent/health-declaration" element={<ProtectedRoute roles={['ROLE_PARENT']}><HealthDeclaration /></ProtectedRoute>} />
+                <Route path="/parent/health-records" element={<ProtectedRoute roles={['ROLE_PARENT']}><HealthRecordsPage /></ProtectedRoute>} />
+                <Route path="/parent/health-declaration-detail/:declarationId" element={<ProtectedRoute roles={['ROLE_PARENT']}><HealthDeclarationDetailPage /></ProtectedRoute>} />
+                <Route path="/parent/student-health-profile" element={<ProtectedRoute roles={['ROLE_PARENT']}><StudentHealthProfilePage /></ProtectedRoute>} />
                 <Route path="/parent/vaccination-consent" element={<ProtectedRoute roles={['ROLE_PARENT']}><VaccinationConsent /></ProtectedRoute>} />
                 <Route path="/parent/checkup-history" element={<ProtectedRoute roles={['ROLE_PARENT']}><CheckupHistory /></ProtectedRoute>} />
                 {/* <Route path="/parent/notifications" element={<ProtectedRoute roles={['ROLE_PARENT']}><Notifications /></ProtectedRoute>} /> */}
@@ -137,6 +143,7 @@ function App() {
                 <Route path="/parent/health-checkup-result/:resultId" element={<ProtectedRoute roles={['ROLE_PARENT']}><ParentHealthCheckupResultPage /></ProtectedRoute>} />                <Route path="/parent/medication-submission" element={<ProtectedRoute roles={['ROLE_PARENT']}><SubmitMedicationPage /></ProtectedRoute>} /> {/* <<< ROUTE MỚI */}                <Route path="/parent/my-requests" element={<ProtectedRoute roles={['ROLE_PARENT']}><ViewMedicationRequestsPage /></ProtectedRoute>} /> {/* <<< ROUTE FOR VIEWING REQUESTS */}
                 <Route path="/parent/medication-request/edit/:requestId" element={<ProtectedRoute roles={['ROLE_PARENT']}><EditMedicationRequestPage /></ProtectedRoute>} /> {/* Route cho chỉnh sửa yêu cầu thuốc */}
                 <Route path="/parent/medication-request/:requestId" element={<ProtectedRoute roles={['ROLE_PARENT']}><MedicationRequestDetailPage /></ProtectedRoute>} /> {/* Route cho chi tiết yêu cầu thuốc */}
+                <Route path="/parent/student-health-profile" element={<ProtectedRoute roles={['ROLE_PARENT']}><StudentHealthProfilePage /></ProtectedRoute>} /> {/* <<< ROUTE MỚI - Student Health Profile */}
 
                 {/* Medical Staff (Nurse/Doctor) Routes */}
                 <Route path="/medical/medication-management" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_DOCTOR']}><MedicationManagement /></ProtectedRoute>} />
