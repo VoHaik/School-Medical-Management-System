@@ -52,7 +52,6 @@ import {
   CheckCircle as CheckIcon,
   Warning as WarningIcon,
   Info as InfoIcon,
-  Assignment as AssignmentIcon,
   Timeline as TimelineIcon,
   BarChart as BarChartIcon
 } from '@mui/icons-material';
@@ -131,32 +130,7 @@ const healthPrograms = [
     completedStudents: 150,
     description: 'COVID-19 vaccination program for senior students',
     createdAt: '2024-02-15',
-    lastUpdated: '2024-04-01'
-  }
-];
-
-const programTemplates = [
-  {
-    id: 1,
-    name: 'Vaccination Campaign',
-    type: 'vaccination',
-    duration: '30 days',
-    components: ['Consent Collection', 'Health Check', 'Vaccination', 'Monitoring']
-  },
-  {
-    id: 2,
-    name: 'Health Checkup',
-    type: 'health_checkup',
-    duration: '60 days',
-    components: ['Registration', 'Physical Exam', 'Vision Test', 'Hearing Test', 'BMI Check']
-  },
-  {
-    id: 3,
-    name: 'Medical Event',
-    type: 'medical_event',
-    duration: '7 days',
-    components: ['Educational Sessions', 'Materials Distribution', 'Interactive Activities']
-  }
+    lastUpdated: '2024-04-01'  }
 ];
 
 const progressData = [
@@ -286,15 +260,9 @@ const HealthPrograms = () => {
 
       <Card>
         <CardContent>
-          <Tabs value={tabValue} onChange={handleTabChange} aria-label="health programs tabs">
-            <Tab 
+          <Tabs value={tabValue} onChange={handleTabChange} aria-label="health programs tabs">            <Tab 
               label="Active Programs" 
               icon={<CampaignIcon />} 
-              iconPosition="start"
-            />
-            <Tab 
-              label="Program Templates" 
-              icon={<AssignmentIcon />} 
               iconPosition="start"
             />
             <Tab 
@@ -402,64 +370,10 @@ const HealthPrograms = () => {
                   ))}
                 </TableBody>
               </Table>
-            </TableContainer>
-          </TabPanel>
-
-          {/* Program Templates Tab */}
-          <TabPanel value={tabValue} index={1}>
-            <Box className="mb-4">
-              <Typography variant="h6" gutterBottom>Program Templates</Typography>
-              <Typography variant="body2" color="textSecondary" className="mb-4">
-                Use pre-configured templates to quickly create new health programs
-              </Typography>
-            </Box>
-
-            <Grid container spacing={3}>
-              {programTemplates.map((template) => (
-                <Grid item xs={12} md={4} key={template.id}>
-                  <Card className="h-full">
-                    <CardContent>
-                      <Box className="flex items-center mb-3">
-                        <HealthIcon className="mr-2 text-blue-600" />
-                        <Typography variant="h6">{template.name}</Typography>
-                      </Box>
-                      <Typography variant="body2" color="textSecondary" className="mb-3">
-                        Type: {template.type} | Duration: {template.duration}
-                      </Typography>
-                      <Accordion>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          <Typography variant="subtitle2">Program Components</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                          <List dense>
-                            {template.components.map((component, index) => (
-                              <ListItem key={index}>
-                                <ListItemText primary={component} />
-                              </ListItem>
-                            ))}
-                          </List>
-                        </AccordionDetails>
-                      </Accordion>
-                      <Button
-                        variant="outlined"
-                        fullWidth
-                        className="mt-3"
-                        onClick={() => {
-                          setValue('type', template.type);
-                          setDialogOpen(true);
-                        }}
-                      >
-                        Use Template
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </TabPanel>
+            </TableContainer>          </TabPanel>
 
           {/* Analytics Tab */}
-          <TabPanel value={tabValue} index={2}>
+          <TabPanel value={tabValue} index={1}>
             <Typography variant="h6" gutterBottom>Program Analytics</Typography>
             
             <Grid container spacing={3} className="mb-6">

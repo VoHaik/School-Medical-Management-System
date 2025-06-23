@@ -4,14 +4,8 @@ import {
   Group, 
   Assessment, 
   LocalHospital, 
-  TrendingUp, 
-  Schedule, 
-  CheckCircle,
-  Warning,
-  Info,
-  VaccinesIcon,
-  HealthAndSafety,
-  Event
+  PersonAdd,
+  TrendingUp
 } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
@@ -81,6 +75,13 @@ const adminCards = [
     icon: <Group fontSize="large" />,
     color: '#1976d2',
     link: '/admin/user-management',
+  },
+  {
+    title: 'Duyệt đăng ký phụ huynh',
+    description: 'Duyệt và quản lý đăng ký tài khoản phụ huynh',
+    icon: <PersonAdd fontSize="large" />,
+    color: '#ff9800',
+    link: '/admin/parent-registration-approval',
   },
   {
     title: 'Báo cáo & Thống kê',

@@ -46,6 +46,7 @@ import ContentManagement from './pages/manager/ContentManagement';
 
 // Admin Pages
 import UserManagement from './pages/admin/UserManagement';
+import ParentRegistrationApproval from './pages/admin/ParentRegistrationApproval';
 import SystemConfiguration from './pages/admin/SystemConfiguration';
 import AnalyticsReports from './pages/admin/AnalyticsReports';
 import HealthPrograms from './pages/admin/HealthPrograms';
@@ -159,6 +160,7 @@ function App() {
 
                 {/* Admin Routes */}
                 <Route path="/admin/user-management" element={<ProtectedRoute roles={['ROLE_ADMIN']}><UserManagement /></ProtectedRoute>} />
+                <Route path="/admin/parent-registration-approval" element={<ProtectedRoute roles={['ROLE_ADMIN']}><ParentRegistrationApproval /></ProtectedRoute>} />
                 <Route path="/admin/system-configuration" element={<ProtectedRoute roles={['ROLE_ADMIN']}><SystemConfiguration /></ProtectedRoute>} />
                 <Route path="/admin/analytics-reports" element={<ProtectedRoute roles={['ROLE_ADMIN']}><AnalyticsReports /></ProtectedRoute>} />
                 <Route path="/admin/health-programs" element={<ProtectedRoute roles={['ROLE_ADMIN']}><HealthPrograms /></ProtectedRoute>} />

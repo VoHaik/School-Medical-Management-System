@@ -74,11 +74,11 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/manager/health-programs', label: 'Health Programs', icon: 'fas fa-heartbeat' },
           { path: '/manager/content', label: 'Content Management', icon: 'fas fa-file-alt' },
         ];
-        break;
-      case 'ROLE_ADMIN':
+        break;      case 'ROLE_ADMIN':
         items = [
           { path: '/admin/dashboard', label: 'Admin Dashboard', icon: 'fas fa-user-shield' },
           { path: '/admin/user-management', label: 'User Management', icon: 'fas fa-users-cog' },
+          { path: '/admin/parent-registration-approval', label: 'Parent Registration Approval', icon: 'fas fa-user-plus' },
           { path: '/admin/reports', label: 'Analytics & Reports', icon: 'fas fa-chart-line' },
           { path: '/admin/health-programs', label: 'Health Programs', icon: 'fas fa-heartbeat' },
         ];

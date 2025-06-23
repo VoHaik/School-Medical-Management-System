@@ -8,9 +8,9 @@ import {
   ListItemIcon, ListItemSecondaryAction, InputAdornment
 } from '@mui/material';
 import {
-  Add, Edit, Delete, Search, FilterList, Group,
-  LocalHospital, SupervisorAccount, Person, Email, Phone,
-  CheckCircle, Cancel, Block, Visibility, VisibilityOff
+  Add, Edit, Delete, Search, FilterList, Group, Security,
+  School, LocalHospital, SupervisorAccount, Person, Email, Phone,
+  CheckCircle, Cancel, Block, VpnKey, History, Visibility, VisibilityOff
 } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -119,8 +119,8 @@ const mockUsers = [
 
 const UserManagement = () => {
   const [selectedTab, setSelectedTab] = useState(0);
-  const [users, setUsers] = useState(mockUsers); // Use mock data instead of empty array
-  const [filteredUsers, setFilteredUsers] = useState(mockUsers); // Initialize with mock data
+  const [users, setUsers] = useState(mockUsers);
+  const [filteredUsers, setFilteredUsers] = useState(mockUsers);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -152,23 +152,8 @@ const UserManagement = () => {
     }
   });
 
-  // Lấy danh sách user từ API
+  // Initialize with mock data
   useEffect(() => {
-    // Comment out API call since we're using mock data
-    /*
-    const fetchUsers = async () => {
-      try {
-        const response = await apiClient.get('/users');
-        setUsers(response.data || []);
-        setFilteredUsers(response.data || []);
-      } catch (error) {
-        setSnackbar({ open: true, message: 'Failed to fetch users', severity: 'error' });
-      }
-    };
-    fetchUsers();
-    */
-    
-    // Initialize with mock data
     setUsers(mockUsers);
     setFilteredUsers(mockUsers);
   }, []);
@@ -198,6 +183,7 @@ const UserManagement = () => {
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
   };
+
   const getRoleIcon = (role) => {
     switch (role) {
       case 'admin': return <SupervisorAccount />;
@@ -338,7 +324,8 @@ const UserManagement = () => {
                   <MenuItem value="inactive">Inactive</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>            <Grid item xs={12} md={2}>
+            </Grid>
+            <Grid item xs={12} md={2}>
               <Button
                 fullWidth
                 variant="contained"
@@ -455,7 +442,8 @@ const UserManagement = () => {
           </TableContainer>
         </CardContent>
       </Card>
-    </div>  );
+    </div>
+  );
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -466,7 +454,9 @@ const UserManagement = () => {
         <Typography variant="body1" color="textSecondary">
           Manage system users, roles, and permissions
         </Typography>
-      </div>      <Card>
+      </div>
+
+      <Card>
         <Tabs value={selectedTab} onChange={handleTabChange}>
           <Tab label="User List" icon={<Group />} />
         </Tabs>
