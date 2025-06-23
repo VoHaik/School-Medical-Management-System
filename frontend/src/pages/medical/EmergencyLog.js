@@ -1,4 +1,24 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * EmergencyLog Component
+ * 
+ * This component manages emergency and incident logs for the school medical management system.
+ * It provides functionality to:
+ * - View all emergency logs with filtering and search capabilities
+ * - Display detailed information about each incident
+ * - Add new emergency logs
+ * - Export and print reports
+ * 
+ * Features:
+ * - Real-time search and filtering by severity and status
+ * - Statistics dashboard showing key metrics
+ * - Detailed modal view for each incident
+ * - Responsive design for mobile and desktop
+ * 
+ * @author School Medical Management System
+ * @version 1.0.0
+ */
+
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   FaBandAid, FaAmbulance, FaExclamationTriangle, FaCheckCircle, 
   FaPlus, FaEdit, FaEye, FaCalendarAlt, FaClock, FaUser,
@@ -7,17 +27,37 @@ import {
 } from 'react-icons/fa';
 import PageHeader from '../../components/PageHeader';
 
+/**
+ * Main EmergencyLog functional component
+ * Manages emergency logs, filtering, and UI state
+ */
 const EmergencyLog = () => {
+  // ============================================================================
+  // STATE MANAGEMENT
+  // ============================================================================
+  
+  // Emergency logs data
   const [emergencyLogs, setEmergencyLogs] = useState([]);
   const [filteredLogs, setFilteredLogs] = useState([]);
+  
+  // Modal states
   const [selectedLog, setSelectedLog] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  
+  // Filter and search states
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  // Sample emergency logs data
+  // ============================================================================
+  // SAMPLE DATA
+  // ============================================================================
+  
+  /**
+   * Sample emergency logs data for demonstration
+   * In production, this would be fetched from the backend API
+   */
   const sampleLogs = [
     {
       id: 'EMG001',
@@ -144,18 +184,50 @@ const EmergencyLog = () => {
       handledBy: 'Nurse Martinez',
       timeResolved: 'Ongoing',
       additionalNotes: 'Parent picked up student for medical evaluation. Return to sports pending medical clearance.'
-    }
-  ];
+    }  ];
 
+  // ============================================================================
+  // COMPUTED VALUES (MEMOIZED)
+  // ============================================================================
+  
+  /**
+   * Statistics computed from emergency logs
+   * Memoized to prevent unnecessary recalculations
+   */
+  const statistics = useMemo(() => ({
+    totalIncidents: emergencyLogs.length,
+    highPriority: emergencyLogs.filter(log => 
+      log.severity === 'critical' || log.severity === 'high'
+    ).length,
+    pendingFollowup: emergencyLogs.filter(log => 
+      log.status === 'pending' || log.status === 'ongoing'
+    ).length,
+    resolved: emergencyLogs.filter(log => log.status === 'resolved').length
+  }), [emergencyLogs]);
+
+  // ============================================================================
+  // EFFECTS
+  // ============================================================================
+  
+  /**
+   * Initial data loading effect
+   * In production, this would fetch data from the API
+   */
   useEffect(() => {
-    // Simulate loading emergency logs
+    // TODO: Replace with actual API call
+    // fetchEmergencyLogs().then(setEmergencyLogs);
     setEmergencyLogs(sampleLogs);
     setFilteredLogs(sampleLogs);
   }, []);
 
+  /**
+   * Filter and search effect
+   * Updates filteredLogs whenever search term or filters change
+   */
   useEffect(() => {
     let filtered = emergencyLogs;
 
+    // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(log =>
         log.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -164,10 +236,12 @@ const EmergencyLog = () => {
       );
     }
 
+    // Apply severity filter
     if (severityFilter !== 'all') {
       filtered = filtered.filter(log => log.severity === severityFilter);
     }
 
+    // Apply status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(log => log.status === statusFilter);
     }
@@ -175,211 +249,395 @@ const EmergencyLog = () => {
     setFilteredLogs(filtered);
   }, [emergencyLogs, searchTerm, severityFilter, statusFilter]);
 
-  const getSeverityBadge = (severity) => {
-    switch (severity) {
-      case 'critical':
-        return <span className="px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded-full">Critical</span>;
-      case 'high':
-        return <span className="px-2 py-1 text-xs font-semibold text-orange-800 bg-orange-100 rounded-full">High</span>;
-      case 'medium':
-        return <span className="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded-full">Medium</span>;
-      case 'low':
-        return <span className="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">Low</span>;
-      default:
-        return <span className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded-full">{severity}</span>;
-    }
-  };
+  // ============================================================================
+  // UTILITY FUNCTIONS
+  // ============================================================================
+  // ============================================================================
+  // UTILITY FUNCTIONS
+  // ============================================================================
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'resolved':
-        return <span className="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full flex items-center"><FaCheckCircle className="mr-1" /> Resolved</span>;
-      case 'pending':
-        return <span className="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded-full flex items-center"><FaClock className="mr-1" /> Pending</span>;
-      case 'ongoing':
-        return <span className="px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full flex items-center"><FaExclamationTriangle className="mr-1" /> Ongoing</span>;
-      default:
-        return <span className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded-full">{status}</span>;
-    }
-  };
+  /**
+   * Returns appropriate severity badge component based on severity level
+   * @param {string} severity - The severity level ('critical', 'high', 'medium', 'low')
+   * @returns {JSX.Element} Severity badge component
+   */
+  const getSeverityBadge = useCallback((severity) => {
+    const severityConfig = {
+      critical: { color: 'red', label: 'Critical' },
+      high: { color: 'orange', label: 'High' },
+      medium: { color: 'yellow', label: 'Medium' },
+      low: { color: 'green', label: 'Low' }
+    };
 
-  const handleViewDetails = (log) => {
+    const config = severityConfig[severity] || { color: 'gray', label: severity };
+    
+    return (
+      <span className={`px-2 py-1 text-xs font-semibold text-${config.color}-800 bg-${config.color}-100 rounded-full`}>
+        {config.label}
+      </span>
+    );
+  }, []);
+
+  /**
+   * Returns appropriate status badge component based on status
+   * @param {string} status - The status ('resolved', 'pending', 'ongoing')
+   * @returns {JSX.Element} Status badge component
+   */
+  const getStatusBadge = useCallback((status) => {
+    const statusConfig = {
+      resolved: { 
+        icon: FaCheckCircle, 
+        color: 'green', 
+        label: 'Resolved' 
+      },
+      pending: { 
+        icon: FaClock, 
+        color: 'yellow', 
+        label: 'Pending' 
+      },
+      ongoing: { 
+        icon: FaExclamationTriangle, 
+        color: 'blue', 
+        label: 'Ongoing' 
+      }
+    };
+
+    const config = statusConfig[status] || { 
+      icon: null, 
+      color: 'gray', 
+      label: status 
+    };
+    
+    const IconComponent = config.icon;
+    
+    return (
+      <span className={`px-2 py-1 text-xs font-semibold text-${config.color}-800 bg-${config.color}-100 rounded-full flex items-center`}>
+        {IconComponent && <IconComponent className="mr-1" />} 
+        {config.label}
+      </span>
+    );
+  }, []);
+
+  // ============================================================================
+  // EVENT HANDLERS
+  // ============================================================================
+
+  /**
+   * Handles viewing detailed information for a specific log
+   * @param {Object} log - The emergency log object to view
+   */
+  const handleViewDetails = useCallback((log) => {
     setSelectedLog(log);
     setShowDetailModal(true);
-  };
+  }, []);
+
+  /**
+   * Handles closing the detail modal
+   */
+  const handleCloseDetailModal = useCallback(() => {
+    setShowDetailModal(false);
+    setSelectedLog(null);
+  }, []);
+
+  /**
+   * Handles search input changes with debouncing
+   * @param {Event} e - Input change event
+   */
+  const handleSearchChange = useCallback((e) => {
+    setSearchTerm(e.target.value);
+  }, []);
+
+  /**
+   * Handles severity filter changes
+   * @param {Event} e - Select change event
+   */
+  const handleSeverityFilterChange = useCallback((e) => {
+    setSeverityFilter(e.target.value);
+  }, []);
+
+  /**
+   * Handles status filter changes
+   * @param {Event} e - Select change event
+   */
+  const handleStatusFilterChange = useCallback((e) => {
+    setStatusFilter(e.target.value);
+  }, []);
+
+  /**
+   * Handles adding new emergency log
+   * TODO: Implement modal for adding new logs
+   */
+  const handleAddNewLog = useCallback(() => {
+    setShowAddModal(true);
+    // TODO: Implement add log functionality
+  }, []);
+
+  /**
+   * Handles exporting emergency logs
+   * TODO: Implement export functionality
+   */
+  const handleExport = useCallback(() => {
+    // TODO: Implement export to CSV/PDF functionality
+    console.log('Exporting emergency logs...');
+  }, []);
+
+  /**
+   * Handles printing emergency logs
+   * TODO: Implement print functionality
+   */
+  const handlePrint = useCallback(() => {
+    // TODO: Implement print functionality
+    window.print();
+  }, []);
+
+  // ============================================================================
+  // RENDER HELPER COMPONENTS
+  // ============================================================================
+
+  /**
+   * Renders the statistics cards section
+   */
+  const renderStatisticsCards = () => (
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <StatCard
+        title="Total Incidents"
+        value={statistics.totalIncidents}
+        icon={FaBandAid}
+        color="red"
+      />
+      <StatCard
+        title="High Priority"
+        value={statistics.highPriority}
+        icon={FaExclamationTriangle}
+        color="orange"
+      />
+      <StatCard
+        title="Pending Follow-up"
+        value={statistics.pendingFollowup}
+        icon={FaClock}
+        color="yellow"
+      />
+      <StatCard
+        title="Resolved"
+        value={statistics.resolved}
+        icon={FaCheckCircle}
+        color="green"
+      />
+    </div>
+  );
+
+  /**
+   * Renders a statistics card component
+   */
+  const StatCard = ({ title, value, icon: Icon, color }) => (
+    <div className={`bg-white p-4 rounded-lg shadow-md border-l-4 border-${color}-500`}>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-2xl font-bold text-gray-800">{value}</p>
+          <p className="text-sm text-gray-600">{title}</p>
+        </div>
+        <Icon className={`text-2xl text-${color}-500`} />
+      </div>
+    </div>
+  );
+
+  /**
+   * Renders the search and filter bar
+   */
+  const renderSearchAndFilterBar = () => (
+    <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        {/* Search Input */}
+        <div className="md:col-span-2">
+          <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
+            Search
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FaSearch className="h-4 w-4 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              id="search"
+              placeholder="Search by student name, incident type, or location..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        </div>
+        
+        {/* Severity Filter */}
+        <div>
+          <label htmlFor="severity" className="block text-sm font-medium text-gray-700 mb-1">
+            Severity
+          </label>
+          <select
+            id="severity"
+            value={severityFilter}
+            onChange={handleSeverityFilterChange}
+            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="all">All Severities</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+
+        {/* Status Filter */}
+        <div>
+          <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+            Status
+          </label>
+          <select
+            id="status"
+            value={statusFilter}
+            onChange={handleStatusFilterChange}
+            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="all">All Statuses</option>
+            <option value="resolved">Resolved</option>
+            <option value="pending">Pending</option>
+            <option value="ongoing">Ongoing</option>
+          </select>
+        </div>
+      </div>
+      
+      {/* Action Buttons */}
+      <div className="mt-4 flex justify-between items-center">
+        <button
+          onClick={handleAddNewLog}
+          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center shadow-sm"
+        >
+          <FaPlus className="mr-2" /> New Emergency Log
+        </button>
+        
+        <div className="flex space-x-2">
+          <button 
+            onClick={handleExport}
+            className="bg-gray-600 text-white px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center"
+          >
+            <FaDownload className="mr-2" /> Export
+          </button>
+          <button 
+            onClick={handlePrint}
+            className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+          >
+            <FaPrint className="mr-2" /> Print
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ============================================================================
+  // MAIN RENDER
+  // ============================================================================
+  // ============================================================================
+  // MAIN RENDER
+  // ============================================================================
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Page Header */}
       <PageHeader
         title="Emergency & Incident Log"
         subtitle="Record and track all medical emergencies, incidents, and safety events in the school."
         icon={<FaBandAid className="text-3xl text-red-600" />}
       />
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow-md border-l-4 border-red-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-2xl font-bold text-gray-800">{emergencyLogs.length}</p>
-              <p className="text-sm text-gray-600">Total Incidents</p>
-            </div>
-            <FaBandAid className="text-2xl text-red-500" />
-          </div>
-        </div>
+      {/* Statistics Cards Section */}
+      {renderStatisticsCards()}
 
-        <div className="bg-white p-4 rounded-lg shadow-md border-l-4 border-orange-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-2xl font-bold text-gray-800">{emergencyLogs.filter(log => log.severity === 'critical' || log.severity === 'high').length}</p>
-              <p className="text-sm text-gray-600">High Priority</p>
-            </div>
-            <FaExclamationTriangle className="text-2xl text-orange-500" />
-          </div>
-        </div>
+      {/* Search and Filter Bar Section */}
+      {renderSearchAndFilterBar()}
 
-        <div className="bg-white p-4 rounded-lg shadow-md border-l-4 border-yellow-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-2xl font-bold text-gray-800">{emergencyLogs.filter(log => log.status === 'pending' || log.status === 'ongoing').length}</p>
-              <p className="text-sm text-gray-600">Pending Follow-up</p>
-            </div>
-            <FaClock className="text-2xl text-yellow-500" />
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg shadow-md border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-2xl font-bold text-gray-800">{emergencyLogs.filter(log => log.status === 'resolved').length}</p>
-              <p className="text-sm text-gray-600">Resolved</p>
-            </div>
-            <FaCheckCircle className="text-2xl text-green-500" />
-          </div>
-        </div>
-      </div>
-
-      {/* Search and Filter Bar */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-          <div className="md:col-span-2">
-            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">Search</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaSearch className="h-4 w-4 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                id="search"
-                placeholder="Search by student name, incident type, or location..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label htmlFor="severity" className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
-            <select
-              id="severity"
-              value={severityFilter}
-              onChange={(e) => setSeverityFilter(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="all">All Severities</option>
-              <option value="critical">Critical</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select
-              id="status"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="all">All Statuses</option>
-              <option value="resolved">Resolved</option>
-              <option value="pending">Pending</option>
-              <option value="ongoing">Ongoing</option>
-            </select>
-          </div>
-        </div>
-        
-        <div className="mt-4 flex justify-between items-center">
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center shadow-sm"
-          >
-            <FaPlus className="mr-2" /> New Emergency Log
-          </button>
-          
-          <div className="flex space-x-2">
-            <button className="bg-gray-600 text-white px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center">
-              <FaDownload className="mr-2" /> Export
-            </button>
-            <button className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-              <FaPrint className="mr-2" /> Print
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Emergency Logs Table */}
+      {/* Emergency Logs Table Section */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
+            {/* Table Header */}
             <thead className="bg-gray-50">
               <tr>
                 {[
-                  'Date/Time', 'Student', 'Incident Type', 'Location', 'Severity', 'Status', 'Handled By', 'Actions'
+                  'Date/Time', 'Student', 'Incident Type', 'Location', 
+                  'Severity', 'Status', 'Handled By', 'Actions'
                 ].map(header => (
-                  <th key={header} scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th 
+                    key={header} 
+                    scope="col" 
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     {header}
                   </th>
                 ))}
               </tr>
             </thead>
+            
+            {/* Table Body */}
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredLogs.length > 0 ? filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50">
+                <tr key={log.id} className="hover:bg-gray-50 transition-colors">
+                  {/* Date/Time Column */}
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{log.date}</div>
                     <div className="text-xs text-gray-500 flex items-center">
                       <FaClock className="mr-1" /> {log.time}
                     </div>
                   </td>
+                  
+                  {/* Student Column */}
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{log.studentName}</div>
                     <div className="text-xs text-gray-500">{log.grade} - {log.studentId}</div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{log.incidentType}</td>
+                  
+                  {/* Incident Type Column */}
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                    {log.incidentType}
+                  </td>
+                  
+                  {/* Location Column */}
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 flex items-center">
                     <FaMapMarkerAlt className="mr-1 text-gray-400" /> {log.location}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">{getSeverityBadge(log.severity)}</td>
-                  <td className="px-4 py-3 whitespace-nowrap">{getStatusBadge(log.status)}</td>
+                  
+                  {/* Severity Column */}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {getSeverityBadge(log.severity)}
+                  </td>
+                  
+                  {/* Status Column */}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {getStatusBadge(log.status)}
+                  </td>
+                  
+                  {/* Handled By Column */}
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 flex items-center">
                     <FaUserNurse className="mr-1 text-blue-500" /> {log.handledBy}
                   </td>
+                  
+                  {/* Actions Column */}
                   <td className="px-4 py-3 whitespace-nowrap text-sm font-medium space-x-2">
                     <button
                       onClick={() => handleViewDetails(log)}
-                      className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-100"
+                      className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-100 transition-colors"
+                      title="View Details"
                     >
                       <FaEye size={16} />
                     </button>
-                    <button className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-100">
+                    <button 
+                      className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-100 transition-colors"
+                      title="Edit Log"
+                    >
                       <FaEdit size={16} />
                     </button>
                   </td>
                 </tr>
               )) : (
+                /* No Data Row */
                 <tr>
                   <td colSpan="8" className="text-center py-10 text-gray-500">
                     <FaBandAid size={32} className="mx-auto mb-2 text-gray-400" />
@@ -394,108 +652,197 @@ const EmergencyLog = () => {
 
       {/* Detail Modal */}
       {showDetailModal && selectedLog && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-800 flex items-center">
-                <FaBandAid className="mr-2 text-red-600" />
-                Emergency Log Details - {selectedLog.id}
-              </h3>
-              <button
-                onClick={() => setShowDetailModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
-              >
-                &times;
-              </button>
-            </div>
-            <div className="p-6 space-y-6">
-              {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-800 mb-3">Incident Information</h4>
-                  <div className="space-y-2">
-                    <p><span className="font-medium">Date:</span> {selectedLog.date}</p>
-                    <p><span className="font-medium">Time:</span> {selectedLog.time}</p>
-                    <p><span className="font-medium">Location:</span> {selectedLog.location}</p>
-                    <p><span className="font-medium">Type:</span> {selectedLog.incidentType}</p>
-                    <p><span className="font-medium">Severity:</span> {getSeverityBadge(selectedLog.severity)}</p>
-                    <p><span className="font-medium">Status:</span> {getStatusBadge(selectedLog.status)}</p>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-800 mb-3">Student Information</h4>
-                  <div className="space-y-2">
-                    <p><span className="font-medium">Name:</span> {selectedLog.studentName}</p>
-                    <p><span className="font-medium">Student ID:</span> {selectedLog.studentId}</p>
-                    <p><span className="font-medium">Grade:</span> {selectedLog.grade}</p>
-                    <p><span className="font-medium">Parent Contact:</span> {selectedLog.parentContact}</p>
-                    <p><span className="font-medium">Parent Notified:</span> {selectedLog.parentNotified ? 'Yes' : 'No'}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Description and Assessment */}
-              <div>
-                <h4 className="text-lg font-semibold text-gray-800 mb-3">Incident Description</h4>
-                <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">{selectedLog.description}</p>
-              </div>
-
-              <div>
-                <h4 className="text-lg font-semibold text-gray-800 mb-3">Initial Assessment</h4>
-                <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">{selectedLog.initialAssessment}</p>
-              </div>
-
-              <div>
-                <h4 className="text-lg font-semibold text-gray-800 mb-3">Treatment Provided</h4>
-                <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">{selectedLog.treatmentProvided}</p>
-              </div>
-
-              {/* Staff and Emergency Response */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-800 mb-3">Staff Involved</h4>
-                  <ul className="space-y-1">
-                    {selectedLog.staffInvolved.map((staff, index) => (
-                      <li key={index} className="flex items-center text-gray-700">
-                        <FaUser className="mr-2 text-blue-500" /> {staff}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-800 mb-3">Emergency Response</h4>
-                  <div className="space-y-2">
-                    <p><span className="font-medium">Emergency Services Called:</span> {selectedLog.emergencyServicesContacted ? 'Yes' : 'No'}</p>
-                    {selectedLog.emergencyResponse && (
-                      <p><span className="font-medium">Response Details:</span> {selectedLog.emergencyResponse}</p>
-                    )}
-                    {selectedLog.hospitalTransport && (
-                      <p><span className="font-medium">Hospital:</span> {selectedLog.hospitalTransport}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Follow-up and Additional Notes */}
-              {selectedLog.followUpRequired && (
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-800 mb-3">Follow-up Required</h4>
-                  <p className="text-gray-700 bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
-                    {selectedLog.followUpNotes}
-                  </p>
-                </div>
-              )}
-
-              <div>
-                <h4 className="text-lg font-semibold text-gray-800 mb-3">Additional Notes</h4>
-                <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">{selectedLog.additionalNotes}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <EmergencyLogDetailModal
+          log={selectedLog}
+          onClose={handleCloseDetailModal}
+          getSeverityBadge={getSeverityBadge}
+          getStatusBadge={getStatusBadge}
+        />
       )}
     </div>
   );
+};
+
+// ============================================================================
+// DETAIL MODAL COMPONENT
+// ============================================================================
+
+/**
+ * Emergency Log Detail Modal Component
+ * Displays comprehensive details about a specific emergency log
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.log - The emergency log object to display
+ * @param {Function} props.onClose - Function to call when closing the modal
+ * @param {Function} props.getSeverityBadge - Function to get severity badge
+ * @param {Function} props.getStatusBadge - Function to get status badge
+ */
+const EmergencyLogDetailModal = ({ log, onClose, getSeverityBadge, getStatusBadge }) => {
+  return (
+    <div className="fixed inset-0 bg-gray-800 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        {/* Modal Header */}
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
+          <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+            <FaBandAid className="mr-2 text-red-600" />
+            Emergency Log Details - {log.id}
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-2xl transition-colors"
+            title="Close Modal"
+          >
+            &times;
+          </button>
+        </div>
+        
+        {/* Modal Content */}
+        <div className="p-6 space-y-6">
+          {/* Basic Information Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                <FaNotesMedical className="mr-2 text-blue-600" />
+                Incident Information
+              </h4>
+              <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
+                <DetailItem label="Date" value={log.date} />
+                <DetailItem label="Time" value={log.time} />
+                <DetailItem label="Location" value={log.location} />
+                <DetailItem label="Type" value={log.incidentType} />
+                <DetailItem label="Severity" value={getSeverityBadge(log.severity)} />
+                <DetailItem label="Status" value={getStatusBadge(log.status)} />
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                <FaUser className="mr-2 text-green-600" />
+                Student Information
+              </h4>
+              <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
+                <DetailItem label="Name" value={log.studentName} />
+                <DetailItem label="Student ID" value={log.studentId} />
+                <DetailItem label="Grade" value={log.grade} />
+                <DetailItem label="Parent Contact" value={log.parentContact} />
+                <DetailItem 
+                  label="Parent Notified" 
+                  value={log.parentNotified ? 'Yes' : 'No'} 
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Description Sections */}
+          <DetailSection
+            title="Incident Description"
+            icon={FaExclamationTriangle}
+            content={log.description}
+          />
+
+          <DetailSection
+            title="Initial Assessment"
+            icon={FaNotesMedical}
+            content={log.initialAssessment}
+          />
+
+          <DetailSection
+            title="Treatment Provided"
+            icon={FaBandAid}
+            content={log.treatmentProvided}
+          />
+
+          {/* Staff and Emergency Response Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                <FaUserNurse className="mr-2 text-purple-600" />
+                Staff Involved
+              </h4>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <ul className="space-y-1">
+                  {log.staffInvolved.map((staff, index) => (
+                    <li key={index} className="flex items-center text-gray-700">
+                      <FaUser className="mr-2 text-blue-500" /> {staff}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                <FaAmbulance className="mr-2 text-red-600" />
+                Emergency Response
+              </h4>
+              <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
+                <DetailItem 
+                  label="Emergency Services Called" 
+                  value={log.emergencyServicesContacted ? 'Yes' : 'No'} 
+                />
+                {log.emergencyResponse && (
+                  <DetailItem label="Response Details" value={log.emergencyResponse} />
+                )}
+                {log.hospitalTransport && (
+                  <DetailItem label="Hospital" value={log.hospitalTransport} />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Follow-up Section */}
+          {log.followUpRequired && (
+            <div>
+              <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                <FaClock className="mr-2 text-yellow-600" />
+                Follow-up Required
+              </h4>
+              <div className="text-gray-700 bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                {log.followUpNotes}
+              </div>
+            </div>
+          )}
+
+          {/* Additional Notes Section */}
+          <DetailSection
+            title="Additional Notes"
+            icon={FaNotesMedical}
+            content={log.additionalNotes}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// HELPER COMPONENTS
+// ============================================================================
+
+/**
+ * Detail Item Component - renders a label-value pair
+ */
+const DetailItem = ({ label, value }) => (
+  <div className="flex justify-between">
+    <span className="font-medium text-gray-600">{label}:</span>
+    <span className="text-gray-900">{value}</span>
+  </div>
+);
+
+/**
+ * Detail Section Component - renders a section with title and content
+ */
+const DetailSection = ({ title, icon: Icon, content }) => (
+  <div>
+    <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+      <Icon className="mr-2 text-blue-600" />
+      {title}
+    </h4>
+    <div className="text-gray-700 bg-gray-50 p-4 rounded-lg border-l-4 border-blue-200">
+      {content}
+    </div>
+  </div>
+);
 };
 
 export default EmergencyLog;
