@@ -8,7 +8,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 const mockReports = [
   { id: 1, type: 'Tiêm chủng', date: '2024-01-10', total: 1200, completed: 1020 },
   { id: 2, type: 'Khám sức khỏe', date: '2024-01-05', total: 1200, completed: 1100 },
-  { id: 3, type: 'Sự kiện y tế', date: '2024-01-12', total: 15, completed: 15 },
+  { id: 3, type: 'Sự kiện y tế', date: '2024-01-15', total: 800, completed: 720 },
 ];
 
 const ReportAdmin = () => {
@@ -47,8 +47,7 @@ const ReportAdmin = () => {
             value={filterType}
             onChange={e => setFilterType(e.target.value)}
             fullWidth
-          >
-            <MenuItem value="all">Tất cả</MenuItem>
+          >            <MenuItem value="all">Tất cả</MenuItem>
             <MenuItem value="Tiêm chủng">Tiêm chủng</MenuItem>
             <MenuItem value="Khám sức khỏe">Khám sức khỏe</MenuItem>
             <MenuItem value="Sự kiện y tế">Sự kiện y tế</MenuItem>
@@ -108,4 +107,4 @@ const ReportAdmin = () => {
   );
 };
 
-export default ReportAdmin; 
+export default ReportAdmin;

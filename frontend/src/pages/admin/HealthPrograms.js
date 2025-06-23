@@ -47,7 +47,6 @@ import {
   Visibility as ViewIcon,
   Campaign as CampaignIcon,
   LocalHospital as HealthIcon,
-  Schedule as ScheduleIcon,
   Group as GroupIcon,
   ExpandMore as ExpandMoreIcon,
   CheckCircle as CheckIcon,
@@ -67,7 +66,7 @@ const healthPrograms = [
   {
     id: 1,
     name: 'Annual Health Screening',
-    type: 'screening',
+    type: 'health_checkup',
     status: 'active',
     startDate: '2024-09-01',
     endDate: '2024-12-31',
@@ -95,7 +94,7 @@ const healthPrograms = [
   {
     id: 3,
     name: 'Vision Screening Program',
-    type: 'screening',
+    type: 'health_checkup',
     status: 'completed',
     startDate: '2024-08-01',
     endDate: '2024-08-31',
@@ -109,7 +108,7 @@ const healthPrograms = [
   {
     id: 4,
     name: 'Mental Health Week',
-    type: 'awareness',
+    type: 'medical_event',
     status: 'planned',
     startDate: '2024-12-01',
     endDate: '2024-12-05',
@@ -119,6 +118,20 @@ const healthPrograms = [
     description: 'Mental health awareness and screening week',
     createdAt: '2024-11-01',
     lastUpdated: '2024-11-15'
+  },
+  {
+    id: 5,
+    name: 'COVID-19 Vaccination',
+    type: 'vaccination',
+    status: 'completed',
+    startDate: '2024-03-01',
+    endDate: '2024-03-31',
+    targetGrades: ['5', '6'],
+    totalStudents: 150,
+    completedStudents: 150,
+    description: 'COVID-19 vaccination program for senior students',
+    createdAt: '2024-02-15',
+    lastUpdated: '2024-04-01'
   }
 ];
 
@@ -132,15 +145,15 @@ const programTemplates = [
   },
   {
     id: 2,
-    name: 'Health Screening',
-    type: 'screening',
+    name: 'Health Checkup',
+    type: 'health_checkup',
     duration: '60 days',
     components: ['Registration', 'Physical Exam', 'Vision Test', 'Hearing Test', 'BMI Check']
   },
   {
     id: 3,
-    name: 'Awareness Campaign',
-    type: 'awareness',
+    name: 'Medical Event',
+    type: 'medical_event',
     duration: '7 days',
     components: ['Educational Sessions', 'Materials Distribution', 'Interactive Activities']
   }
@@ -164,8 +177,8 @@ const gradeCompletionData = [
 
 const programTypeData = [
   { name: 'Vaccination', value: 40, color: '#8884d8' },
-  { name: 'Screening', value: 35, color: '#82ca9d' },
-  { name: 'Awareness', value: 25, color: '#ffc658' }
+  { name: 'Health Checkup', value: 35, color: '#82ca9d' },
+  { name: 'Medical Event', value: 25, color: '#ffc658' }
 ];
 
 // Validation schema
@@ -287,11 +300,6 @@ const HealthPrograms = () => {
             <Tab 
               label="Analytics" 
               icon={<BarChartIcon />} 
-              iconPosition="start"
-            />
-            <Tab 
-              label="Calendar View" 
-              icon={<ScheduleIcon />} 
               iconPosition="start"
             />
           </Tabs>
@@ -517,56 +525,6 @@ const HealthPrograms = () => {
               </CardContent>
             </Card>
           </TabPanel>
-
-          {/* Calendar View Tab */}
-          <TabPanel value={tabValue} index={3}>
-            <Typography variant="h6" gutterBottom>Program Calendar</Typography>
-            <Alert severity="info" className="mb-4">
-              Calendar view showing all scheduled health programs and their timelines
-            </Alert>
-            
-            <Grid container spacing={3}>
-              {healthPrograms.map((program) => (
-                <Grid item xs={12} md={6} key={program.id}>
-                  <Card>
-                    <CardContent>
-                      <Box className="flex items-center justify-between mb-2">
-                        <Typography variant="h6">{program.name}</Typography>
-                        <Chip 
-                          label={program.status}
-                          color={getStatusColor(program.status)}
-                          size="small"
-                        />
-                      </Box>
-                      <Typography variant="body2" color="textSecondary" className="mb-2">
-                        {program.description}
-                      </Typography>
-                      <Box className="flex items-center mb-2">
-                        <ScheduleIcon className="mr-2 text-gray-500" fontSize="small" />
-                        <Typography variant="body2">
-                          {program.startDate} - {program.endDate}
-                        </Typography>
-                      </Box>
-                      <Box className="flex items-center mb-2">
-                        <GroupIcon className="mr-2 text-gray-500" fontSize="small" />
-                        <Typography variant="body2">
-                          {program.targetGrades.join(', ')} grades
-                        </Typography>
-                      </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={calculateProgress(program.completedStudents, program.totalStudents)}
-                        className="mt-2"
-                      />
-                      <Typography variant="caption" className="mt-1 block">
-                        Progress: {calculateProgress(program.completedStudents, program.totalStudents)}%
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </TabPanel>
         </CardContent>
       </Card>
 
@@ -607,9 +565,8 @@ const HealthPrograms = () => {
                       <InputLabel>Program Type</InputLabel>
                       <Select {...field} label="Program Type">
                         <MenuItem value="vaccination">Vaccination</MenuItem>
-                        <MenuItem value="screening">Health Screening</MenuItem>
-                        <MenuItem value="awareness">Awareness Campaign</MenuItem>
-                        <MenuItem value="checkup">Health Checkup</MenuItem>
+                        <MenuItem value="health_checkup">Health Checkup</MenuItem>
+                        <MenuItem value="medical_event">Medical Event</MenuItem>
                       </Select>
                     </FormControl>
                   )}

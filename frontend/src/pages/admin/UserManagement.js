@@ -17,10 +17,110 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import apiClient from '../../utils/api';
 
+// Mock data for users
+const mockUsers = [
+  {
+    id: 1,
+    firstName: 'John',
+    lastName: 'Admin',
+    email: 'admin@schoolhealth.com',
+    phone: '+84-912-345-678',
+    role: 'admin',
+    status: 'active',
+    lastLogin: '2024-01-15 10:30:00',
+    createdAt: '2024-01-01',
+    permissions: ['full_access']
+  },
+  {
+    id: 2,
+    firstName: 'Dr. Sarah',
+    lastName: 'Johnson',
+    email: 'sarah.johnson@schoolhealth.com',
+    phone: '+84-987-654-321',
+    role: 'medical_staff',
+    status: 'active',
+    lastLogin: '2024-01-15 09:45:00',
+    createdAt: '2024-01-05',
+    permissions: ['view_students', 'manage_medications', 'create_reports']
+  },
+  {
+    id: 3,
+    firstName: 'Michael',
+    lastName: 'Smith',
+    email: 'michael.smith@parent.com',
+    phone: '+84-901-234-567',
+    role: 'parent',
+    status: 'active',
+    lastLogin: '2024-01-14 20:15:00',
+    createdAt: '2024-01-10',
+    permissions: ['view_own_child', 'submit_declarations']
+  },
+  {
+    id: 4,
+    firstName: 'Emma',
+    lastName: 'Wilson',
+    email: 'emma.wilson@student.edu',
+    phone: '+84-923-456-789',
+    role: 'student',
+    status: 'active',
+    lastLogin: '2024-01-15 08:20:00',
+    createdAt: '2024-01-12',
+    permissions: ['view_own_profile', 'view_health_resources']
+  },
+  {
+    id: 5,
+    firstName: 'Dr. James',
+    lastName: 'Brown',
+    email: 'james.brown@schoolhealth.com',
+    phone: '+84-934-567-890',
+    role: 'medical_staff',
+    status: 'active',
+    lastLogin: '2024-01-15 07:30:00',
+    createdAt: '2024-01-08',
+    permissions: ['view_students', 'manage_medications', 'create_reports']
+  },
+  {
+    id: 6,
+    firstName: 'Lisa',
+    lastName: 'Davis',
+    email: 'lisa.davis@parent.com',
+    phone: '+84-945-678-901',
+    role: 'parent',
+    status: 'inactive',
+    lastLogin: '2024-01-10 18:45:00',
+    createdAt: '2024-01-03',
+    permissions: ['view_own_child', 'submit_declarations']
+  },
+  {
+    id: 7,
+    firstName: 'Alex',
+    lastName: 'Chen',
+    email: 'alex.chen@student.edu',
+    phone: '+84-956-789-012',
+    role: 'student',
+    status: 'active',
+    lastLogin: '2024-01-14 16:10:00',
+    createdAt: '2024-01-11',
+    permissions: ['view_own_profile', 'view_health_resources']
+  },
+  {
+    id: 8,
+    firstName: 'Maria',
+    lastName: 'Garcia',
+    email: 'maria.garcia@parent.com',
+    phone: '+84-967-890-123',
+    role: 'parent',
+    status: 'active',
+    lastLogin: '2024-01-15 12:00:00',
+    createdAt: '2024-01-06',
+    permissions: ['view_own_child', 'submit_declarations']
+  }
+];
+
 const UserManagement = () => {
   const [selectedTab, setSelectedTab] = useState(0);
-  const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [users, setUsers] = useState(mockUsers); // Use mock data instead of empty array
+  const [filteredUsers, setFilteredUsers] = useState(mockUsers); // Initialize with mock data
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -54,6 +154,8 @@ const UserManagement = () => {
 
   // Lấy danh sách user từ API
   useEffect(() => {
+    // Comment out API call since we're using mock data
+    /*
     const fetchUsers = async () => {
       try {
         const response = await apiClient.get('/users');
@@ -64,6 +166,11 @@ const UserManagement = () => {
       }
     };
     fetchUsers();
+    */
+    
+    // Initialize with mock data
+    setUsers(mockUsers);
+    setFilteredUsers(mockUsers);
   }, []);
 
   // Filter users based on search and filters
@@ -434,48 +541,6 @@ const UserManagement = () => {
     return allPermissions[role] || [];
   };
 
-  const SystemLogsTab = () => (
-    <div className="space-y-6">
-      <Typography variant="h6" gutterBottom>
-        System Activity Logs
-      </Typography>
-      
-      <Card>
-        <CardContent>
-          <List>
-            {[
-              { action: 'User Login', user: 'Dr. Sarah Johnson', time: '2024-01-15 10:30:00', type: 'info' },
-              { action: 'User Created', user: 'Admin User', time: '2024-01-15 09:15:00', type: 'success' },
-              { action: 'Failed Login Attempt', user: 'Unknown', time: '2024-01-15 08:45:00', type: 'warning' },
-              { action: 'User Status Changed', user: 'John Davis', time: '2024-01-14 16:20:00', type: 'info' },
-              { action: 'Password Reset', user: 'Emma Wilson', time: '2024-01-14 14:10:00', type: 'warning' }
-            ].map((log, index) => (
-              <React.Fragment key={index}>
-                <ListItem>
-                  <ListItemIcon>
-                    <History color={log.type === 'success' ? 'success' : log.type === 'warning' ? 'warning' : 'action'} />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={log.action}
-                    secondary={`User: ${log.user} | Time: ${log.time}`}
-                  />
-                  <ListItemSecondaryAction>
-                    <Chip 
-                      label={log.type.toUpperCase()} 
-                      size="small" 
-                      color={log.type === 'success' ? 'success' : log.type === 'warning' ? 'warning' : 'default'}
-                    />
-                  </ListItemSecondaryAction>
-                </ListItem>
-                {index < 4 && <Divider />}
-              </React.Fragment>
-            ))}
-          </List>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-6">
@@ -491,13 +556,11 @@ const UserManagement = () => {
         <Tabs value={selectedTab} onChange={handleTabChange}>
           <Tab label="User List" icon={<Group />} />
           <Tab label="Role Permissions" icon={<Security />} />
-          <Tab label="System Logs" icon={<History />} />
         </Tabs>
         
         <CardContent>
           {selectedTab === 0 && <UserListTab />}
           {selectedTab === 1 && <RolePermissionsTab />}
-          {selectedTab === 2 && <SystemLogsTab />}
         </CardContent>
       </Card>
 
