@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
 const StudentProfile = () => {
@@ -16,12 +16,8 @@ const StudentProfile = () => {
   const [messageType, setMessageType] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Load profile data on component mount
-  useEffect(() => {
-    loadProfileData();
-  }, []);
-
-  const loadProfileData = async () => {
+  // Define loadProfileData function before using it
+  const loadProfileData = useCallback(async () => {
     try {
       setLoading(true);
       const authAxios = getAuthAxios();
@@ -72,7 +68,12 @@ const StudentProfile = () => {
 
       setLoading(false);
     }
-  };
+  }, [getAuthAxios, currentUser]);
+
+  // Load profile data on component mount
+  useEffect(() => {
+    loadProfileData();
+  }, [loadProfileData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { Snackbar, Alert } from '@mui/material';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,10 @@ const Register = () => {
   });
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('error');
+  const [registrationAttempts, setRegistrationAttempts] = useState(0);
 
   const { register, currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -40,18 +45,27 @@ const Register = () => {
     if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword || !formData.fullName) {
       setMessage('Please fill in all fields.');
       setMessageType('error');
+      setSnackbarMessage('Please fill in all required fields.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
       setMessage('Passwords do not match.');
       setMessageType('error');
+      setSnackbarMessage('Passwords do not match. Please try again.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
       return;
     }
 
     if (formData.password.length < 6) {
       setMessage('Password must be at least 6 characters long.');
       setMessageType('error');
+      setSnackbarMessage('Password must be at least 6 characters long.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
       return;
     }
 
@@ -61,18 +75,50 @@ const Register = () => {
       if (result.success) {
         setMessage(result.message || 'Registration successful! Please login.');
         setMessageType('success');
+        setSnackbarMessage('Registration successful! Redirecting to login page...');
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
+        setRegistrationAttempts(0);
 
         // Redirect to login page after a short delay
         setTimeout(() => {
           navigate('/login');
         }, 2000);
       } else {
+        // Increment failed registration attempts
+        const newAttempts = registrationAttempts + 1;
+        setRegistrationAttempts(newAttempts);
+        
         setMessage(result.message);
         setMessageType('error');
+        
+        // Display different messages based on the number of failed attempts
+        if (newAttempts >= 3) {
+          setSnackbarMessage(`Multiple registration failures detected. Please check your information carefully or contact support.`);
+          setSnackbarSeverity('warning');
+        } else {
+          setSnackbarMessage(result.message || 'Registration failed. Please check your information and try again.');
+          setSnackbarSeverity('error');
+        }
+        setSnackbarOpen(true);
       }
     } catch (error) {
+      // Also count system errors as failed attempts
+      const newAttempts = registrationAttempts + 1;
+      setRegistrationAttempts(newAttempts);
+      
       setMessage('An error occurred during registration. Please try again.');
       setMessageType('error');
+      
+      // Display different messages based on the number of failed attempts
+      if (newAttempts >= 3) {
+        setSnackbarMessage(`System error during registration. Please try again later or contact support.`);
+        setSnackbarSeverity('error');
+      } else {
+        setSnackbarMessage('An error occurred during registration. Please try again.');
+        setSnackbarSeverity('error');
+      }
+      setSnackbarOpen(true);
       console.error('Registration error:', error);
     }
   };
@@ -227,6 +273,21 @@ const Register = () => {
           </form>
         </div>
       </div>
+      
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+      >
+        <Alert 
+          onClose={() => setSnackbarOpen(false)} 
+          severity={snackbarSeverity} 
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </section>
   );
 };

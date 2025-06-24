@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
+import { handleApiError } from '../utils/errorHandler'; // Import our utility
 
 const StudentBlog = () => {
     const { getAuthAxios, currentUser } = useContext(AuthContext);
@@ -39,6 +40,20 @@ const StudentBlog = () => {
         currentUser.roles.includes('ROLE_PARENT') ||
         currentUser.roles.includes('ROLE_Parent')
     );
+
+    // Check if user is nurse (can create/edit blog posts)
+    const isNurse = currentUser && currentUser.roles && (
+        currentUser.roles.includes('ROLE_NURSE') ||
+        currentUser.roles.includes('ROLE_SCHOOLNURSE') ||
+        currentUser.roles.includes('ROLE_Nurse') ||
+        currentUser.roles.includes('ROLE_SchoolNurse')
+    );
+
+    // Check if user can view blog (all authenticated users + guests)
+    const canViewBlog = true; // Everyone can view blog
+
+    // Check if user can create/edit blog posts (only nurses)
+    const canManageBlog = isNurse;
 
     // Utility functions
     const showMessage = (msg, type = 'info') => {
@@ -86,23 +101,16 @@ const StudentBlog = () => {
         try {
             setLoading(true);
             const response = await axios.get('/api/blog');
-            console.log('Raw API response:', response); // Debug log
-            console.log('Response data:', response.data); // Debug log
-            console.log('Response data type:', typeof response.data); // Debug log
-            console.log('Response data length:', Array.isArray(response.data) ? response.data.length : 'Not an array'); // Debug log
             
             const postsData = response.data || [];
-            console.log('Posts data before cleaning:', postsData); // Debug log
-            
             const cleanedPosts = cleanPostsData(postsData);
-            console.log('Posts after cleaning:', cleanedPosts); // Debug log
-            
             setAllPosts(cleanedPosts);
         } catch (error) {
-            console.error('Error loading all posts:', error);
-            console.error('Error response:', error.response); // Debug log
+            // Use our error handler
+            const errorDetails = handleApiError(error, 'Failed to load blog posts');
+            console.error('Error loading all posts:', errorDetails);
             setAllPosts([]);
-            showMessage('Failed to load blog posts', 'error');
+            showMessage(errorDetails.message, errorDetails.type);
         } finally {
             setLoading(false);
         }
@@ -113,18 +121,15 @@ const StudentBlog = () => {
         try {
             const authAxios = getAuthAxios();
             const response = await authAxios.get('/api/blog/my-posts');
-            console.log('My posts response:', response.data); // Debug log
             const postsData = response.data || [];
             const cleanedPosts = cleanPostsData(postsData);
             setPosts(cleanedPosts);
         } catch (error) {
-            console.error('Error loading my posts:', error);
-            if (error.response?.status === 404) {
-                setPosts([]);
-            } else {
-                showMessage('Failed to load your posts', 'error');
-                setPosts([]);
-            }
+            // Use our error handler
+            const errorDetails = handleApiError(error, 'Failed to load your posts');
+            console.error('Error loading my posts:', errorDetails);
+            setPosts([]);
+            showMessage(errorDetails.message, errorDetails.type);
         }
     };
 
@@ -177,8 +182,10 @@ const StudentBlog = () => {
             loadMyPosts();
             loadAllPosts();
         } catch (error) {
-            console.error('Error saving post:', error);
-            showMessage('Failed to save post. Please try again.', 'error');
+            // Use our error handler
+            const errorDetails = handleApiError(error, 'Failed to save post');
+            console.error('Error saving post:', errorDetails);
+            showMessage(errorDetails.message, 'error');
         }
     };
 
@@ -204,8 +211,10 @@ const StudentBlog = () => {
             loadMyPosts();
             loadAllPosts();
         } catch (error) {
-            console.error('Error deleting post:', error);
-            showMessage('Failed to delete post', 'error');
+            // Use our error handler
+            const errorDetails = handleApiError(error, 'Failed to delete post');
+            console.error('Error deleting post:', errorDetails);
+            showMessage(errorDetails.message, 'error');
         }
     };
 
@@ -221,12 +230,10 @@ const StudentBlog = () => {
                 showMessage('Backend is running correctly. No blog posts found in database.', 'info');
             }
         } catch (error) {
-            console.error('Backend connection failed:', error);
-            if (error.code === 'ERR_NETWORK') {
-                showMessage('Backend server is not running on port 8080', 'error');
-            } else {
-                showMessage(`Backend error: ${error.response?.status || error.message}`, 'error');
-            }
+            // Use our error handler
+            const errorDetails = handleApiError(error, 'Backend connection failed');
+            console.error('Backend connection failed:', errorDetails);
+            showMessage(errorDetails.message, 'error');
         }
     };
 
@@ -237,18 +244,20 @@ const StudentBlog = () => {
             showMessage('Test post created successfully!', 'success');
             loadAllPosts();
         } catch (error) {
-            console.error('Error creating test post:', error);
-            showMessage('Failed to create test post', 'error');
+            // Use our error handler
+            const errorDetails = handleApiError(error, 'Failed to create test post');
+            console.error('Error creating test post:', errorDetails);
+            showMessage(errorDetails.message, 'error');
         }
     };
 
     // Load data on component mount
     useEffect(() => {
         loadAllPosts();
-        if (isStudent) {
+        if (canManageBlog) {
             loadMyPosts();
         }
-    }, [isStudent]);
+    }, [canManageBlog]);
 
     // Enhanced render functions
     const renderMessage = () => {
@@ -262,7 +271,7 @@ const StudentBlog = () => {
             </div>
         );
     };    const renderCreateForm = () => {
-        if (!isStudent) return null;
+        if (!canManageBlog) return null; // Only nurses can create/edit blog posts
 
         return (
             <div className={`blog-editor-container mb-5 ${showCreateForm ? 'expanded' : ''}`} style={{borderRadius: '1.5rem'}}>
@@ -326,38 +335,42 @@ const StudentBlog = () => {
                                 <span className="fw-semibold">Start Writing</span>
                             </button>
                         )}
-                          {/* Test buttons for debugging */}
-                        <button
-                            type="button"
-                            className="btn btn-outline-info btn-sm ms-3"
-                            onClick={testBackendConnection}
-                            style={{
-                                borderRadius: '30px',
-                                padding: '12px 24px',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                transition: 'all 0.3s ease'
-                            }}
-                        >
-                            <i className="fas fa-wifi me-2"></i>
-                            Test Backend
-                        </button>
+                        {/* Test buttons for debugging - only for nurses */}
+                        {canManageBlog && (
+                            <>
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-info btn-sm ms-3"
+                                    onClick={testBackendConnection}
+                                    style={{
+                                        borderRadius: '30px',
+                                        padding: '12px 24px',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                >
+                                    <i className="fas fa-wifi me-2"></i>
+                                    Test Backend
+                                </button>
                         
-                        <button
-                            type="button"
-                            className="btn btn-outline-secondary btn-sm ms-2"
-                            onClick={createTestPost}
-                            style={{
-                                borderRadius: '30px',
-                                padding: '12px 24px',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                transition: 'all 0.3s ease'
-                            }}
-                        >
-                            <i className="fas fa-vial me-2"></i>
-                            Create Test Post
-                        </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-secondary btn-sm ms-2"
+                                    onClick={createTestPost}
+                                    style={{
+                                        borderRadius: '30px',
+                                        padding: '12px 24px',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                >
+                                    <i className="fas fa-vial me-2"></i>
+                                    Create Test Post
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -710,7 +723,7 @@ const StudentBlog = () => {
                                 </div>
                             </div>
                         </div>
-                        {showActions && (
+                        {showActions && canManageBlog && (
                             <div className="dropdown">
                                 <button
                                     className="btn btn-link text-white p-2 rounded-circle"
@@ -890,7 +903,7 @@ const StudentBlog = () => {
                         </div>
                     ) : (
                         <div className="posts-grid">
-                            {posts.filter(validatePost).map(post => renderPostCard(post, true))}
+                            {posts.filter(validatePost).map(post => renderPostCard(post, canManageBlog))}
                         </div>
                     )}
                 </div>
@@ -930,12 +943,15 @@ const StudentBlog = () => {
                                 <div style={{position: 'relative', zIndex: 1}}>
                                     <h1 className="display-3 fw-bold mb-3">
                                         <i className="fas fa-hospital-alt me-3"></i>
-                                        Student Health Blog
+                                        Health Blog
                                     </h1>
                                     <p className="lead fs-4 mb-4">
-                                        Share your health experiences, tips, and knowledge with fellow students
+                                        {canManageBlog 
+                                            ? "Share health knowledge and tips with students and parents"
+                                            : "Stay informed with the latest health articles and tips from our medical team"
+                                        }
                                     </p>
-                                    {isStudent && (
+                                    {canManageBlog && (
                                         <div className="mt-4">
                                             <button
                                                 className="btn btn-light btn-lg px-5 py-3 rounded-pill shadow-sm"
@@ -997,7 +1013,7 @@ const StudentBlog = () => {
                         </span>
                                             </button>
                                         </li>
-                                        {isStudent && (
+                                        {canManageBlog && (
                                             <li className="nav-item">
                                                 <button
                                                     className={`nav-link px-4 py-3 fw-semibold rounded-3 ${activeTab === 'my' ? 'active shadow-sm' : 'text-muted'}`}
