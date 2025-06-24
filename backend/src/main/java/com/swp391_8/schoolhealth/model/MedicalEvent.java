@@ -66,18 +66,9 @@ public class MedicalEvent {
 
     @Column(name = "medication_given")
     private String medicationGiven;
-
-    @Column(name = "parent_notified")
-    private Boolean parentNotified;
-
-    @Column(name = "referred_to")
-    private String referredTo; // e.g., Doctor's name, Hospital name
-
-    @Column(name = "follow_up_required")
-    private Boolean followUpRequired;
-
-    @Column(name = "follow_up_date")
-    private LocalDateTime followUpDate;
+    
+    @Column(name = "medication_quantity")
+    private Integer medicationQuantity;
 
     @Column(name = "status")
     private String status; // Consider Enum: ACTIVE, RESOLVED, FOLLOW_UP, REFERRED

@@ -24,7 +24,8 @@ import {
   EventAvailable as EventAvailableIcon, 
   Assessment as AssessmentIcon,
   Warning as WarningIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  MedicalServices as MedicalServicesIcon
 } from '@mui/icons-material';
 import { AuthContext } from '../../context/AuthContext';
 import authHeader from '../../services/auth-header'; // Add this import for direct header testing
@@ -505,13 +506,17 @@ function NurseDashboard() {
             <ListItemIcon><MedicationIcon /></ListItemIcon>
             <ListItemText primary="Full Medication Management" />
           </ListItem>
+          <ListItem button component={RouterLink} to="/medical/medication-management?tab=4">
+            <ListItemIcon><MedicalServicesIcon color="error" /></ListItemIcon>
+            <ListItemText primary="Medical Events & Incidents" />
+          </ListItem>
           <ListItem button component={RouterLink} to="/nurse/health-declaration-approval">
             <ListItemIcon><AssessmentIcon /></ListItemIcon>
             <ListItemText primary="Health Declarations Review" />
           </ListItem>
           <ListItem button component={RouterLink} to="/nurse/health-checkup-events">
             <ListItemIcon><EventAvailableIcon /></ListItemIcon>
-            <ListItemText primary="Health Checkup Events" />
+            <ListItemText primary="Create and Organize Event" />
           </ListItem>
           {/* Add more quick links as other nurse functionalities are developed */}
           {/* e.g., Vaccination Management */}

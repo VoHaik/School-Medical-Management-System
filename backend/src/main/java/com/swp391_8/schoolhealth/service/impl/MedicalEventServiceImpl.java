@@ -66,16 +66,11 @@ public class MedicalEventServiceImpl implements MedicalEventServiceInterface {
         medicalEvent.setEventType(medicalEventDTO.getEventType());
         medicalEvent.setDescription(medicalEventDTO.getDescription());
         medicalEvent.setEventDatetime(medicalEventDTO.getEventDatetime() != null ? medicalEventDTO.getEventDatetime() : LocalDateTime.now());
-        medicalEvent.setRecordedBy(recordedByUser);
-
-        medicalEvent.setSymptoms(medicalEventDTO.getSymptoms());
+        medicalEvent.setRecordedBy(recordedByUser);        medicalEvent.setSymptoms(medicalEventDTO.getSymptoms());
         medicalEvent.setSeverity(medicalEventDTO.getSeverity());
         medicalEvent.setActionTaken(medicalEventDTO.getActionTaken());
         medicalEvent.setMedicationGiven(medicalEventDTO.getMedicationGiven());
-        medicalEvent.setParentNotified(medicalEventDTO.getParentNotified());
-        medicalEvent.setReferredTo(medicalEventDTO.getReferredTo());
-        medicalEvent.setFollowUpRequired(medicalEventDTO.getFollowUpRequired());
-        medicalEvent.setFollowUpDate(medicalEventDTO.getFollowUpDate());
+        medicalEvent.setMedicationQuantity(medicalEventDTO.getMedicationQuantity());
         medicalEvent.setStatus(medicalEventDTO.getStatus());
         // createdAt is handled by @PrePersist
 
@@ -102,16 +97,11 @@ public class MedicalEventServiceImpl implements MedicalEventServiceInterface {
         }
         existingEvent.setDescription(medicalEventDTO.getDescription());
         existingEvent.setEventDatetime(medicalEventDTO.getEventDatetime() != null ? medicalEventDTO.getEventDatetime() : existingEvent.getEventDatetime());
-        existingEvent.setRecordedBy(recordedByUser);
-
-        existingEvent.setSymptoms(medicalEventDTO.getSymptoms());
+        existingEvent.setRecordedBy(recordedByUser);        existingEvent.setSymptoms(medicalEventDTO.getSymptoms());
         existingEvent.setSeverity(medicalEventDTO.getSeverity());
         existingEvent.setActionTaken(medicalEventDTO.getActionTaken());
         existingEvent.setMedicationGiven(medicalEventDTO.getMedicationGiven());
-        existingEvent.setParentNotified(medicalEventDTO.getParentNotified());
-        existingEvent.setReferredTo(medicalEventDTO.getReferredTo());
-        existingEvent.setFollowUpRequired(medicalEventDTO.getFollowUpRequired());
-        existingEvent.setFollowUpDate(medicalEventDTO.getFollowUpDate());
+        existingEvent.setMedicationQuantity(medicalEventDTO.getMedicationQuantity());
         existingEvent.setStatus(medicalEventDTO.getStatus());
 
         MedicalEvent updatedEvent = medicalEventRepository.save(existingEvent);
@@ -142,15 +132,11 @@ public class MedicalEventServiceImpl implements MedicalEventServiceInterface {
         dto.setEventDatetime(event.getEventDatetime());
         if (event.getRecordedBy() != null) {
             dto.setHandledByUsername(event.getRecordedBy().getUsername());
-        }
-        dto.setSymptoms(event.getSymptoms());
+        }        dto.setSymptoms(event.getSymptoms());
         dto.setSeverity(event.getSeverity());
         dto.setActionTaken(event.getActionTaken());
         dto.setMedicationGiven(event.getMedicationGiven());
-        dto.setParentNotified(event.getParentNotified());
-        dto.setReferredTo(event.getReferredTo());
-        dto.setFollowUpRequired(event.getFollowUpRequired());
-        dto.setFollowUpDate(event.getFollowUpDate());
+        dto.setMedicationQuantity(event.getMedicationQuantity());
         dto.setStatus(event.getStatus());
         return dto;
     }

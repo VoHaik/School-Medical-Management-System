@@ -15,12 +15,8 @@ public class MedicalEventDTO {
     private String handledByUsername; // Username of the User who handled the event
     private List<String> symptoms; // Assuming symptoms are stored as a list of strings
     private String severity;
-    private String actionTaken;
-    private String medicationGiven;
-    private Boolean parentNotified;
-    private String referredTo;
-    private Boolean followUpRequired;
-    private LocalDateTime followUpDate;
+    private String actionTaken;    private String medicationGiven;
+    private Integer medicationQuantity;
     private String status; // e.g., active, resolved, follow_up
 
     // Additional method to convert string to enum for convenience
