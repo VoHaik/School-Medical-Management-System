@@ -66,9 +66,10 @@ public class HealthCheckupEventController {
     }
 
     @DeleteMapping("/{eventId}")
-    @PreAuthorize("hasRole('ADMIN')") // Only admins can delete events
+    @PreAuthorize("hasAuthority('Admin')") // Only admins can delete events
     public ResponseEntity<Void> deleteHealthCheckupEvent(@PathVariable Integer eventId) {
         eventService.deleteHealthCheckupEvent(eventId);
         return ResponseEntity.noContent().build();
     }
 }
+

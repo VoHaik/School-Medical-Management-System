@@ -87,26 +87,37 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // For debugging, temporarily allow all requests to test connectivity
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Use the local bean
             .csrf(csrf -> csrf.disable()) // Disable CSRF entirely for simplicity in development
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll() // Common authentication endpoints
-                .requestMatchers("/api/blog").permitAll() // Cho phép GET /api/blog không cần xác thực
-                .requestMatchers("/api/blog/**").permitAll() // Cho phép GET /api/blog/{id} không cần xác thực
+                // API endpoints configuration - prioritize these
+                .requestMatchers("/api/auth/**").permitAll() // Authentication endpoints
+                .requestMatchers("/api/blog").permitAll() // Public blog endpoints
+                .requestMatchers("/api/blog/**").permitAll()
+                
+                // Explicitly define API endpoints that require authentication
+                .requestMatchers("/api/medication-requests/**").authenticated()
+                .requestMatchers("/api/health-declaration/**").authenticated()
+                .requestMatchers("/api/nurse/**").authenticated()
+                .requestMatchers("/api/admin/**").authenticated()
+                
+                // Static resource paths (that should not conflict with API)
                 .requestMatchers("/").permitAll()
                 .requestMatchers("/*.html").permitAll()
                 .requestMatchers("/register.html").permitAll()
-                .requestMatchers("/auth-test.html").permitAll() // Allow test page
+                .requestMatchers("/auth-test.html").permitAll()
                 .requestMatchers("/css/**").permitAll()
                 .requestMatchers("/js/**").permitAll()
                 .requestMatchers("/images/**").permitAll()
                 .requestMatchers("/favicon.ico").permitAll()
-                .requestMatchers("/logo192.png").permitAll() // Thêm cho phép truy cập logo192.png
-                .anyRequest().authenticated() // All other requests must be authenticated
+                .requestMatchers("/logo192.png").permitAll()
+                .requestMatchers("/static/**").permitAll() // All static resources in the /static directory
+                
+                // Default rule
+                .anyRequest().authenticated()
             );
 
         http.authenticationProvider(authenticationProvider());

@@ -1,8 +1,8 @@
 package com.swp391_8.schoolhealth.controller;
 
 import com.swp391_8.schoolhealth.dto.MedicationRequestDTO;
-import com.swp391_8.schoolhealth.dto.MedicationRequestResponseDTO; // Added
-// import com.swp391_8.schoolhealth.model.MedicationRequest; // No longer returning entity directly
+import com.swp391_8.schoolhealth.dto.MedicationRequestResponseDTO;
+import com.swp391_8.schoolhealth.model.MedicationRequest;
 // import com.swp391_8.schoolhealth.model.User; // Not directly used here
 import com.swp391_8.schoolhealth.service.MedicationRequestService;
 import com.swp391_8.schoolhealth.service.SecurityService; // Keep for @PreAuthorize if complex checks remain
@@ -28,10 +28,13 @@ public class MedicationRequestController {
 
     @Autowired
     private MedicationRequestService medicationRequestService;
+    
+    @Autowired
+    private com.swp391_8.schoolhealth.repository.MedicationRequestRepository medicationRequestRepository;
 
     // Parent endpoints
     @PostMapping("")
-    @PreAuthorize("hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('Parent')")
     public ResponseEntity<?> createMedicationRequest(@RequestBody MedicationRequestDTO requestDTO, Authentication authentication) {
         logger.info(">>> createMedicationRequest: Received payload for studentCode: {}, medicationName: {}", requestDTO.getStudentCode(), requestDTO.getMedicationName()); // Log specific fields
         logger.debug(">>> createMedicationRequest: Full payload: {}", requestDTO); // Log full DTO if toString() is well-defined
@@ -46,7 +49,7 @@ public class MedicationRequestController {
     }
 
     @GetMapping("/student/{studentCode}")
-    @PreAuthorize("hasRole('PARENT')") // Service layer will do fine-grained check
+    @PreAuthorize("hasAuthority('Parent')") // Service layer will do fine-grained check
     public ResponseEntity<?> getMedicationRequestsForStudent(
             @PathVariable String studentCode, Authentication authentication) {
         try {
@@ -60,7 +63,7 @@ public class MedicationRequestController {
     }
 
     @GetMapping("/mine")
-    @PreAuthorize("hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('Parent')")
     public ResponseEntity<?> getMyMedicationRequests(Authentication authentication) {
         try {
             List<MedicationRequestResponseDTO> requests = medicationRequestService.getMedicationRequestsByAuthenticatedParent(authentication);
@@ -86,7 +89,7 @@ public class MedicationRequestController {
     }
 
     @PutMapping("/{requestId}/cancel")
-    @PreAuthorize("hasRole('PARENT')") // Service layer will verify ownership
+    @PreAuthorize("hasAuthority('Parent')") // Service layer will verify ownership
     public ResponseEntity<?> cancelMedicationRequest(@PathVariable Integer requestId, Authentication authentication) {
         try {
             MedicationRequestResponseDTO cancelledRequest = medicationRequestService.cancelMedicationRequest(requestId, authentication);
@@ -112,14 +115,40 @@ public class MedicationRequestController {
         }
     }
 
+    /**
+     * Get all pending medication requests for school nurses and admins
+     * Endpoint: GET /api/medication-requests/pending
+     */
     @GetMapping("/pending")
-    @PreAuthorize("hasAnyRole('SCHOOLNURSE', 'ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('ROLE_SCHOOLNURSE') or hasAuthority('Admin') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> getPendingMedicationRequests(Authentication authentication) {
+        logger.info("Controller: Getting all pending medication requests at /api/medication-requests/pending");
+        logger.info("Authentication: {}", 
+            authentication != null ? authentication.getName() + " with authorities: " + authentication.getAuthorities() : "null");
+        
         try {
+            // Log the thread and request details to help diagnose routing issues
+            Thread currentThread = Thread.currentThread();
+            logger.info("Request processing on thread: {} (ID: {})", 
+                currentThread.getName(), currentThread.getId());
+            
             List<MedicationRequestResponseDTO> requests = medicationRequestService.getAllPendingMedicationRequests(authentication);
+            logger.info("Found {} pending medication requests", requests.size());
             return ResponseEntity.ok(requests);
         } catch (AccessDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+            logger.error("Access denied when getting pending requests: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "error", e.getMessage(),
+                "endpoint", "/api/medication-requests/pending",
+                "requiredRole", "SchoolNurse or Admin"
+            ));
+        } catch (Exception e) {
+            logger.error("Error retrieving pending medication requests", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                    "error", "Could not retrieve pending medication requests: " + e.getMessage(),
+                    "endpoint", "/api/medication-requests/pending"
+                ));
         }
     }
 
@@ -177,7 +206,7 @@ public class MedicationRequestController {
 
     // Added new endpoint for updating a medication request
     @PutMapping("/{requestId}")
-    @PreAuthorize("hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('Parent')")
     public ResponseEntity<?> updateMedicationRequest(
             @PathVariable Integer requestId, 
             @RequestBody MedicationRequestDTO requestDTO, 
@@ -203,7 +232,7 @@ public class MedicationRequestController {
 
     // Added new endpoint for deleting a medication request
     @DeleteMapping("/{requestId}")
-    @PreAuthorize("hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('Parent')")
     public ResponseEntity<?> deleteMedicationRequest(
             @PathVariable Integer requestId, 
             Authentication authentication) {
@@ -220,4 +249,27 @@ public class MedicationRequestController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
+
+    // Endpoint to get count of pending medication requests for nurse dashboard
+    @GetMapping("/pending/count")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('ROLE_SCHOOLNURSE') or hasAuthority('Admin') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Long> getPendingRequestsCount() {
+        logger.info("Getting count of PENDING medication requests");
+        
+        // Log the current authentication details for debugging
+        org.springframework.security.core.Authentication auth = 
+            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            logger.info("Current authentication: Principal={}, Authorities={}", 
+                auth.getPrincipal(), 
+                auth.getAuthorities());
+        } else {
+            logger.warn("No authentication found in security context");
+        }
+        
+        long count = medicationRequestRepository.countByStatus(MedicationRequest.MedicationRequestStatus.PENDING);
+        logger.info("Found {} pending medication requests", count);
+        return ResponseEntity.ok(count);
+    }
 }
+

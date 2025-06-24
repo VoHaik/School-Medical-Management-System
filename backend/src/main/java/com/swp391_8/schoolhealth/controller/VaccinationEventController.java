@@ -20,7 +20,7 @@ public class VaccinationEventController {
 
     // Endpoint for nurse/admin to create a new vaccination event
     @PostMapping
-    @PreAuthorize("hasAnyRole('NURSE', 'ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<VaccinationEventDTO> createVaccinationEvent(@RequestBody VaccinationEventRequestDTO requestDTO) {
         VaccinationEventDTO createdEvent = eventService.createVaccinationEvent(requestDTO);
         return new ResponseEntity<>(createdEvent, HttpStatus.CREATED);
@@ -44,7 +44,7 @@ public class VaccinationEventController {
 
     // Endpoint for nurse/admin to update a vaccination event
     @PutMapping("/{eventId}")
-    @PreAuthorize("hasAnyRole('NURSE', 'ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<VaccinationEventDTO> updateVaccinationEvent(
             @PathVariable Integer eventId, // Changed String to Integer
             @RequestBody VaccinationEventRequestDTO requestDTO) {
@@ -54,7 +54,7 @@ public class VaccinationEventController {
 
     // Endpoint for nurse/admin to update the status of an event (e.g., PLANNED -> ONGOING -> COMPLETED)
     @PatchMapping("/{eventId}/status")
-    @PreAuthorize("hasAnyRole('NURSE', 'ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<VaccinationEventDTO> updateEventStatus(
             @PathVariable Integer eventId, // Changed String to Integer
             @RequestParam String status) {
@@ -64,7 +64,7 @@ public class VaccinationEventController {
 
     // Endpoint for nurse/admin to delete a vaccination event (use with caution)
     @DeleteMapping("/{eventId}")
-    @PreAuthorize("hasRole('ADMIN')") // Or NURSE if they should also be able to delete
+    @PreAuthorize("hasAuthority('Admin')") // Or SchoolNurse if they should also be able to delete
     public ResponseEntity<Void> deleteVaccinationEvent(@PathVariable Integer eventId) { // Changed String to Integer
         eventService.deleteVaccinationEvent(eventId);
         return ResponseEntity.noContent().build();

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import * as yup from 'yup';
 import {
   Card,
   CardContent,
@@ -35,9 +34,11 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemIcon,  Accordion,
+  ListItemIcon,
+  Accordion,
   AccordionSummary,
-  AccordionDetails
+  AccordionDetails,
+  CircularProgress
 } from '@mui/material';
 import {
   Timeline,
@@ -62,111 +63,148 @@ import {
   Phone as PhoneIcon
 } from '@mui/icons-material';
 import PageHeader from '../../components/PageHeader';
+import './StudentManagement.css';
+import { getAllStudents, getHealthDeclarationByStudentCode, getAllStudentsWithHealthData, nurseEditHealthDeclaration } from '../../utils/api';
 
 function StudentManagement() {
   const [activeTab, setActiveTab] = useState(0);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGrade, setFilterGrade] = useState('all');
   const [filterHealthStatus, setFilterHealthStatus] = useState('all');
   const [healthProfile, setHealthProfile] = useState(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(null);
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
   useEffect(() => {
     fetchStudents();
   }, []);
 
   const fetchStudents = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      // Mock data - replace with actual API call
-      setStudents([
-        {
-          id: 'S001',
-          name: 'John Doe',
-          grade: '10A',
-          dateOfBirth: '2008-05-15',
-          gender: 'Male',
-          studentCode: 'STU001',
-          email: 'john.doe@school.edu',
-          phone: '(555) 123-4567',
-          address: '123 Main St, City, State 12345',
-          healthStatus: 'normal',
-          allergies: ['Peanuts', 'Shellfish'],
-          medications: ['Inhaler for asthma'],
-          healthConditions: ['Asthma'],
-          emergencyContacts: [
-            { name: 'Jane Doe', relationship: 'Mother', phone: '(555) 987-6543' },
-            { name: 'Robert Doe', relationship: 'Father', phone: '(555) 456-7890' }
-          ],
-          lastCheckup: '2024-01-15',
-          nextCheckup: '2024-07-15',
-          vaccinationStatus: 'up-to-date',
-          medicalEvents: [
-            { date: '2024-01-20', type: 'Asthma Episode', severity: 'Mild' },
-            { date: '2023-12-10', type: 'Physical Checkup', severity: 'Normal' }
-          ],
-          restrictions: ['No contact sports during asthma flare-ups']
-        },
-        {
-          id: 'S002',
-          name: 'Jane Smith',
-          grade: '9B',
-          dateOfBirth: '2009-03-20',
-          gender: 'Female',
-          studentCode: 'STU002',
-          email: 'jane.smith@school.edu',
-          phone: '(555) 234-5678',
-          address: '456 Oak Ave, City, State 12345',
-          healthStatus: 'attention',
-          allergies: ['Latex'],
-          medications: [],
-          healthConditions: ['Mild hearing loss'],
-          emergencyContacts: [
-            { name: 'Sarah Smith', relationship: 'Mother', phone: '(555) 876-5432' }
-          ],
-          lastCheckup: '2024-01-10',
-          nextCheckup: '2024-03-10',
-          vaccinationStatus: 'pending',
-          medicalEvents: [
-            { date: '2024-01-10', type: 'Hearing Test', severity: 'Mild Loss' }
-          ],
-          restrictions: []
-        },
-        {
-          id: 'S003',
-          name: 'Michael Johnson',
-          grade: '11C',
-          dateOfBirth: '2007-09-12',
-          gender: 'Male',
-          studentCode: 'STU003',
-          email: 'michael.johnson@school.edu',
-          phone: '(555) 345-6789',
-          address: '789 Pine St, City, State 12345',
-          healthStatus: 'normal',
-          allergies: [],
-          medications: [],
-          healthConditions: [],
-          emergencyContacts: [
-            { name: 'Lisa Johnson', relationship: 'Mother', phone: '(555) 765-4321' },
-            { name: 'David Johnson', relationship: 'Father', phone: '(555) 567-8901' }
-          ],
-          lastCheckup: '2024-01-05',
-          nextCheckup: '2024-07-05',
-          vaccinationStatus: 'up-to-date',
-          medicalEvents: [
-            { date: '2024-01-05', type: 'Annual Physical', severity: 'Normal' }
-          ],
-          restrictions: []
-        }
-      ]);
+      // Use our getAllStudentsWithHealthData function which already maps and combines the data
+      const studentsWithHealthData = await getAllStudentsWithHealthData();
+      
+      // Map the returned data to the format expected by the UI
+      const formattedStudents = studentsWithHealthData.map(student => {
+        // Extract health data
+        const healthData = student.healthData || {};
+        
+        return {
+          id: student.studentCode,
+          name: student.fullName,
+          grade: student.className || 'N/A',
+          dateOfBirth: student.dateOfBirth || 'N/A',
+          gender: student.gender || 'N/A',
+          studentCode: student.studentCode,
+          email: student.userUsername || 'N/A',
+          phone: 'N/A', // Not available in student data
+          address: 'N/A', // Not available in student data
+          
+          // Health status based on health declaration
+          healthStatus: healthData.status ? 
+            (healthData.status === 'APPROVED' ? 'normal' : 
+             healthData.status === 'PENDING' ? 'attention' : 
+             healthData.status === 'REJECTED' ? 'critical' : 'normal') : 'normal',
+          
+          // Health declaration details
+          allergies: healthData.allergies ? 
+            (typeof healthData.allergies === 'string' ? 
+              healthData.allergies.split(',').filter(item => item.trim() !== '') : 
+              healthData.allergies) : [],
+          medications: healthData.medications ? 
+            healthData.medications.map(med => med.medicationName) : [],
+          chronicIllnesses: healthData.chronicIllnesses ? 
+            (typeof healthData.chronicIllnesses === 'string' ? 
+              healthData.chronicIllnesses.split(',').filter(item => item.trim() !== '') : 
+              healthData.chronicIllnesses) : [],
+          healthConditions: healthData.chronicIllnesses ? 
+            (typeof healthData.chronicIllnesses === 'string' ? 
+              healthData.chronicIllnesses.split(',').filter(item => item.trim() !== '') : 
+              healthData.chronicIllnesses) : [],
+          emergencyContacts: healthData.emergencyContacts ? 
+            healthData.emergencyContacts : 
+            (healthData.emergencyContactName ? [{ 
+              name: healthData.emergencyContactName, 
+              relationship: healthData.emergencyContactRelationship || 'Contact', 
+              phone: healthData.emergencyContactPhone || 'N/A' 
+            }] : []),
+          
+          // Other health-related info
+          lastCheckup: healthData.lastModifiedDate || 'N/A',
+          nextCheckup: 'Scheduled based on school policy',
+          vaccinationStatus: healthData.vaccinationStatus || 'unknown',
+          medicalEvents: [],
+          restrictions: healthData.specialNeeds ? 
+            [healthData.specialNeeds] : []
+        };
+      });
+      
+      setStudents(formattedStudents);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching students:', error);
+      setError('Failed to load student data. Please try again later.');
+      setLoading(false);
     }
   };
 
   const handleViewProfile = (student) => {
     setHealthProfile(student);
     setProfileDialogOpen(true);
+  };
+
+  const handleEditProfile = (student) => {
+    setEditingProfile({
+      ...student,
+      allergies: student.allergies || [],
+      chronicIllnesses: student.chronicIllnesses || [],
+      emergencyContacts: student.emergencyContacts || [],
+      visionStatus: student.visionStatus || '',
+      hearingStatus: student.hearingStatus || '',
+      specialNeeds: student.specialNeeds || '',
+      physicalLimitations: student.physicalLimitations || '',
+      mentalHealthConcerns: student.mentalHealthConcerns || '',
+      dietaryRestrictions: student.dietaryRestrictions || '',
+      medicalHistory: student.medicalHistory || ''
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingProfile) return;
+
+    setIsSubmittingEdit(true);
+    try {
+      await nurseEditHealthDeclaration(editingProfile.studentCode, {
+        allergies: editingProfile.allergies,
+        chronicIllnesses: editingProfile.chronicIllnesses,
+        emergencyContacts: editingProfile.emergencyContacts,
+        visionStatus: editingProfile.visionStatus,
+        hearingStatus: editingProfile.hearingStatus,
+        specialNeeds: editingProfile.specialNeeds,
+        physicalLimitations: editingProfile.physicalLimitations,
+        mentalHealthConcerns: editingProfile.mentalHealthConcerns,
+        dietaryRestrictions: editingProfile.dietaryRestrictions,
+        medicalHistory: editingProfile.medicalHistory
+      });
+
+      alert('Health profile updated successfully!');
+      setEditDialogOpen(false);
+      setEditingProfile(null);
+      fetchStudents(); // Reload the student list
+    } catch (error) {
+      console.error('Error updating health profile:', error);
+      alert('Error updating health profile: ' + (error.message || 'Unknown error'));
+    } finally {
+      setIsSubmittingEdit(false);
+    }
   };
 
   const filteredStudents = students.filter(student => {
@@ -279,6 +317,7 @@ function StudentManagement() {
                 startAdornment: <SearchIcon className="mr-2 text-gray-500" />
               }}
               className="flex-1"
+              disabled={loading}
             />
             <FormControl className="min-w-32">
               <InputLabel>Grade</InputLabel>
@@ -286,6 +325,7 @@ function StudentManagement() {
                 value={filterGrade}
                 label="Grade"
                 onChange={(e) => setFilterGrade(e.target.value)}
+                disabled={loading}
               >
                 <MenuItem value="all">All</MenuItem>
                 <MenuItem value="9">Grade 9</MenuItem>
@@ -300,6 +340,7 @@ function StudentManagement() {
                 value={filterHealthStatus}
                 label="Health Status"
                 onChange={(e) => setFilterHealthStatus(e.target.value)}
+                disabled={loading}
               >
                 <MenuItem value="all">All</MenuItem>
                 <MenuItem value="normal">Normal</MenuItem>
@@ -307,7 +348,23 @@ function StudentManagement() {
                 <MenuItem value="critical">Critical</MenuItem>
               </Select>
             </FormControl>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={fetchStudents}
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={20} /> : <HealthIcon />}
+            >
+              {loading ? 'Loading...' : 'Refresh'}
+            </Button>
           </Box>
+          
+          {/* Error message */}
+          {error && (
+            <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
           {/* Tab Content */}
           {activeTab === 0 && (
@@ -327,7 +384,27 @@ function StudentManagement() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filteredStudents.map((student) => (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={9} align="center">
+                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                          <CircularProgress />
+                        </Box>
+                        <Typography variant="body2" color="textSecondary" align="center">
+                          Loading student health data...
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredStudents.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} align="center">
+                        <Typography variant="body2" color="textSecondary">
+                          No students found matching your criteria.
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredStudents.map((student) => (
                     <TableRow key={student.id}>
                       <TableCell>
                         <Box className="flex items-center gap-3">
@@ -404,7 +481,8 @@ function StudentManagement() {
                         </Tooltip>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ))
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -658,8 +736,180 @@ function StudentManagement() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setProfileDialogOpen(false)}>Close</Button>
-          <Button variant="contained" startIcon={<EditIcon />}>
+          <Button variant="contained" startIcon={<EditIcon />} onClick={() => handleEditProfile(healthProfile)}>
             Edit Profile
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Edit Health Profile</DialogTitle>
+        <DialogContent>
+          {editingProfile && (
+            <Box sx={{ mt: 2 }}>
+              <Grid container spacing={3}>
+                {/* Basic Information */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom>
+                    Student: {editingProfile.name} ({editingProfile.studentCode})
+                  </Typography>
+                </Grid>
+
+                {/* Allergies */}
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle1" gutterBottom>Allergies</Typography>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    value={Array.isArray(editingProfile.allergies) ? editingProfile.allergies.join(', ') : editingProfile.allergies || ''}
+                    onChange={(e) => setEditingProfile({
+                      ...editingProfile,
+                      allergies: e.target.value.split(',').map(item => item.trim()).filter(item => item)
+                    })}
+                    placeholder="Enter allergies separated by commas"
+                  />
+                </Grid>
+
+                {/* Chronic Illnesses */}
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle1" gutterBottom>Chronic Illnesses</Typography>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    value={Array.isArray(editingProfile.chronicIllnesses) ? editingProfile.chronicIllnesses.join(', ') : editingProfile.chronicIllnesses || ''}
+                    onChange={(e) => setEditingProfile({
+                      ...editingProfile,
+                      chronicIllnesses: e.target.value.split(',').map(item => item.trim()).filter(item => item)
+                    })}
+                    placeholder="Enter chronic illnesses separated by commas"
+                  />
+                </Grid>
+
+                {/* Vision Status */}
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle1" gutterBottom>Vision Status</Typography>
+                  <TextField
+                    fullWidth
+                    value={editingProfile.visionStatus || ''}
+                    onChange={(e) => setEditingProfile({
+                      ...editingProfile,
+                      visionStatus: e.target.value
+                    })}
+                    placeholder="e.g., Wears glasses, 20/20"
+                  />
+                </Grid>
+
+                {/* Hearing Status */}
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle1" gutterBottom>Hearing Status</Typography>
+                  <TextField
+                    fullWidth
+                    value={editingProfile.hearingStatus || ''}
+                    onChange={(e) => setEditingProfile({
+                      ...editingProfile,
+                      hearingStatus: e.target.value
+                    })}
+                    placeholder="e.g., Normal, Uses hearing aids"
+                  />
+                </Grid>
+
+                {/* Special Needs */}
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle1" gutterBottom>Special Needs</Typography>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={2}
+                    value={editingProfile.specialNeeds || ''}
+                    onChange={(e) => setEditingProfile({
+                      ...editingProfile,
+                      specialNeeds: e.target.value
+                    })}
+                    placeholder="Describe any special needs"
+                  />
+                </Grid>
+
+                {/* Physical Limitations */}
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle1" gutterBottom>Physical Limitations</Typography>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={2}
+                    value={editingProfile.physicalLimitations || ''}
+                    onChange={(e) => setEditingProfile({
+                      ...editingProfile,
+                      physicalLimitations: e.target.value
+                    })}
+                    placeholder="Describe any physical limitations"
+                  />
+                </Grid>
+
+                {/* Mental Health Concerns */}
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle1" gutterBottom>Mental Health Concerns</Typography>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={2}
+                    value={editingProfile.mentalHealthConcerns || ''}
+                    onChange={(e) => setEditingProfile({
+                      ...editingProfile,
+                      mentalHealthConcerns: e.target.value
+                    })}
+                    placeholder="Describe any mental health concerns"
+                  />
+                </Grid>
+
+                {/* Dietary Restrictions */}
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle1" gutterBottom>Dietary Restrictions</Typography>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={2}
+                    value={editingProfile.dietaryRestrictions || ''}
+                    onChange={(e) => setEditingProfile({
+                      ...editingProfile,
+                      dietaryRestrictions: e.target.value
+                    })}
+                    placeholder="e.g., Vegetarian, Gluten-free"
+                  />
+                </Grid>
+
+                {/* Medical History */}
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" gutterBottom>Medical History</Typography>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    value={editingProfile.medicalHistory || ''}
+                    onChange={(e) => setEditingProfile({
+                      ...editingProfile,
+                      medicalHistory: e.target.value
+                    })}
+                    placeholder="Describe relevant medical history"
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)} disabled={isSubmittingEdit}>
+            Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleSaveEdit} 
+            disabled={isSubmittingEdit}
+            startIcon={isSubmittingEdit ? <CircularProgress size={20} /> : null}
+          >
+            {isSubmittingEdit ? 'Saving...' : 'Save Changes'}
           </Button>
         </DialogActions>
       </Dialog>

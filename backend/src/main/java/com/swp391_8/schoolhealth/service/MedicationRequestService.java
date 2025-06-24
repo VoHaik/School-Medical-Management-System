@@ -45,23 +45,40 @@ public class MedicationRequestService {
 
         String studentName = "N/A";
         String studentCode = null;
+        String studentFullName = null;
         if (request.getStudent() != null) {
-            studentCode = request.getStudent().getStudentCode();
-            if (request.getStudent().getUser() != null) {
-                 studentName = request.getStudent().getUser().getFullName();
+            Student student = request.getStudent();
+            studentCode = student.getStudentCode();
+            
+            // Prioritize student's own fullName field first
+            if (student.getFullName() != null && !student.getFullName().isEmpty()) {
+                studentName = student.getFullName();
+                studentFullName = student.getFullName(); // Store for the new field
+            } else if (student.getUser() != null && student.getUser().getFullName() != null) {
+                // If student fullName not available, try user's fullName
+                studentName = student.getUser().getFullName();
+                studentFullName = student.getUser().getFullName();
+            } else if (student.getFirstName() != null && student.getLastName() != null) {
+                // If both methods above fail, try to construct from first and last name
+                studentName = student.getFirstName() + " " + student.getLastName();
+                studentFullName = studentName;
             } else {
-                studentName = "Student Code: " + studentCode; // Fallback
+                // Last resort fallback - just show the code but NOT with the "Student Code:" prefix
+                studentName = "Student " + studentCode;
+                studentFullName = "Student " + studentCode;
             }
         }
         
         String requestedByName = (request.getRequestedBy() != null) ?
                             request.getRequestedBy().getFullName() : "N/A";
+        String parentFullName = requestedByName; // Store for the new field                    
+                            
         String approvedByName = (request.getApprovedBy() != null) ?
                                 request.getApprovedBy().getFullName() : null;
         String administeredByName = (request.getAdministeredBy() != null) ?
                                     request.getAdministeredBy().getFullName() : null;
 
-        return new MedicationRequestResponseDTO(
+        MedicationRequestResponseDTO responseDTO = new MedicationRequestResponseDTO(
                 request.getRequestId(),
                 studentCode,
                 studentName,
@@ -81,6 +98,12 @@ public class MedicationRequestService {
                 request.getAdministeredAt(),
                 request.getAdministrationNotes() // This is the administration notes by nurse
         );
+        
+        // Set additional fields for parent and student full names
+        responseDTO.setStudentFullName(studentFullName);
+        responseDTO.setParentFullName(parentFullName);
+        
+        return responseDTO;
     }
 
     @Transactional

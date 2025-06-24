@@ -15,6 +15,8 @@ import com.swp391_8.schoolhealth.model.User;
 import com.swp391_8.schoolhealth.model.Vaccine;
 import com.swp391_8.schoolhealth.model.MedicationRequest;
 import com.swp391_8.schoolhealth.model.MedicationRequest.MedicationRequestStatus;
+import com.swp391_8.schoolhealth.model.HealthDeclaration.HealthDeclarationStatus;
+import com.swp391_8.schoolhealth.model.ERole;
 import com.swp391_8.schoolhealth.repository.HealthDeclarationChronicIllnessRepository;
 import com.swp391_8.schoolhealth.repository.HealthDeclarationEmergencyContactRepository;
 import com.swp391_8.schoolhealth.repository.HealthDeclarationMedicationRepository;
@@ -35,6 +37,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -263,14 +266,49 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
     
     @Override
     public List<HealthDeclarationDTO> getPendingHealthDeclarations() {
-        // Lấy danh sách khai báo sức khỏe có trạng thái PENDING
-        List<HealthDeclaration> pendingDeclarations = healthDeclarationRepository.findByStatus(
+        logger.info("Fetching pending health declarations from repository");
+        
+        // Log the current enum value we're looking for
+        logger.info("Looking for declarations with status: {}", HealthDeclaration.HealthDeclarationStatus.PENDING);
+          // Lấy danh sách khai báo sức khỏe có trạng thái PENDING
+        List<HealthDeclaration> pendingDeclarations = healthDeclarationRepository.findByStatusOrderByDeclarationDateDesc(
             HealthDeclaration.HealthDeclarationStatus.PENDING);
             
+        // Log results
+        logger.info("Found {} pending health declarations in the database", pendingDeclarations.size());
+        
+        if (!pendingDeclarations.isEmpty()) {
+            // If we have declarations, log some details for the first few
+            int count = Math.min(pendingDeclarations.size(), 3);
+            for (int i = 0; i < count; i++) {
+                HealthDeclaration declaration = pendingDeclarations.get(i);
+                logger.info("Pending declaration #{}: ID={}, Student={}, StudentCode={}, Status={}", 
+                           i+1, declaration.getDeclarationId(), 
+                           declaration.getStudent() != null ? declaration.getStudent().getFullName() : "NULL",
+                           declaration.getStudent() != null ? declaration.getStudent().getStudentCode() : "NULL",
+                           declaration.getStatus());
+            }
+        }
+        
         // Chuyển đổi sang DTO và trả về
-        return pendingDeclarations.stream()
+        List<HealthDeclarationDTO> dtos = pendingDeclarations.stream()
             .map(this::convertToDTO)
             .collect(Collectors.toList());
+            
+        logger.info("Returning {} pending health declaration DTOs", dtos.size());
+        
+        // Debug: Log DTO values to verify student names are set
+        if (!dtos.isEmpty()) {
+            int count = Math.min(dtos.size(), 3);
+            for (int i = 0; i < count; i++) {
+                HealthDeclarationDTO dto = dtos.get(i);
+                logger.info("Pending DTO #{}: ID={}, StudentCode={}, StudentName={}, Status={}", 
+                           i+1, dto.getDeclarationId(), dto.getStudentCode(), 
+                           dto.getStudentName(), dto.getStatus());
+            }
+        }
+        
+        return dtos;
     }
     
     @Override
@@ -288,10 +326,9 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
         // Tìm thông tin người duyệt
         User reviewer = userRepository.findByUsername(reviewerUsername)
             .orElseThrow(() -> new ResourceNotFoundException("User", "username", reviewerUsername));
-        
-        // Kiểm tra xem người dùng có quyền phê duyệt không (thường là y tá)
-        boolean isNurseOrAdmin = reviewer.getRole().getRoleName().equals("ROLE_SCHOOLNURSE") || 
-                               reviewer.getRole().getRoleName().equals("ROLE_ADMIN");
+          // Kiểm tra xem người dùng có quyền phê duyệt không (thường là y tá)
+        boolean isNurseOrAdmin = reviewer.getRole().getRoleName().equals("SchoolNurse") || 
+                               reviewer.getRole().getRoleName().equals("Admin");
         
         if (!isNurseOrAdmin) {
             throw new SecurityException("User is not authorized to review health declarations");
@@ -367,7 +404,16 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
         HealthDeclarationDTO dto = new HealthDeclarationDTO();
         dto.setDeclarationId(entity.getDeclarationId());
         dto.setStudentCode(entity.getStudent().getStudentCode());
-          // Ưu tiên dùng chronicIllnesses thay vì medicalConditions
+        // Set the student name from the Student entity
+        if (entity.getStudent() != null) {
+            dto.setStudentName(entity.getStudent().getFullName());
+            // Log for debugging
+            logger.info("Setting student name: {} for declaration ID: {}", 
+                       entity.getStudent().getFullName(), entity.getDeclarationId());
+        } else {
+            logger.warn("Student is null for declaration ID: {}", entity.getDeclarationId());
+        }
+        // Ưu tiên dùng chronicIllnesses thay vì medicalConditions
         // Trường medicalConditions chỉ giữ lại để tương thích ngược với mã cũ
         if (entity.getMedicalConditions() != null) {
             dto.setChronicIllnesses(entity.getMedicalConditions());
@@ -571,8 +617,101 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
         dto.setEmail(entity.getEmail());
         dto.setAddress(entity.getAddress());
         dto.setIsPrimary(entity.getIsPrimary());
-        dto.setNotes(entity.getNotes());
-        dto.setEmergency(true); // Default to true for backward compatibility
+        dto.setNotes(entity.getNotes());        dto.setEmergency(true); // Default to true for backward compatibility
         return dto;
+    }
+    
+    @Override
+    @Transactional
+    public HealthDeclarationDTO nurseEditHealthDeclaration(String studentCode, HealthDeclarationDTO healthDeclarationData, String nurseUsername) {
+        logger.info("Nurse {} editing health declaration for student {}", nurseUsername, studentCode);
+        
+        // Kiểm tra quyền của y tá
+        User nurse = userRepository.findByUsername(nurseUsername)
+            .orElseThrow(() -> new ResourceNotFoundException("Nurse not found with username: " + nurseUsername));          // Kiểm tra role của y tá (so sánh với role name trong database)
+        boolean hasNurseRole = nurse.getRole() != null && nurse.getRole().getRoleName() != null &&
+            ("SchoolNurse".equalsIgnoreCase(nurse.getRole().getRoleName()) || 
+             "Admin".equalsIgnoreCase(nurse.getRole().getRoleName()));
+        
+        if (!hasNurseRole) {
+            throw new SecurityException("User does not have permission to edit health declarations");
+        }
+        
+        // Tìm học sinh
+        Student student = studentRepository.findByStudentCode(studentCode)
+            .orElseThrow(() -> new ResourceNotFoundException("Student not found with code: " + studentCode));
+          // Tìm health declaration gần nhất của học sinh hoặc tạo mới nếu chưa có
+        Optional<HealthDeclaration> existingDeclarationOpt = healthDeclarationRepository
+            .findFirstByStudent_StudentCodeAndIsDraftOrderByDeclarationDateDesc(studentCode, false);
+        
+        HealthDeclaration declaration;
+        if (existingDeclarationOpt.isPresent()) {
+            declaration = existingDeclarationOpt.get();
+            logger.info("Updating existing health declaration ID: {}", declaration.getDeclarationId());
+        } else {
+            // Tạo mới nếu chưa có
+            declaration = new HealthDeclaration();
+            declaration.setStudent(student);
+            declaration.setDeclarationDate(LocalDate.now());
+            declaration.setStatus(HealthDeclarationStatus.APPROVED); // Y tá chỉnh sửa sẽ tự động approved
+            declaration.setIsDraft(false);
+            logger.info("Creating new health declaration for student: {}", studentCode);
+        }
+          // Cập nhật thông tin cơ bản
+        declaration.setVisionScreeningResult(healthDeclarationData.getVisionStatus());
+        declaration.setHearingScreeningResult(healthDeclarationData.getHearingStatus());
+        declaration.setSpecialNeeds(healthDeclarationData.getSpecialNeeds());
+        declaration.setPhysicalLimitations(healthDeclarationData.getPhysicalLimitations());
+        declaration.setMentalHealthConcerns(healthDeclarationData.getMentalHealthConcerns());
+        declaration.setDietaryRestrictions(healthDeclarationData.getDietaryRestrictions());
+        declaration.setMedicalHistory(healthDeclarationData.getMedicalHistory());
+        // Note: Tracking modification by nurse can be added later if needed
+        
+        // Cập nhật dị ứng
+        if (healthDeclarationData.getAllergies() != null) {
+            declaration.getAllergies().clear();
+            declaration.getAllergies().addAll(healthDeclarationData.getAllergies());
+        }
+        
+        // Cập nhật bệnh mãn tính
+        declaration.getChronicIllnesses().clear();
+        if (healthDeclarationData.getChronicIllnesses() != null) {
+            for (String illness : healthDeclarationData.getChronicIllnesses()) {
+                if (illness != null && !illness.trim().isEmpty()) {
+                    HealthDeclarationChronicIllness chronicIllness = new HealthDeclarationChronicIllness();
+                    chronicIllness.setHealthDeclaration(declaration);
+                    chronicIllness.setChronicIllness(illness.trim());
+                    declaration.getChronicIllnesses().add(chronicIllness);
+                }
+            }
+        }
+        
+        // Cập nhật liên hệ khẩn cấp
+        declaration.getEmergencyContacts().clear();
+        if (healthDeclarationData.getEmergencyContacts() != null) {
+            for (EmergencyContactDTO contactDTO : healthDeclarationData.getEmergencyContacts()) {
+                if (contactDTO.getName() != null && !contactDTO.getName().trim().isEmpty()) {
+                    HealthDeclarationEmergencyContact contact = new HealthDeclarationEmergencyContact();
+                    contact.setHealthDeclaration(declaration);
+                    contact.setContactName(contactDTO.getName());
+                    contact.setRelationship(contactDTO.getRelationship());
+                    contact.setPhoneNumber(contactDTO.getPhoneNumber());
+                    contact.setAlternativePhone(contactDTO.getAlternativePhone());
+                    contact.setEmail(contactDTO.getEmail());
+                    contact.setAddress(contactDTO.getAddress());
+                    contact.setIsPrimary(contactDTO.getIsPrimary());
+                    contact.setNotes(contactDTO.getNotes());
+                    declaration.getEmergencyContacts().add(contact);
+                }
+            }
+        }
+        
+        // Lưu vào database
+        HealthDeclaration updatedDeclaration = healthDeclarationRepository.save(declaration);
+        
+        logger.info("Successfully updated health declaration for student {} by nurse {}", studentCode, nurseUsername);
+        
+        // Chuyển đổi và trả về DTO
+        return convertToDTO(updatedDeclaration);
     }
 }

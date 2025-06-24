@@ -38,6 +38,7 @@ const HealthDeclaration = () => {
   const { currentUser } = useContext(AuthContext);
   const location = useLocation(); // Added to get state from navigation
   const [children, setChildren] = useState([]);
+  
   const [selectedStudentCode, setSelectedStudentCode] = useState('');
   const [initialLoading, setInitialLoading] = useState(true); // For children list
   const [isFetchingDeclaration, setIsFetchingDeclaration] = useState(false); // For health data for a selected child

@@ -28,7 +28,7 @@ public class StudentProfileController {
     private UserRepository userRepository;
 
     @GetMapping
-    @PreAuthorize("hasRole('STUDENT') or hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('Student') or hasAuthority('Parent')")
     public ResponseEntity<?> getStudentProfile() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -58,7 +58,7 @@ public class StudentProfileController {
 
         return ResponseEntity.ok(response);
     }    @PutMapping
-    @PreAuthorize("hasRole('STUDENT') or hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('Student') or hasAuthority('Parent')")
     public ResponseEntity<?> updateStudentProfile(@RequestBody Map<String, Object> profileData) {
         // Debug: Log all received data
         System.out.println("=== PUT REQUEST DEBUG ===");
@@ -134,7 +134,7 @@ public class StudentProfileController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('STUDENT') or hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('Student') or hasAuthority('Parent')")
     public ResponseEntity<?> createStudentProfile(@RequestBody Map<String, Object> profileData) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -206,3 +206,4 @@ public class StudentProfileController {
     }
 
 }
+

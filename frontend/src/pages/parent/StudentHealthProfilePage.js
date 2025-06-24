@@ -94,21 +94,27 @@ const StudentHealthProfilePage = () => {
                     });
                     
                     const declarations = declarationsResponse.data || [];
-                    
-                    // Find the latest approved declaration if any
+                      // Find the latest approved declaration if any (handling different status formats)
                     const latestApprovedDeclaration = declarations.find(
-                        d => d.status && d.status.toLowerCase() === 'approved'
+                        d => d.status && ['approved', 'APPROVED', 'Approved'].includes(d.status)
                     ) || declarations[0]; // Fallback to the first declaration if none is approved
-                    
-                    if (latestApprovedDeclaration) {
-                        // Get student details
-                        const studentResponse = await axios.get(`/api/student/${selectedStudent}`, {
-                            headers: { Authorization: `Bearer ${token}` }
-                        }).catch(() => ({ data: { fullName: 'Unknown' } })); // Fallback if API fails
+                      if (latestApprovedDeclaration) {                        // Get student details from the children array instead of making a separate API call
+                        const selectedChild = children.find(child => child.studentCode === selectedStudent);
+                        console.log('Children array:', children);
+                        console.log('Selected student code:', selectedStudent);
+                        console.log('Selected child data:', selectedChild);
+                        
+                        const studentDetails = {
+                            fullName: selectedChild?.fullName || 'Student',
+                            studentCode: selectedStudent,
+                            ...selectedChild // Include other properties if available
+                        };
+                        
+                        console.log('Student details being used:', studentDetails);
                         
                         // Combine data to create a complete health profile
                         setHealthProfile({
-                            studentDetails: studentResponse.data,
+                            studentDetails: studentDetails,
                             healthData: latestApprovedDeclaration,
                             latestDeclarationDate: latestApprovedDeclaration.declarationDate || new Date().toISOString(),
                             declarations: declarations
@@ -245,12 +251,10 @@ const StudentHealthProfilePage = () => {
                                             <Box sx={{ textAlign: 'right' }}>
                                                 <Typography variant="body2" color="text.secondary">
                                                     Last Updated: {formatDate(healthProfile.latestDeclarationDate)}
-                                                </Typography>
-                                                <Button 
+                                                </Typography>                                                <Button 
                                                     variant="text" 
                                                     size="small" 
-                                                    component={Link}
-                                                    to={`/parent/health-declaration?studentCode=${selectedStudent}`}
+                                                    onClick={() => navigate('/parent/health-declaration', { state: { studentCode: selectedStudent } })}
                                                     startIcon={<HealthIcon />}
                                                     sx={{ mt: 1 }}
                                                 >

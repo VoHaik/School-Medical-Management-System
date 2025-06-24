@@ -151,21 +151,60 @@ export const AuthProvider = ({ children }) => {
   // Get authenticated axios instance
   const getAuthAxios = () => {
     const token = localStorage.getItem('token');
-
+    console.log('[getAuthAxios] Token from localStorage:', token ? 'Available' : 'Not available');
+    
+    // Also try to get token from user object as a fallback
+    let userToken = null;
+    const userJson = localStorage.getItem('user');
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        userToken = user?.accessToken || user?.token;
+        console.log('[getAuthAxios] Token from user object:', userToken ? 'Available' : 'Not available');
+      } catch (e) {
+        console.error('[getAuthAxios] Error parsing user JSON:', e);
+      }
+    }
+    
+    // Use the most reliable token source
+    const finalToken = token || userToken;
+    console.log('[getAuthAxios] Using token?', finalToken ? 'Yes' : 'No');
+    
     const instance = axios.create({
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': finalToken ? `Bearer ${finalToken}` : undefined
       }
     });
+    
+    // Log headers for debugging
+    console.log('[getAuthAxios] Headers set:', instance.defaults.headers);
+    
+    // Add request interceptor for dynamic token check
+    instance.interceptors.request.use(
+      config => {
+        // Check token again at request time (in case it was updated)
+        const currentToken = localStorage.getItem('token');
+        if (currentToken && (!config.headers.Authorization || config.headers.Authorization !== `Bearer ${currentToken}`)) {
+          console.log('[getAuthAxios] Updating token in request');
+          config.headers.Authorization = `Bearer ${currentToken}`;
+        }
+        return config;
+      },
+      error => {
+        return Promise.reject(error);
+      }
+    );
 
     // Add response interceptor to handle 401 errors
     instance.interceptors.response.use(
       response => response,
       error => {
+        console.log('[getAuthAxios] Response error:', error.response?.status, error.message);
         if (error.response && error.response.status === 401) {
+          console.log('[getAuthAxios] 401 Unauthorized - logging out');
           logout();
-          window.location.href = '/login';
+          window.location.href = '/login?error=session_expired';
         }
         return Promise.reject(error);
       }

@@ -57,7 +57,7 @@ public class StudentVaccinationController {
     
     // Endpoint for a parent to provide consent for a vaccination
     @PostMapping("/{id}/consent")
-    @PreAuthorize("hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('Parent')")
     public ResponseEntity<StudentVaccinationDTO> provideConsent(@PathVariable Integer id, 
                                                                 @RequestParam String consentStatus, // Changed from boolean to String
                                                                 @RequestParam(required = false) String notes, 

@@ -60,8 +60,9 @@ const AppMenu = ({ isOpen, closeMenu }) => {
       case 'ROLE_SCHOOLNURSE':
         items = [
           { path: '/medical/dashboard', label: 'Medical Dashboard', icon: 'fas fa-tachometer-alt' },
-          { path: '/medical/events', label: 'Medical Events', icon: 'fas fa-ambulance' },
+          { path: '/nurse/health-declaration-approval', label: 'Health Declaration Review', icon: 'fas fa-clipboard-check' },
           { path: '/medical/medication-management', label: 'Medication Management', icon: 'fas fa-capsules' },
+          { path: '/nurse/health-checkup-events', label: 'Health Checkup Events', icon: 'fas fa-calendar-check' },
           { path: '/medical/vaccination-management', label: 'Vaccination Management', icon: 'fas fa-syringe' },
           { path: '/medical/health-checkups', label: 'Health Checkups', icon: 'fas fa-stethoscope' },
           { path: '/medical/student-management', label: 'Student Management', icon: 'fas fa-users' },

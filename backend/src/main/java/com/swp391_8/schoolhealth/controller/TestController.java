@@ -54,7 +54,7 @@ public class TestController {
     }
     
     @GetMapping(value = "/user", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SCHOOLNURSE') or hasRole('TEACHER') or hasRole('PARENT') or hasRole('STUDENT')")
+    @PreAuthorize("hasAuthority('Admin') or hasAuthority('SchoolNurse') or hasAuthority('Manager') or hasAuthority('Parent') or hasAuthority('Student')")
     public ResponseEntity<?> userAccess(Principal principal) {
         return ResponseEntity.ok(Map.of(
             "message", "User content accessible",

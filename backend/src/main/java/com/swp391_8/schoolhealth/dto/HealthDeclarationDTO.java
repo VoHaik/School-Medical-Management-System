@@ -7,6 +7,7 @@ import java.util.List;
 public class HealthDeclarationDTO {
     private Integer declarationId;
     private String studentCode;
+    private String studentName; // Add this field for student's full name
     // parentUsername is not directly part of HealthDeclaration, it's contextual from the service call
     // private String parentUsername;    // Các trường emergency_contact_name và emergency_contact_phone đã được thay thế bởi emergencyContacts
     // Chỉ giữ lại để đảm bảo tương thích ngược
@@ -431,4 +432,12 @@ public class HealthDeclarationDTO {
     public void setReviewNotes(String reviewNotes) {
         this.reviewNotes = reviewNotes;
     }
+
+	public String getStudentName() {
+		return studentName;
+	}
+
+	public void setStudentName(String studentName) {
+		this.studentName = studentName;
+	}
 }

@@ -4,6 +4,7 @@ import com.swp391_8.schoolhealth.dto.HealthDeclarationDTO;
 import com.swp391_8.schoolhealth.dto.MedicationDTO;
 import com.swp391_8.schoolhealth.dto.MessageResponse;
 import com.swp391_8.schoolhealth.exception.ResourceNotFoundException;
+import com.swp391_8.schoolhealth.model.HealthDeclaration;
 import com.swp391_8.schoolhealth.security.services.UserDetailsImpl;
 import com.swp391_8.schoolhealth.service.HealthDeclarationService;
 import com.swp391_8.schoolhealth.service.SecurityService;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/health-declaration")
@@ -27,15 +29,17 @@ import java.util.Optional;
 public class HealthDeclarationController {
     
     private static final Logger logger = LoggerFactory.getLogger(HealthDeclarationController.class);
-    
-    @Autowired
+      @Autowired
     private HealthDeclarationService healthDeclarationService;
     
     @Autowired
     private SecurityService securityService;
-
+    
+    @Autowired
+    private com.swp391_8.schoolhealth.repository.HealthDeclarationRepository healthDeclarationRepository;
+    
     @GetMapping
-    @PreAuthorize("hasRole('PARENT') or hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('Parent') or hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<?> getHealthDeclaration(
             @RequestParam(required = false) String studentCode,
             Authentication authentication) {
@@ -66,10 +70,11 @@ public class HealthDeclarationController {
             return ResponseEntity.ok(declaration.get());
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new MessageResponse("No health declaration found for this student", false));
-        }
-    }    @PostMapping
-    @PreAuthorize("hasRole('PARENT')")
+                .body(new MessageResponse("No health declaration found for this student", false));        }
+    }
+    
+    @PostMapping
+    @PreAuthorize("hasAuthority('Parent')")
     public ResponseEntity<?> saveHealthDeclaration(
             @RequestBody HealthDeclarationDTO declarationDTO,
             Authentication authentication) {
@@ -116,14 +121,13 @@ public class HealthDeclarationController {
             logger.info("Successfully saved health declaration for student: {}", declarationDTO.getStudentCode());
             return ResponseEntity.ok(savedDeclaration);
         } catch (Exception e) {
-            logger.error("Error saving health declaration", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            logger.error("Error saving health declaration", e);            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new MessageResponse("Error saving health declaration: " + e.getMessage(), false));
         }
     }
-
+    
     @GetMapping("/history")
-    @PreAuthorize("hasRole('PARENT') or hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('Parent') or hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<?> getHealthDeclarationHistory(
             @RequestParam String studentCode,
             Authentication authentication) {
@@ -139,14 +143,12 @@ public class HealthDeclarationController {
         if (isParent && !securityService.isParentOfStudentByCode(authentication, studentCode)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(new MessageResponse("You don't have permission to view this student's health declaration history", false));
-        }
-
-        List<HealthDeclarationDTO> declarationHistory = healthDeclarationService.getAllHealthDeclarationsByStudentCode(studentCode);
+        }        List<HealthDeclarationDTO> declarationHistory = healthDeclarationService.getAllHealthDeclarationsByStudentCode(studentCode);
         return ResponseEntity.ok(declarationHistory);
     }
-
+    
     @GetMapping("/approved-medications")
-    @PreAuthorize("hasRole('PARENT') or hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('Parent') or hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<?> getApprovedMedications(
             @RequestParam String studentCode,
             Authentication authentication) {
@@ -182,20 +184,43 @@ public class HealthDeclarationController {
         
         return ResponseEntity.ok(medications);
     }
-    
-    // Endpoint mới để lấy danh sách khai báo sức khỏe cần duyệt (chỉ dành cho y tá và admin)
+      // Endpoint mới để lấy danh sách khai báo sức khỏe cần duyệt (chỉ dành cho y tá và admin)
     @GetMapping("/pending")
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
-    public ResponseEntity<?> getPendingHealthDeclarations() {
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
+    public ResponseEntity<?> getPendingHealthDeclarations(Authentication authentication) {
         logger.info("GET request received for pending health declarations");
         
+        // Log authentication details for debugging
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        logger.info("User requesting pending declarations: {}, Roles: {}", 
+                   userDetails.getUsername(),
+                   userDetails.getAuthorities().stream()
+                             .map(auth -> auth.getAuthority())
+                             .collect(Collectors.toList()));
+        
         List<HealthDeclarationDTO> pendingDeclarations = healthDeclarationService.getPendingHealthDeclarations();
-        return ResponseEntity.ok(pendingDeclarations);
-    }
+        
+        // Log the result for debugging
+        logger.info("Found {} pending health declarations", pendingDeclarations.size());
+        if (pendingDeclarations.isEmpty()) {
+            logger.warn("No pending health declarations found in the database");
+        } else {
+            // Log some details of the first few declarations
+            int count = Math.min(pendingDeclarations.size(), 3);
+            for (int i = 0; i < count; i++) {
+                HealthDeclarationDTO dto = pendingDeclarations.get(i);
+                logger.info("Declaration #{}: ID={}, StudentCode={}, StudentName={}, Status={}", 
+                           i+1, dto.getDeclarationId(), dto.getStudentCode(), 
+                           dto.getStudentName() != null ? dto.getStudentName() : "NULL", 
+                           dto.getStatus());
+            }
+        }
+        
+        return ResponseEntity.ok(pendingDeclarations);    }
     
     // Endpoint để lấy thông tin chi tiết của một khai báo sức khỏe theo ID
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('PARENT') or hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('Parent') or hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<?> getHealthDeclarationById(
             @PathVariable Integer id,
             Authentication authentication) {
@@ -220,12 +245,11 @@ public class HealthDeclarationController {
             return ResponseEntity.ok(declaration);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
-        }
-    }
+        }    }
     
     // Endpoint để phê duyệt hoặc từ chối khai báo sức khỏe
     @PutMapping("/{id}/review")
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<?> reviewHealthDeclaration(
             @PathVariable Integer id,
             @RequestBody Map<String, String> reviewData,
@@ -254,9 +278,49 @@ public class HealthDeclarationController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new MessageResponse(e.getMessage(), false));
         } catch (Exception e) {
-            logger.error("Error reviewing health declaration", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            logger.error("Error reviewing health declaration", e);            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Error reviewing health declaration: " + e.getMessage(), false));
         }
+    }
+    
+    // Endpoint để y tá chỉnh sửa hồ sơ sức khỏe của học sinh
+    @PutMapping("/nurse-edit/{studentCode}")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
+    public ResponseEntity<?> nurseEditHealthDeclaration(
+            @PathVariable String studentCode,
+            @RequestBody HealthDeclarationDTO healthDeclarationData,
+            Authentication authentication) {
+        
+        logger.info("PUT request received to edit health declaration for student: {}", studentCode);
+        
+        try {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            healthDeclarationData.setStudentCode(studentCode);
+            
+            HealthDeclarationDTO updatedDeclaration = healthDeclarationService.nurseEditHealthDeclaration(
+                studentCode, healthDeclarationData, userDetails.getUsername());
+            
+            return ResponseEntity.ok(updatedDeclaration);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new MessageResponse(e.getMessage(), false));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new MessageResponse(e.getMessage(), false));
+        } catch (Exception e) {
+            logger.error("Error editing health declaration", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Error editing health declaration: " + e.getMessage(), false));
+        }
+    }
+    
+    // Endpoint để đếm số lượng khai báo sức khỏe đang chờ xử lý (cho nurse dashboard)
+    @GetMapping("/pending/count")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
+    public ResponseEntity<Long> getPendingDeclarationsCount() {
+        logger.info("Getting count of PENDING health declarations");
+        long count = healthDeclarationRepository.countByStatus(HealthDeclaration.HealthDeclarationStatus.PENDING);
+        logger.info("Found {} pending health declarations", count);
+        return ResponseEntity.ok(count);
     }
 }

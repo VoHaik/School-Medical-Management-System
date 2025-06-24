@@ -23,6 +23,11 @@ public class MedicationRequestResponseDTO {
     private String administeredByName; // Name of the user who administered (nurse)
     private LocalDateTime administeredAt;
     private String administrationNotes; // Nurse's notes during administration
+    
+    // New fields for clearly identifying students and parents
+    private String studentFullName; // Student's full name without any prefixes
+    private String parentFullName; // Parent's full name without any prefixes
+    private String requestedByName; // Alias for parentName to maintain consistency
 
     public MedicationRequestResponseDTO() {
     }
@@ -39,6 +44,7 @@ public class MedicationRequestResponseDTO {
         this.studentCode = studentCode;
         this.studentName = studentName;
         this.parentName = parentName;
+        this.requestedByName = parentName; // Alias for backward compatibility
         this.medicationName = medicationName;
         this.dosage = dosage;
         this.frequency = frequency;
@@ -53,6 +59,10 @@ public class MedicationRequestResponseDTO {
         this.administeredByName = administeredByName;
         this.administeredAt = administeredAt;
         this.administrationNotes = administrationNotes;
+        
+        // Default these to the same values to maintain backward compatibility
+        this.studentFullName = studentName;
+        this.parentFullName = parentName;
     }
 
     // Getters and Setters for all fields
@@ -199,5 +209,31 @@ public class MedicationRequestResponseDTO {
 
     public void setAdministrationNotes(String administrationNotes) {
         this.administrationNotes = administrationNotes;
+    }
+
+    // Add getters and setters for new fields
+    
+    public String getStudentFullName() {
+        return studentFullName;
+    }
+
+    public void setStudentFullName(String studentFullName) {
+        this.studentFullName = studentFullName;
+    }
+
+    public String getParentFullName() {
+        return parentFullName;
+    }
+
+    public void setParentFullName(String parentFullName) {
+        this.parentFullName = parentFullName;
+    }
+    
+    public String getRequestedByName() {
+        return requestedByName;
+    }
+
+    public void setRequestedByName(String requestedByName) {
+        this.requestedByName = requestedByName;
     }
 }

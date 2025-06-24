@@ -83,7 +83,7 @@ const screeningProgramSchema = yup.object().shape({
   description: yup.string()
 });
 
-function HealthCheckups() {
+const HealthCheckups = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [checkupDialogOpen, setCheckupDialogOpen] = useState(false);
   const [programDialogOpen, setProgramDialogOpen] = useState(false);

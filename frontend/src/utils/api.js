@@ -211,4 +211,79 @@ export const getStudentVaccinationsByStudentId = async (studentId) => {
 
 // ... other vaccination related functions
 
+// Health Declaration APIs
+export const getHealthDeclarationByStudentCode = async (studentCode) => {
+  try {
+    const response = await apiClient.get(`/health-declaration?studentCode=${studentCode}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch health declaration');
+  }
+};
+
+export const getHealthDeclarationHistory = async (studentCode) => {
+  try {
+    const response = await apiClient.get(`/health-declaration/history?studentCode=${studentCode}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch health declaration history');
+  }
+};
+
+export const getPendingHealthDeclarations = async () => {
+  try {
+    const response = await apiClient.get('/health-declaration/pending');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch pending health declarations');
+  }
+};
+
+// Function to get all students with their health data
+export const getAllStudentsWithHealthData = async () => {
+  try {
+    // First get all students
+    const students = await apiClient.get('/students');
+    
+    // Then fetch health data for each student
+    const studentsWithHealthData = await Promise.all(
+      students.data.map(async (student) => {
+        try {
+          // Try to get health declaration for this student
+          const healthData = await getHealthDeclarationByStudentCode(student.studentCode);
+          return {
+            ...student,
+            healthData: healthData || null
+          };
+        } catch (error) {
+          console.warn(`Failed to fetch health data for student ${student.studentCode}:`, error);
+          return {
+            ...student,
+            healthData: null
+          };
+        }
+      })
+    );
+    
+    return studentsWithHealthData;
+  } catch (error) {
+    handleApiError(error, 'fetch students with health data');
+  }
+};
+
+// Function for nurse to edit student health profile
+export const nurseEditHealthDeclaration = async (studentCode, healthData) => {
+  try {
+    console.log(`Making PUT request to: /health-declaration/nurse-edit/${studentCode}`);
+    console.log('Request data:', healthData);
+    const response = await apiClient.put(`/health-declaration/nurse-edit/${studentCode}`, healthData);
+    console.log('Response received:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('API Error details:', error.response || error);
+    handleApiError(error, 'edit student health profile');
+    throw error; // Re-throw để frontend có thể handle
+  }
+};
+
 export default apiClient;

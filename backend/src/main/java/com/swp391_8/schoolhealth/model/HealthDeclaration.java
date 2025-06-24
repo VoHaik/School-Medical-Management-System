@@ -137,10 +137,16 @@ public class HealthDeclaration {
     // Thêm ngày duyệt/từ chối
     @Column(name = "reviewed_at")
     private LocalDate reviewedAt;
-    
-    // Thêm ghi chú từ người duyệt
+      // Thêm ghi chú từ người duyệt
     @Column(name = "review_notes")
     private String reviewNotes;
+    
+    // Thêm trường để tracking chỉnh sửa bởi y tá
+    @Column(name = "last_modified_date")
+    private LocalDate lastModifiedDate;
+    
+    @Column(name = "last_modified_by")
+    private String lastModifiedBy;
     
     // Enum cho trạng thái khai báo sức khỏe
     public enum HealthDeclarationStatus {
@@ -497,9 +503,23 @@ public class HealthDeclaration {
 
     public String getMedicalHistory() {
         return medicalHistory;
+    }    public void setMedicalHistory(String medicalHistory) {
+        this.medicalHistory = medicalHistory;
+    }
+    
+    public LocalDate getLastModifiedDate() {
+        return lastModifiedDate;
     }
 
-    public void setMedicalHistory(String medicalHistory) {
-        this.medicalHistory = medicalHistory;
+    public void setLastModifiedDate(LocalDate lastModifiedDate) {
+        this.lastModifiedDate = lastModifiedDate;
+    }
+
+    public String getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
     }
 }

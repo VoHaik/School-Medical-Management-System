@@ -28,7 +28,7 @@ public class MedicalEventController {
 
     // Endpoint to get all medical events - accessible by SCHOOLNURSE or ADMIN
     @GetMapping
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<List<MedicalEventDTO>> getAllMedicalEvents(
             @RequestParam(required = false) String studentCode, // Filter by student code
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate, // Filter by start date
@@ -42,14 +42,14 @@ public class MedicalEventController {
     }
 
     @GetMapping("/student/{studentCode}")
-    @PreAuthorize("@securityService.isParentOfStudentByCode(authentication, #studentCode) or hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    @PreAuthorize("@securityService.isParentOfStudentByCode(authentication, #studentCode) or hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<List<MedicalEventDTO>> getMedicalEventsForStudent(@PathVariable String studentCode) {
         List<MedicalEventDTO> events = medicalEventService.getMedicalEventsByStudentStudentCode(studentCode);
         return ResponseEntity.ok(events);
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<MedicalEventDTO> createMedicalEvent(@RequestBody MedicalEventDTO medicalEventDTO, Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String creatorUsername = userDetails.getUsername();
@@ -58,7 +58,7 @@ public class MedicalEventController {
     }
 
     @PutMapping("/{eventId}")
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<MedicalEventDTO> updateMedicalEvent(@PathVariable Integer eventId, @RequestBody MedicalEventDTO medicalEventDTO, Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String updaterUsername = userDetails.getUsername();
@@ -67,9 +67,10 @@ public class MedicalEventController {
     }
 
     @DeleteMapping("/{eventId}")
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<Void> deleteMedicalEvent(@PathVariable Integer eventId) {
         medicalEventService.deleteMedicalEvent(eventId);
         return ResponseEntity.noContent().build();
     }
 }
+

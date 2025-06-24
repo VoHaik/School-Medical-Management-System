@@ -5,7 +5,9 @@ import { AuthContext } from '../context/AuthContext';
 // console.log('--- ProtectedRoute.js MODULE LOADED - V3 ---');
 // console.log('[ProtectedRoute] MODULE LOADED - This log is at the top of ProtectedRoute.js'); // New log
 
-function ProtectedRoute({ children, allowedRoles = [] }) {
+function ProtectedRoute({ children, roles = [], allowedRoles = [] }) {
+  // Support both 'roles' and 'allowedRoles' props for backwards compatibility
+  const effectiveRoles = roles.length > 0 ? roles : allowedRoles;
   // console.log('[ProtectedRoute] FUNCTION CALLED - Path:', window.location.pathname); // New log
   const { currentUser, loading } = useContext(AuthContext);
 
@@ -28,8 +30,8 @@ function ProtectedRoute({ children, allowedRoles = [] }) {
 
   // console.log('[ProtectedRoute] Checking roles. currentUser.roles:', currentUser.roles);
   const userHasRequiredRole =
-    allowedRoles.length === 0 ||
-    (currentUser.roles && currentUser.roles.some(role => allowedRoles.includes(role)));
+    effectiveRoles.length === 0 ||
+    (currentUser.roles && currentUser.roles.some(role => effectiveRoles.includes(role)));
 
   console.log('[ProtectedRoute] Result of role check - userHasRequiredRole:', userHasRequiredRole);
 

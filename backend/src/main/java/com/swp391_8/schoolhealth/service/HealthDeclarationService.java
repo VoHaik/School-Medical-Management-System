@@ -25,7 +25,13 @@ public interface HealthDeclarationService {
     
     // Phương thức lấy danh sách khai báo sức khỏe cần phê duyệt
     List<HealthDeclarationDTO> getPendingHealthDeclarations();
-    
-    // Phương thức lấy khai báo sức khỏe theo ID
+      // Phương thức lấy khai báo sức khỏe theo ID
     HealthDeclarationDTO getHealthDeclarationById(Integer declarationId);
+    
+    // Phương thức cho y tá chỉnh sửa hồ sơ sức khỏe học sinh
+    HealthDeclarationDTO nurseEditHealthDeclaration(
+        String studentCode,
+        HealthDeclarationDTO healthDeclarationData,
+        String nurseUsername
+    );
 }

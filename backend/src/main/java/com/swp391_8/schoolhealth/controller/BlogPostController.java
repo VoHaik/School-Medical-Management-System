@@ -35,7 +35,7 @@ public class BlogPostController {
     }
 
     @GetMapping(value = "/my-posts", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('STUDENT') or hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('Student') or hasAuthority('Parent')")
     public ResponseEntity<List<BlogPost>> getMyPosts() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -44,7 +44,7 @@ public class BlogPostController {
     }
 
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('STUDENT') or hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('Student') or hasAuthority('Parent')")
     public ResponseEntity<BlogPost> createPost(@RequestBody BlogPost blogPost) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -67,16 +67,17 @@ public class BlogPostController {
     }
 
     @PutMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("(hasRole('STUDENT') or hasRole('PARENT')) and @securityService.isPostAuthor(authentication, #id)")
+    @PreAuthorize("(hasAuthority('Student') or hasAuthority('Parent')) and @securityService.isPostAuthor(authentication, #id)")
     public ResponseEntity<BlogPost> updatePost(@PathVariable Integer id, @RequestBody BlogPost blogPost) {
         BlogPost updatedPost = blogPostService.updatePost(id, blogPost);
         return ResponseEntity.ok(updatedPost);
     }
 
     @DeleteMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("((hasRole('STUDENT') or hasRole('PARENT')) and @securityService.isPostAuthor(authentication, #id)) or hasRole('ADMIN')")
+    @PreAuthorize("((hasAuthority('Student') or hasAuthority('Parent')) and @securityService.isPostAuthor(authentication, #id)) or hasAuthority('Admin')")
     public ResponseEntity<?> deletePost(@PathVariable Integer id) {
         blogPostService.deletePost(id);
         return ResponseEntity.ok().build();
     }
 }
+

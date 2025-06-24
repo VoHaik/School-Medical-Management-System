@@ -18,7 +18,7 @@ public class VaccineController {
     private VaccineService vaccineService;
 
     @PostMapping
-    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')") // Assuming ADMIN can also manage this
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')") // Assuming ADMIN can also manage this
     public ResponseEntity<VaccineDTO> createVaccine(@RequestBody VaccineDTO vaccineDTO) {
         try {
             VaccineDTO createdVaccine = vaccineService.createVaccine(vaccineDTO);
@@ -29,14 +29,14 @@ public class VaccineController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('NURSE') or hasRole('PARENT') or hasRole('ADMIN')") // Parents might need to list vaccines
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Parent') or hasAuthority('Admin')") // Parents might need to list vaccines
     public ResponseEntity<List<VaccineDTO>> getAllVaccines() {
         List<VaccineDTO> vaccines = vaccineService.getAllVaccines();
         return ResponseEntity.ok(vaccines);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('NURSE') or hasRole('PARENT') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Parent') or hasAuthority('Admin')")
     public ResponseEntity<VaccineDTO> getVaccineById(@PathVariable Integer id) {
         try {
             VaccineDTO vaccine = vaccineService.getVaccineById(id);
@@ -47,7 +47,7 @@ public class VaccineController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<VaccineDTO> updateVaccine(@PathVariable Integer id, @RequestBody VaccineDTO vaccineDTO) {
         try {
             VaccineDTO updatedVaccine = vaccineService.updateVaccine(id, vaccineDTO);
@@ -60,7 +60,7 @@ public class VaccineController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<Void> deleteVaccine(@PathVariable Integer id) {
         try {
             vaccineService.deleteVaccine(id);

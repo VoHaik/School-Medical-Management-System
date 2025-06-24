@@ -37,9 +37,8 @@ const MedicationItemDeclaration = ({ medication = {}, index, onChange, onRemove,
   const fetchApprovedMedications = useCallback(async () => {
     setLoading(true);
     setError(null);
-    try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/health-declaration/approved-medications?studentCode=${studentCode}`,
+    try {      const response = await axios.get(
+        `/api/health-declaration/approved-medications?studentCode=${studentCode}`,
         { headers: authHeader() }
       );
       setApprovedMedications(response.data);

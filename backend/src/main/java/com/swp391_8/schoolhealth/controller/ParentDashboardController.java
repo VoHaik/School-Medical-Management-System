@@ -37,7 +37,7 @@ public class ParentDashboardController {
 
     // Endpoint to get notifications for a parent (linked by username/user_code)
     @GetMapping("/notifications/parent/{parentUsername}")
-    @PreAuthorize("hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('Parent')")
     public ResponseEntity<List<NotificationDTO>> getNotificationsForParent(
             @PathVariable String parentUsername, 
             @RequestParam(required = false) String studentCode) { // studentCode is already String
@@ -55,7 +55,7 @@ public class ParentDashboardController {
     // The parentId is in the path but might not be directly used if events are school-wide.
     // studentId can be used for filtering if events are targeted (e.g., by grade).
     @GetMapping("/events/parent/{parentCode}")
-    @PreAuthorize("hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('Parent')")
     public ResponseEntity<List<EventDTO>> getEventsForParent(@PathVariable String parentCode, @RequestParam(required = false) String studentCode) { // Changed parentId to parentCode, studentId to studentCode
         // The EventService currently gets all upcoming events.
         // Filtering by parentCode or studentCode would require more complex logic in EventService/Repository.
@@ -70,7 +70,7 @@ public class ParentDashboardController {
     // Endpoint to get medication submission summaries for a specific student of the parent.
     // studentId is crucial here.
     @GetMapping("/medication-requests/summary/student/{studentCode}") // Changed path and from studentId to studentCode
-    @PreAuthorize("hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('Parent')")
     // Ensure that the security context or service layer checks if the authenticated parent can view this studentCode
     public ResponseEntity<List<MedicationRequestResponseDTO>> getMedicationSummaryForStudent(@PathVariable String studentCode, Authentication authentication) { // Changed from Long studentId to String studentCode, added Authentication
         System.out.println("Fetching medication summary for studentCode: " + studentCode);
@@ -84,7 +84,7 @@ public class ParentDashboardController {
 
     // New endpoint to get students for the authenticated parent
     @GetMapping("/parent/students")
-    @PreAuthorize("hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('Parent')")
     public ResponseEntity<List<StudentDTO>> getStudentsForAuthenticatedParent(Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         String parentCode = userDetails.getUserCode(); // Changed from getUsername() to getUserCode()
@@ -103,3 +103,4 @@ public class ParentDashboardController {
         return ResponseEntity.ok(students);
     }
 }
+

@@ -35,28 +35,28 @@ public class StudentController {
     private UserRepository userRepository;
 
     @GetMapping
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<List<StudentDTO>> getAllStudents() {
         List<StudentDTO> students = studentService.getAllStudents();
         return ResponseEntity.ok(students);
     }
 
     @GetMapping("/{studentCode}")
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN') or @securityService.isParentOfStudentByCode(authentication, #studentCode)")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or @securityService.isParentOfStudentByCode(authentication, #studentCode)")
     public ResponseEntity<StudentDTO> getStudentByCode(@PathVariable String studentCode) {
         StudentDTO student = studentService.getStudentByCode(studentCode);
         return ResponseEntity.ok(student);
     }
 
     @GetMapping("/parent/{parentId}")
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN') or authentication.principal.id == #parentId")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or authentication.principal.id == #parentId")
     public ResponseEntity<List<StudentDTO>> getStudentsByParentId(@PathVariable Integer parentId) {
         List<StudentDTO> students = studentService.getStudentsByParentId(parentId);
         return ResponseEntity.ok(students);
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN') or hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or hasAuthority('Parent')")
     public ResponseEntity<?> createStudent(@RequestBody Map<String, Object> studentData) {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -87,7 +87,7 @@ public class StudentController {
     }
 
     @PutMapping("/{studentCode}")
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN') or @securityService.isParentOfStudentByCode(authentication, #studentCode)")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or @securityService.isParentOfStudentByCode(authentication, #studentCode)")
     public ResponseEntity<?> updateStudent(@PathVariable String studentCode, @RequestBody Map<String, Object> studentData) {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -116,7 +116,7 @@ public class StudentController {
     }
 
     @DeleteMapping("/{studentCode}")
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<?> deleteStudent(@PathVariable String studentCode) {
         try {
             studentService.deleteStudent(studentCode);

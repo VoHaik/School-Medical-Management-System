@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import axios from 'axios'; // Assuming axios is configured (e.g., ../../utils/axiosConfig)
+import axiosWithAuth from '../../utils/axiosWithAuth'; // Import the auth utility
 import {
   Card,
   CardContent,
@@ -87,7 +87,7 @@ const medicationAdministrationSchema = yup.object().shape({
 
 // Schema for rejecting a medication request
 const rejectionSchema = yup.object().shape({
-  rejectionReason: yup.string().required('Rejection reason is required').min(10, 'Reason must be at least 10 characters long'),
+  rejectionReason: yup.string().nullable(), // Make it optional so the form can be submitted without a reason
 });
 
 // Schema for administering medication for a request
@@ -144,6 +144,7 @@ function MedicationManagement() {
   const rejectForm = useForm({
     resolver: yupResolver(rejectionSchema),
     defaultValues: { rejectionReason: '' },
+    mode: 'onSubmit', // Only validate on submit to allow empty values
   });
 
   const recordAdministrationForm = useForm({
@@ -161,11 +162,70 @@ function MedicationManagement() {
     setIsLoadingPendingRequests(true);
     setPendingRequestsError(null);
     try {
-      const response = await axios.get('/api/medication-requests/nurse/pending');
-      setPendingRequests(response.data);
+      // Use axiosWithAuth as a function
+      const authAxios = axiosWithAuth();
+      console.log('Fetching pending medication requests with authorization headers...');
+      
+      // Add debugging info to help trace the request
+      authAxios.defaults.headers.common['X-Debug'] = 'MedicationManagement-FetchPending';
+      console.log('Request Headers:', authAxios.defaults.headers);
+      
+      // Use the correct endpoint path - this is the API URL configured in the controller
+      // Always include details to get full parent and student names
+      const response = await authAxios.get('/api/medication-requests/pending?includeDetails=true');
+      console.log('Successfully fetched pending requests:', response.data);
+      
+      // Process the data to ensure we have the full names available for display
+      const processedData = response.data.map(request => {
+        // Log the original data to help with debugging
+        console.log('Original request data:', {
+          requestId: request.requestId,
+          id: request.id,
+          studentCode: request.studentCode,
+          studentName: request.studentName,
+          studentFullName: request.studentFullName
+        });
+        
+        // Use the new studentFullName field if available
+        let displayStudentName;
+        
+        if (request.studentFullName) {
+          displayStudentName = request.studentFullName;
+        } else if (request.studentName && !request.studentName.startsWith('Student Code:')) {
+          displayStudentName = request.studentName;
+        } else {
+          displayStudentName = `Student (${request.studentCode})`;
+        }
+        
+        // Use the new parentFullName field if available
+        let displayParentName = request.parentFullName || 
+                               request.requestedByName || 
+                               request.parentName || 
+                               'Parent';
+        
+        // Ensure id is mapped to requestId for consistency
+        return {
+          ...request,
+          id: request.requestId, // Map backend requestId to id for frontend compatibility
+          studentFullName: displayStudentName,
+          parentFullName: displayParentName
+        };
+      });
+      
+      setPendingRequests(processedData);
     } catch (error) {
       console.error('Error fetching pending medication requests:', error);
-      setPendingRequestsError(error.response?.data?.message || 'Failed to fetch pending requests. Please try again.');
+      // More detailed error logging
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+        console.error('Request URL:', error.config.url);
+        console.error('Request headers:', error.config.headers);
+      }
+      setPendingRequestsError(
+        error.response?.data?.message || 
+        `Failed to fetch pending requests (${error.response?.status || 'unknown error'}). Please try again.`
+      );
     } finally {
       setIsLoadingPendingRequests(false);
     }
@@ -283,13 +343,46 @@ function MedicationManagement() {
   const handleApproveRequest = async () => {
     if (!selectedRequest) return;
     try {
-      await axios.put(`/api/medication-requests/${selectedRequest.id}/approve`);
-      // Add success notification
-      fetchPendingMedicationRequests(); // Refetch or update state locally
-      // Potentially move to an "Approved" list/tab
+      // Use requestId which is the correct field from the backend DTO
+      const requestId = selectedRequest.requestId;
+      
+      if (!requestId) {
+        console.error('Error: Request ID is undefined or null', selectedRequest);
+        alert('Error: Cannot approve request - missing request ID');
+        return;
+      }
+      
+      console.log(`Approving request ID: ${requestId}`);
+      const authAxios = axiosWithAuth();
+      
+      // First let's check if the API endpoint is accessible
+      console.log(`Sending approval to: /api/medication-requests/${requestId}/approve`);
+      console.log('Request object:', selectedRequest);
+      
+      // Ensure we're using the correct endpoint from the MedicationRequestController
+      const response = await authAxios.put(`/api/medication-requests/${requestId}/approve`);
+      console.log('Request approved successfully:', response.data);
+      
+      // Add success notification - we should show this in the UI
+      alert('Medication request approved successfully'); // Simple alert for now
+      
+      // Update the UI by fetching the latest data
+      fetchPendingMedicationRequests();
     } catch (error) {
       console.error('Error approving request:', error);
-      // Add error notification
+      
+      // Detailed error logging for debugging
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+        console.error('Request URL:', error.config.url);
+        console.error('Request headers:', error.config.headers);
+        
+        // Show error message to the user
+        alert(`Error approving request: ${error.response.data?.error || error.message}`);
+      } else {
+        alert(`Error approving request: ${error.message}`);
+      }
     } finally {
       setApproveConfirmationDialogOpen(false);
       setSelectedRequest(null);
@@ -304,13 +397,54 @@ function MedicationManagement() {
 
   const handleRejectRequest = async (data) => {
     if (!selectedRequest) return;
+    
     try {
-      await axios.put(`/api/medication-requests/${selectedRequest.id}/reject`, { reason: data.rejectionReason });
-      // Add success notification
-      fetchPendingMedicationRequests(); // Refetch or update state locally
+      const authAxios = axiosWithAuth();
+      
+      // Extract the rejection reason, providing an empty string if null or undefined
+      const rejectionReason = data.rejectionReason || '';
+      
+      // Debug logging to identify the correct ID field
+      console.log('Selected request object:', selectedRequest);
+      
+      // Use requestId which is the correct field from the backend DTO
+      const requestId = selectedRequest.requestId;
+      
+      if (!requestId) {
+        console.error('Error: Request ID is undefined or null', selectedRequest);
+        alert('Error: Cannot reject request - missing request ID');
+        return;
+      }
+      
+      console.log(`Rejecting request ID: ${requestId} with reason: ${rejectionReason || '(No reason provided)'}`);
+      
+      // The backend controller expects "reason" as the parameter name
+      const response = await authAxios.put(`/api/medication-requests/${requestId}/reject`, { 
+        reason: rejectionReason
+      });
+      
+      console.log('Request rejected successfully:', response.data);
+      
+      // Show a success message to the user
+      alert('Medication request rejected successfully');
+      
+      // Update the UI by fetching the latest data
+      fetchPendingMedicationRequests();
     } catch (error) {
       console.error('Error rejecting request:', error);
-      // Add error notification
+      
+      // Detailed error logging
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+        console.error('Request URL:', error.config.url);
+        console.error('Request payload:', error.config.data);
+        
+        // Show error message to the user
+        alert(`Error rejecting request: ${error.response.data?.error || error.message}`);
+      } else {
+        alert(`Error rejecting request: ${error.message}`);
+      }
     } finally {
       setRejectDialogOpen(false);
       setSelectedRequest(null);
@@ -326,18 +460,45 @@ function MedicationManagement() {
 
   const handleAdministerMedication = async (data) => {
     if (!selectedRequest) return;
+    
+    // Use requestId which is the correct field from the backend DTO
+    const requestId = selectedRequest.requestId;
+    
+    if (!requestId) {
+      console.error('Error: Request ID is undefined or null', selectedRequest);
+      alert('Error: Cannot administer medication - missing request ID');
+      return;
+    }
+    
     const administrationData = {
       administrationTime: data.administrationTime.toISOString(), // Ensure correct format for backend
       notes: data.notes,
+      // Use the field name expected by the backend controller
+      administrationNotes: data.notes
     };
     try {
-      await axios.post(`/api/medication-requests/${selectedRequest.id}/administer`, administrationData);
+      console.log(`Administering medication for request ID: ${requestId}`);
+      const authAxios = axiosWithAuth();
+      await authAxios.post(`/api/medication-requests/${requestId}/administer`, administrationData);
+      
       // Add success notification
-      fetchPendingMedicationRequests(); // Refetch or update state locally
-      // Potentially update request status to ADMINISTERED or PARTIALLY_ADMINISTERED
+      alert('Medication administered successfully');
+      
+      fetchPendingMedicationRequests(); // Refetch to update the UI
     } catch (error) {
       console.error('Error administering medication:', error);
-      // Add error notification
+      // More detailed error logging for debugging
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+        console.error('Request URL:', error.config.url);
+        console.error('Request payload:', error.config.data);
+        
+        // Show error message to the user
+        alert(`Error administering medication: ${error.response.data?.error || error.message}`);
+      } else {
+        alert(`Error administering medication: ${error.message}`);
+      }
     } finally {
       setAdministerDialogOpen(false);
       setSelectedRequest(null);
@@ -378,7 +539,7 @@ function MedicationManagement() {
                 <Table stickyHeader>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Student Name</TableCell>
+                      <TableCell>Student Full Name</TableCell>
                       <TableCell>Student Code</TableCell>
                       <TableCell>Medication</TableCell>
                       <TableCell>Dosage</TableCell>
@@ -398,34 +559,64 @@ function MedicationManagement() {
                     )}
                     {pendingRequests.map((request) => (
                       <TableRow key={request.id}>
-                        <TableCell>{request.studentName}</TableCell>
+                        <TableCell>{request.studentFullName}</TableCell>
                         <TableCell>{request.studentCode}</TableCell>
                         <TableCell>{request.medicationName}</TableCell>
                         <TableCell>{request.dosage}</TableCell>
                         <TableCell>{request.frequency}</TableCell>
                         <TableCell>{formatDate(request.startDate)}</TableCell>
                         <TableCell>{formatDate(request.endDate)}</TableCell>
-                        <TableCell><Chip label={request.status} color={request.status === 'PENDING_APPROVAL' ? 'warning' : 'default'} /></TableCell>
-                        <TableCell>{request.requestedByName}</TableCell>
                         <TableCell>
-                          <Tooltip title="View Details">
-                            <IconButton onClick={() => handleViewDetails(request)} size="small"><ViewIcon /></IconButton>
-                          </Tooltip>
-                          {request.status === 'PENDING_APPROVAL' && (
-                            <>
-                              <Tooltip title="Approve">
-                                <IconButton onClick={() => handleOpenApproveConfirmation(request)} size="small" color="success"><ApproveIcon /></IconButton>
+                          <Chip 
+                            label={request.status} 
+                            color={request.status === 'PENDING' || request.status === 'PENDING_APPROVAL' ? 'warning' : 
+                                 request.status === 'APPROVED' ? 'success' :
+                                 request.status === 'REJECTED' ? 'error' : 'default'} 
+                          />
+                        </TableCell>
+                        <TableCell>{request.parentFullName}</TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Tooltip title="View Details">
+                              <IconButton onClick={() => handleViewDetails(request)} size="small"><ViewIcon /></IconButton>
+                            </Tooltip>
+                            {(request.status === 'PENDING_APPROVAL' || request.status === 'PENDING') && (
+                              <>
+                                <Tooltip title="Approve">
+                                  <IconButton 
+                                    onClick={() => handleOpenApproveConfirmation(request)} 
+                                    size="small" 
+                                    color="success"
+                                    aria-label="Approve medication request"
+                                  >
+                                    <ApproveIcon />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Reject">
+                                  <IconButton 
+                                    onClick={() => handleOpenRejectDialog(request)} 
+                                    size="small" 
+                                    color="error"
+                                    aria-label="Reject medication request"
+                                  >
+                                    <RejectIcon />
+                                  </IconButton>
+                                </Tooltip>
+                              </>
+                            )}
+                            {request.status === 'APPROVED' && ( // Assuming 'APPROVED' means ready to administer
+                              <Tooltip title="Administer">
+                                <IconButton 
+                                  onClick={() => handleOpenAdministerDialog(request)} 
+                                  size="small" 
+                                  color="primary"
+                                  aria-label="Administer medication"
+                                >
+                                  <AdministerIcon />
+                                </IconButton>
                               </Tooltip>
-                              <Tooltip title="Reject">
-                                <IconButton onClick={() => handleOpenRejectDialog(request)} size="small" color="error"><RejectIcon /></IconButton>
-                              </Tooltip>
-                            </>
-                          )}
-                          {request.status === 'APPROVED' && ( // Assuming 'APPROVED' means ready to administer
-                             <Tooltip title="Administer">
-                                <IconButton onClick={() => handleOpenAdministerDialog(request)} size="small" color="primary"><AdministerIcon /></IconButton>
-                              </Tooltip>
-                          )}
+                            )}
+                          </Box>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -626,17 +817,26 @@ function MedicationManagement() {
         {selectedRequest && (
           <DialogContent>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}><Typography variant="subtitle2">Student Name:</Typography><Typography>{selectedRequest.studentName}</Typography></Grid>
+              <Grid item xs={12} sm={6}><Typography variant="subtitle2">Student Name:</Typography><Typography>{selectedRequest.studentFullName}</Typography></Grid>
               <Grid item xs={12} sm={6}><Typography variant="subtitle2">Student Code:</Typography><Typography>{selectedRequest.studentCode}</Typography></Grid>
               <Grid item xs={12} sm={6}><Typography variant="subtitle2">Medication:</Typography><Typography>{selectedRequest.medicationName}</Typography></Grid>
               <Grid item xs={12} sm={6}><Typography variant="subtitle2">Dosage:</Typography><Typography>{selectedRequest.dosage}</Typography></Grid>
               <Grid item xs={12} sm={6}><Typography variant="subtitle2">Frequency:</Typography><Typography>{selectedRequest.frequency}</Typography></Grid>
-              <Grid item xs={12} sm={6}><Typography variant="subtitle2">Status:</Typography><Chip label={selectedRequest.status} /></Grid>
+              <Grid item xs={12} sm={6}><Typography variant="subtitle2">Status:</Typography>
+                <Chip 
+                  label={selectedRequest.status} 
+                  color={
+                    selectedRequest.status === 'PENDING' || selectedRequest.status === 'PENDING_APPROVAL' ? 'warning' : 
+                    selectedRequest.status === 'APPROVED' ? 'success' :
+                    selectedRequest.status === 'REJECTED' ? 'error' : 'default'
+                  } 
+                />
+              </Grid>
               <Grid item xs={12} sm={6}><Typography variant="subtitle2">Start Date:</Typography><Typography>{formatDate(selectedRequest.startDate)}</Typography></Grid>
               <Grid item xs={12} sm={6}><Typography variant="subtitle2">End Date:</Typography><Typography>{formatDate(selectedRequest.endDate)}</Typography></Grid>
-              <Grid item xs={12}><Typography variant="subtitle2">Reason for Medication:</Typography><Typography>{selectedRequest.reason}</Typography></Grid>
+              <Grid item xs={12}><Typography variant="subtitle2">Reason for Medication:</Typography><Typography>{selectedRequest.reason || 'N/A'}</Typography></Grid>
               <Grid item xs={12}><Typography variant="subtitle2">Parent's Notes:</Typography><Typography>{selectedRequest.notes || 'N/A'}</Typography></Grid>
-              <Grid item xs={12} sm={6}><Typography variant="subtitle2">Requested By:</Typography><Typography>{selectedRequest.requestedByName}</Typography></Grid>
+              <Grid item xs={12} sm={6}><Typography variant="subtitle2">Requested By:</Typography><Typography>{selectedRequest.parentFullName}</Typography></Grid>
               <Grid item xs={12} sm={6}><Typography variant="subtitle2">Requested At:</Typography><Typography>{formatDateTime(selectedRequest.requestedAt)}</Typography></Grid>
               {selectedRequest.approvedByName && (<Grid item xs={12} sm={6}><Typography variant="subtitle2">Approved By:</Typography><Typography>{selectedRequest.approvedByName}</Typography></Grid>)}
               {selectedRequest.approvedAt && (<Grid item xs={12} sm={6}><Typography variant="subtitle2">Approved At:</Typography><Typography>{formatDateTime(selectedRequest.approvedAt)}</Typography></Grid>)}
@@ -658,7 +858,7 @@ function MedicationManagement() {
                           <TableRow key={record.id}>
                             <TableCell>{formatDateTime(record.administrationTime)}</TableCell>
                             <TableCell>{record.administeredByNurseName}</TableCell>
-                            <TableCell>{record.notes}</TableCell>
+                            <TableCell>{record.notes || '-'}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -671,20 +871,91 @@ function MedicationManagement() {
         )}
         <DialogActions>
           <Button onClick={() => setViewDetailsDialogOpen(false)}>Close</Button>
+          {selectedRequest && (selectedRequest.status === 'PENDING' || selectedRequest.status === 'PENDING_APPROVAL') && (
+            <>
+              <Button 
+                onClick={() => {
+                  setViewDetailsDialogOpen(false);
+                  handleOpenApproveConfirmation(selectedRequest);
+                }}
+                color="success" 
+                variant="contained" 
+                startIcon={<ApproveIcon />}
+              >
+                Approve
+              </Button>
+              <Button 
+                onClick={() => {
+                  setViewDetailsDialogOpen(false);
+                  handleOpenRejectDialog(selectedRequest);
+                }}
+                color="error" 
+                variant="contained" 
+                startIcon={<RejectIcon />}
+              >
+                Reject
+              </Button>
+            </>
+          )}
         </DialogActions>
       </Dialog>
 
       {/* Confirmation Dialog for Approving Request */}
       <Dialog open={approveConfirmationDialogOpen} onClose={() => setApproveConfirmationDialogOpen(false)}>
-        <DialogTitle>Confirm Approval</DialogTitle>
+        <DialogTitle>Confirm Medication Request Approval</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            Are you sure you want to approve this medication request for {selectedRequest?.studentName} ({selectedRequest?.medicationName})?
-          </DialogContentText>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <DialogContentText>
+                Are you sure you want to approve this medication request?
+              </DialogContentText>
+            </Grid>
+            {selectedRequest && (
+              <>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2">Student:</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{selectedRequest.studentFullName}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2">Requested By:</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{selectedRequest.parentFullName}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2">Medication:</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{selectedRequest.medicationName}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2">Dosage:</Typography>
+                  <Typography variant="body1">{selectedRequest.dosage}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2">Schedule:</Typography>
+                  <Typography variant="body1">{selectedRequest.frequency}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2">Duration:</Typography>
+                  <Typography variant="body1">{formatDate(selectedRequest.startDate)} - {formatDate(selectedRequest.endDate)}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Alert severity="info" sx={{ mt: 2 }}>
+                    By approving this request, you confirm that the medication can be safely administered to the student according to school policy.
+                  </Alert>
+                </Grid>
+              </>
+            )}
+          </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setApproveConfirmationDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleApproveRequest} color="primary" variant="contained">Approve</Button>
+          <Button 
+            onClick={handleApproveRequest} 
+            color="success" 
+            variant="contained" 
+            startIcon={<ApproveIcon />}
+            aria-label="Approve medication request"
+          >
+            Approve Request
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -693,29 +964,61 @@ function MedicationManagement() {
         <DialogTitle>Reject Medication Request</DialogTitle>
         <form onSubmit={rejectForm.handleSubmit(handleRejectRequest)}>
           <DialogContent>
-            <Typography>Student: {selectedRequest?.studentName}</Typography>
-            <Typography>Medication: {selectedRequest?.medicationName}</Typography>
-            <Controller
-              name="rejectionReason"
-              control={rejectForm.control}
-              render={({ field, fieldState }) => (
-                <TextField
-                  {...field}
-                  label="Reason for Rejection"
-                  multiline
-                  rows={4}
-                  fullWidth
-                  margin="normal"
-                  required
-                  error={!!fieldState.error}
-                  helperText={fieldState.error?.message}
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2">Student:</Typography>
+                <Typography variant="body1">{selectedRequest?.studentFullName}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2">Requested By:</Typography>
+                <Typography variant="body1">{selectedRequest?.parentFullName}</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="subtitle2">Medication:</Typography>
+                <Typography variant="body1">{selectedRequest?.medicationName} ({selectedRequest?.dosage})</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  You can provide a reason for rejecting this medication request.
+                  The parent will receive this information if provided.
+                </Alert>
+                <Controller
+                  name="rejectionReason"
+                  control={rejectForm.control}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      label="Reason for Rejection (Optional)"
+                      multiline
+                      rows={3}
+                      fullWidth
+                      autoFocus
+                      error={!!fieldState.error}
+                      helperText={fieldState.error?.message || 'Leave blank if no reason needed'}
+                      placeholder="Example: Doctor's prescription required"
+                      onChange={(e) => {
+                        field.onChange(e);
+                        // Always clear any validation errors as this is optional
+                        rejectForm.clearErrors('rejectionReason');
+                      }}
+                    />
+                  )}
                 />
-              )}
-            />
+              </Grid>
+            </Grid>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setRejectDialogOpen(false)}>Cancel</Button>
-            <Button type="submit" variant="contained" color="error">Reject Request</Button>
+            <Button 
+              type="submit" 
+              variant="contained" 
+              color="error" 
+              startIcon={<RejectIcon />}
+              aria-label="Submit rejection with reason"
+              // Never disable the button since rejection reason is optional
+            >
+              Reject Request
+            </Button>
           </DialogActions>
         </form>
       </Dialog>
@@ -725,8 +1028,21 @@ function MedicationManagement() {
         <DialogTitle>Administer Medication</DialogTitle>
         <form onSubmit={recordAdministrationForm.handleSubmit(handleAdministerMedication)}>
           <DialogContent>
-            <Typography>Student: {selectedRequest?.studentName}</Typography>
-            <Typography>Medication: {selectedRequest?.medicationName} ({selectedRequest?.dosage})</Typography>
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={12}>
+                <Typography variant="subtitle2">Student:</Typography>
+                <Typography>{selectedRequest?.studentFullName}</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="subtitle2">Medication:</Typography>
+                <Typography>{selectedRequest?.medicationName} ({selectedRequest?.dosage})</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="subtitle2">Frequency:</Typography>
+                <Typography>{selectedRequest?.frequency}</Typography>
+              </Grid>
+            </Grid>
+            
             <Controller
               name="administrationTime"
               control={recordAdministrationForm.control}
@@ -760,13 +1076,21 @@ function MedicationManagement() {
                   margin="normal"
                   error={!!fieldState.error}
                   helperText={fieldState.error?.message}
+                  placeholder="Optional notes about this medication administration"
                 />
               )}
             />
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setAdministerDialogOpen(false)}>Cancel</Button>
-            <Button type="submit" variant="contained" color="primary">Record Administration</Button>
+            <Button 
+              type="submit" 
+              variant="contained" 
+              color="primary"
+              startIcon={<AdministerIcon />}
+            >
+              Record Administration
+            </Button>
           </DialogActions>
         </form>
       </Dialog>

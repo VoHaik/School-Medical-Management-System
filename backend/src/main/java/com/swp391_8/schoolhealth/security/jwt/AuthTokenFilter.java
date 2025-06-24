@@ -32,12 +32,13 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         try {
             String jwt = parseJwt(request);
             if (jwt != null) {
-                logger.debug("JWT token found in request");
+                logger.debug("JWT token found in request for path: {}", request.getRequestURI());
                 if (jwtUtils.validateJwtToken(jwt)) {
                     String username = jwtUtils.getUserNameFromJwtToken(jwt);
                     logger.debug("JWT token validated for user: {}", username);
 
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                    logger.debug("User authorities: {}", userDetails.getAuthorities());
 
                     // Check if user is enabled
                     if (!userDetails.isEnabled()) {
@@ -52,7 +53,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                         SecurityContextHolder.getContext().setAuthentication(authentication);
-                        logger.debug("User authenticated successfully: {}", username);
+                        logger.debug("User authenticated successfully: {} with authorities: {}", 
+                            username, userDetails.getAuthorities());
                     }
                 } else {
                     logger.error("JWT token validation failed");

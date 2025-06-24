@@ -26,14 +26,14 @@ public class ParentController {
     private UserService userService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SCHOOLNURSE')")
+    @PreAuthorize("hasAuthority('Admin') or hasAuthority('SchoolNurse')")
     public ResponseEntity<List<Parent>> getAllParents() {
         List<Parent> parents = parentService.getAllParents();
         return ResponseEntity.ok(parents);
     }
 
     @GetMapping("/{parentCode}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SCHOOLNURSE') or @securityService.isParentByCode(authentication, #parentCode)")
+    @PreAuthorize("hasAuthority('Admin') or hasAuthority('SchoolNurse') or @securityService.isParentByCode(authentication, #parentCode)")
     public ResponseEntity<?> getParentByCode(@PathVariable String parentCode) {
         Optional<Parent> parent = parentService.getParentByCode(parentCode);
         return parent.map(ResponseEntity::ok)
@@ -41,7 +41,7 @@ public class ParentController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SCHOOLNURSE')")
+    @PreAuthorize("hasAuthority('Admin') or hasAuthority('SchoolNurse')")
     public ResponseEntity<?> createParent(@RequestBody Map<String, Object> parentData) {
         try {
             String userCode = (String) parentData.get("userCode");
@@ -82,7 +82,7 @@ public class ParentController {
     }
 
     @PutMapping("/{parentCode}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SCHOOLNURSE') or @securityService.isParentByCode(authentication, #parentCode)")
+    @PreAuthorize("hasAuthority('Admin') or hasAuthority('SchoolNurse') or @securityService.isParentByCode(authentication, #parentCode)")
     public ResponseEntity<?> updateParent(@PathVariable String parentCode, @RequestBody Map<String, Object> parentData) {
         try {
             Parent parentDetails = new Parent();
@@ -100,7 +100,7 @@ public class ParentController {
     }
 
     @DeleteMapping("/{parentCode}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('Admin')")
     public ResponseEntity<?> deleteParent(@PathVariable String parentCode) {
         boolean deleted = parentService.deleteParentByCode(parentCode);
         if (deleted) {
@@ -110,3 +110,4 @@ public class ParentController {
         }
     }
 }
+

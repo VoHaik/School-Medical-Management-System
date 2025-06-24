@@ -29,14 +29,14 @@ public class NurseController {
     private UserRepository userRepository;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('Admin')")
     public ResponseEntity<List<Nurse>> getAllNurses() {
         List<Nurse> nurses = nurseService.getAllNurses();
         return ResponseEntity.ok(nurses);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @securityService.isNurse(authentication, #id)")
+    @PreAuthorize("hasAuthority('Admin') or @securityService.isNurse(authentication, #id)")
     public ResponseEntity<?> getNurseById(@PathVariable Integer id) {
         Optional<Nurse> nurse = nurseService.getNurseById(id);
         return nurse.map(ResponseEntity::ok)
@@ -44,7 +44,7 @@ public class NurseController {
     }
 
     @GetMapping("/code/{nurseCode}")
-    @PreAuthorize("hasRole('ADMIN') or @securityService.isNurseByCode(authentication, #nurseCode)")
+    @PreAuthorize("hasAuthority('Admin') or @securityService.isNurseByCode(authentication, #nurseCode)")
     public ResponseEntity<?> getNurseByCode(@PathVariable String nurseCode) {
         Optional<Nurse> nurse = nurseService.getNurseByCode(nurseCode);
         return nurse.map(ResponseEntity::ok)
@@ -53,7 +53,7 @@ public class NurseController {
 
     /*
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or authentication.principal.id == #userId")
+    @PreAuthorize("hasAuthority('Admin') or authentication.principal.id == #userId")
     public ResponseEntity<?> getNurseByUserId(@PathVariable Integer userId) {
         Optional<Nurse> nurse = nurseService.getNurseByUserId(userId);
         return nurse.map(ResponseEntity::ok)
@@ -62,7 +62,7 @@ public class NurseController {
     */
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('Admin')")
     public ResponseEntity<?> createNurse(@RequestBody Map<String, Object> nurseData) {
         try {
             // Expect userCode instead of userId
@@ -117,7 +117,7 @@ public class NurseController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @securityService.isNurse(authentication, #id)")
+    @PreAuthorize("hasAuthority('Admin') or @securityService.isNurse(authentication, #id)")
     public ResponseEntity<?> updateNurse(@PathVariable Integer id, @RequestBody Map<String, Object> nurseData) {
         try {
             // Create nurse object for update
@@ -137,7 +137,7 @@ public class NurseController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('Admin')")
     public ResponseEntity<?> deleteNurse(@PathVariable Integer id) {
         boolean deleted = nurseService.deleteNurse(id);
         if (deleted) {
@@ -147,3 +147,4 @@ public class NurseController {
         }
     }
 }
+

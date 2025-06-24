@@ -23,7 +23,7 @@ public class DeclaredVaccinationRecordController {
     private DeclaredVaccinationRecordService recordService;
 
     @PostMapping("/student/{studentCode}")
-    @PreAuthorize("hasRole('PARENT')")
+    @PreAuthorize("hasAuthority('Parent')")
     public ResponseEntity<DeclaredVaccinationRecordDTO> submitDeclaredVaccination(
             @PathVariable String studentCode,
             @RequestPart("record") DeclaredVaccinationRecordRequestDTO requestDTO,
@@ -73,9 +73,10 @@ public class DeclaredVaccinationRecordController {
     }
     
     @DeleteMapping("/{recordId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('Admin')")
     public ResponseEntity<Void> deleteDeclaredRecord(@PathVariable Integer recordId) {
         recordService.deleteDeclaredRecord(recordId);
         return ResponseEntity.noContent().build();
     }
 }
+

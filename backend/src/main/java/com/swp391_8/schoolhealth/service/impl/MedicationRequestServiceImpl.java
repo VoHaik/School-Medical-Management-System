@@ -162,11 +162,9 @@ public class MedicationRequestServiceImpl implements MedicationRequestServiceInt
         return medicationRequestRepository.findAll().stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
-    }
-
-    @Override
+    }    @Override
     public List<MedicationRequestResponseDTO> getMedicationRequestsByStatus(MedicationRequestStatus status) {
-        return medicationRequestRepository.findByStatus(status).stream()
+        return medicationRequestRepository.findByStatusOrderByRequestDateDesc(status).stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
@@ -266,7 +264,7 @@ public class MedicationRequestServiceImpl implements MedicationRequestServiceInt
         if (user == null) return false;
           // Check if user has the appropriate role
         // This is a simple check that can be made more sophisticated based on your requirements
-        if (user.getRoles().stream().anyMatch(role -> role.getName().toString().equals("ROLE_NURSE"))) {
+        if (user.getRole().getRoleName().equals("SchoolNurse") || user.getRole().getRoleName().equals("Admin")) {
             return true;
         }
         
@@ -287,10 +285,9 @@ public class MedicationRequestServiceImpl implements MedicationRequestServiceInt
         // A user can manage a request if they are the requester OR nurse with appropriate role
         if (request.getRequestedBy() != null && request.getRequestedBy().getId().equals(user.getId())) {
             return true;
-        }
-          // For nurses or admins, check role
+        }        // For nurses or admins, check role
         if (userDetails.getAuthorities().stream().anyMatch(auth -> 
-                auth.getAuthority().equals("ROLE_NURSE") || auth.getAuthority().equals("ROLE_ADMIN"))) {
+                auth.getAuthority().equals("SchoolNurse") || auth.getAuthority().equals("Admin"))) {
             return true;
         }
         

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Box, 
   Typography, 
@@ -26,8 +26,10 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import axios from 'axios';
 import authHeader from '../../services/auth-header';
+import { AuthContext } from '../../context/AuthContext';
 
 const HealthDeclarationApproval = () => {
+  const { currentUser } = useContext(AuthContext); // Lấy thông tin người dùng hiện tại
   const [declarations, setDeclarations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -42,23 +44,95 @@ const HealthDeclarationApproval = () => {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewError, setReviewError] = useState(null);
   const [reviewSuccess, setReviewSuccess] = useState(null);
-  
-  useEffect(() => {
-    fetchPendingDeclarations();
-  }, []);
-  
-  const fetchPendingDeclarations = async () => {
+    useEffect(() => {
+    // Log thông tin người dùng và quyền hạn để debug
+    console.log('Current user:', currentUser);
+    console.log('User roles:', currentUser?.roles);
+    console.log('Has ROLE_NURSE:', currentUser?.roles?.includes('ROLE_NURSE'));
+    console.log('Has ROLE_SCHOOLNURSE:', currentUser?.roles?.includes('ROLE_SCHOOLNURSE'));
+    
+    // Check if user has the required role before fetching declarations
+    if (currentUser && 
+        (currentUser.roles?.includes('ROLE_SCHOOLNURSE') || 
+         currentUser.roles?.includes('ROLE_NURSE') || 
+         currentUser.roles?.includes('ROLE_ADMIN'))) {
+      fetchPendingDeclarations();
+    } else if (currentUser) {
+      setError('You do not have the required permissions to view this page. Required roles: ROLE_SCHOOLNURSE, ROLE_NURSE, or ROLE_ADMIN');
+      setLoading(false);
+    }
+  }, [currentUser]);
+    const fetchPendingDeclarations = async () => {
     setLoading(true);
     setError(null);
     try {
+      // Get auth headers and check if token exists
+      const headers = authHeader();
+      console.log('Auth headers:', headers);
+      
+      if (!headers.Authorization) {
+        console.error('No authorization token found');
+        setError('Authentication token is missing. Please try logging out and logging in again.');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Request URL:', '/api/health-declaration/pending');
+      
+      // Try to refresh the token first if needed
+      try {
+        await axios.get('/api/auth/me', { headers });
+        console.log('Token validation successful');
+      } catch (validationErr) {
+        if (validationErr.response?.status === 401) {
+          console.error('Token validation failed, user needs to login again');
+          setError('Your session has expired. Please log in again.');
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // Now proceed with the main request
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/health-declaration/pending`,
-        { headers: authHeader() }
+        `/api/health-declaration/pending`,
+        { headers }
       );
+      
+      // Enhanced logging for the response
+      console.log('API response status:', response.status);
+      console.log('API response data type:', typeof response.data);
+      console.log('API response data:', JSON.stringify(response.data, null, 2));
+      
+      if (Array.isArray(response.data)) {
+        console.log('Response is an array with length:', response.data.length);
+      } else {
+        console.log('Response is not an array, actual type:', Object.prototype.toString.call(response.data));
+      }
+      
       setDeclarations(response.data);
+      
+      // Thêm thông báo kiểm tra số lượng dữ liệu
+      if (response.data && response.data.length === 0) {
+        setError('Không tìm thấy khai báo sức khỏe nào đang chờ duyệt. Có thể tất cả đã được xử lý hoặc chưa có khai báo nào được gửi.');
+      }
     } catch (err) {
       console.error('Error fetching pending health declarations:', err);
-      setError('Could not load pending declarations. Please try again.');
+      console.error('Error details:', err.response?.data || err.message);
+      console.error('Error status:', err.response?.status);
+      console.error('Error headers:', err.response?.headers);
+      
+      if (err.response?.status === 401) {
+        setError('Phiên đăng nhập của bạn đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.');
+        
+        // Optional: Redirect to login page after a delay
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 3000);
+      } else if (err.response?.status === 403) {
+        setError('Bạn không có quyền xem danh sách khai báo sức khỏe đang chờ duyệt.');
+      } else {
+        setError('Không thể tải danh sách khai báo sức khỏe. Lỗi: ' + (err.response?.data?.message || err.message));
+      }
     } finally {
       setLoading(false);
     }
@@ -72,12 +146,11 @@ const HealthDeclarationApproval = () => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-  
-  const handleViewDeclaration = async (id) => {
+    const handleViewDeclaration = async (id) => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/health-declaration/${id}`,
+        `/api/health-declaration/${id}`,
         { headers: authHeader() }
       );
       setSelectedDeclaration(response.data);
@@ -109,10 +182,9 @@ const HealthDeclarationApproval = () => {
     setReviewLoading(true);
     setReviewError(null);
     setReviewSuccess(null);
-    
-    try {
+      try {
       await axios.put(
-        `${process.env.REACT_APP_API_URL}/api/health-declaration/${selectedDeclaration.declarationId}/review`,
+        `/api/health-declaration/${selectedDeclaration.declarationId}/review`,
         { status: reviewStatus, reviewNotes },
         { headers: authHeader() }
       );

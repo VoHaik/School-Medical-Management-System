@@ -39,8 +39,10 @@ public interface MedicationRequestRepository extends JpaRepository<MedicationReq
     // For getting approved medications for health declaration
     List<MedicationRequest> findByStudent_StudentCodeAndStatusInOrderByStartDateDesc(String studentCode, List<MedicationRequestStatus> statuses);
 
-    // Additional methods required by the service implementations
-    List<MedicationRequest> findByStatus(MedicationRequestStatus status);
+    // Additional methods required by the service implementations    List<MedicationRequest> findByStatus(MedicationRequestStatus status);
     
     List<MedicationRequest> findByStudent_StudentCodeAndStatusIn(String studentCode, List<MedicationRequestStatus> statuses);
+    
+    // For getting count of pending requests for dashboard
+    long countByStatus(MedicationRequestStatus status);
 }
