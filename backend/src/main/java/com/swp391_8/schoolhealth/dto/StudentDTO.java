@@ -14,11 +14,16 @@ public class StudentDTO {
     private LocalDate dateOfBirth;
     private String gender;
     private String className;
-    // Add other fields as needed, but avoid complex objects or lazy-loaded entities directly
-    // For example, if you need the user's username or ID associated with the student
-    private String userUsername; // If the student has an associated User account
-    private Integer userId;      // If the student has an associated User account
-
+    private String grade;
+    private String clazz;
+    private String schoolYear;
+    private String allergies;
+    private String medicalConditions;
+    private String emergencyContactName;
+    private String emergencyContactPhone;
+    private Integer parentId;
+    private String parentName;
+    
     // Constructor to map from Student entity
     public StudentDTO(com.swp391_8.schoolhealth.model.Student student) {
         this.studentCode = student.getStudentCode();
@@ -26,9 +31,13 @@ public class StudentDTO {
         this.dateOfBirth = student.getDateOfBirth();
         this.gender = student.getGender();
         this.className = student.getClassName();
-        if (student.getUser() != null) {
-            this.userUsername = student.getUser().getUsername();
-            this.userId = student.getUser().getUserId();
-        }
+        this.grade = student.getGrade();
+        this.clazz = student.getClazz();
+        this.schoolYear = student.getSchoolYear();
+        this.allergies = student.getAllergies();
+        this.medicalConditions = student.getMedicalConditions();
+        this.emergencyContactName = student.getEmergencyContactName();
+        this.emergencyContactPhone = student.getEmergencyContactPhone();
+        // parentId and parentName will be set separately if needed
     }
 }

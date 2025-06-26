@@ -22,28 +22,28 @@ public class User {
     @Column(name = "user_id")
     private Integer userId;
 
-    @Nationalized
     @Column(name = "username", nullable = false, unique = true, length = 50)
+    @Nationalized
     private String username;
 
-    @Nationalized
     @Column(name = "password", nullable = false, length = 255)
+    @Nationalized
     private String password;
 
-    @Nationalized
     @Column(name = "user_code", nullable = false, unique = true, length = 50)
+    @Nationalized
     private String userCode;
 
-    @Nationalized
     @Column(name = "full_name", length = 100) // Added fullName field
+    @Nationalized
     private String fullName;
 
-    @Nationalized
     @Column(name = "email", length = 100)
+    @Nationalized
     private String email;
 
-    @Nationalized
     @Column(name = "phone_number", length = 20) // Added phoneNumber field
+    @Nationalized
     private String phoneNumber;
 
     @JsonIgnore

@@ -26,16 +26,15 @@ const Navigation = () => {
     ];
 
     // Determine the primary role for navigation.
-    let primaryRole = null;
-    if (currentUser.roles.includes('ROLE_ADMIN')) {
+    let primaryRole = null;    if (currentUser.roles.includes('Admin') || currentUser.roles.includes('ROLE_ADMIN')) {
       primaryRole = 'ROLE_ADMIN';
-    } else if (currentUser.roles.includes('ROLE_PARENT')) {
+    } else if (currentUser.roles.includes('Parent') || currentUser.roles.includes('ROLE_PARENT')) {
       primaryRole = 'ROLE_PARENT';
-    } else if (currentUser.roles.includes('ROLE_SCHOOLNURSE')) {
+    } else if (currentUser.roles.includes('SchoolNurse') || currentUser.roles.includes('ROLE_SCHOOLNURSE')) {
       primaryRole = 'ROLE_SCHOOLNURSE';
-    } else if (currentUser.roles.includes('ROLE_TEACHER')) {
+    } else if (currentUser.roles.includes('Manager') || currentUser.roles.includes('ROLE_TEACHER')) {
       primaryRole = 'ROLE_TEACHER';
-    } else if (currentUser.roles.includes('ROLE_STUDENT')) {
+    } else if (currentUser.roles.includes('Student') || currentUser.roles.includes('ROLE_STUDENT')) {
       primaryRole = 'ROLE_STUDENT';
     } else if (currentUser.roles.length > 0) {
       primaryRole = currentUser.roles[0]; // Fallback to first role if specific ones aren't matched

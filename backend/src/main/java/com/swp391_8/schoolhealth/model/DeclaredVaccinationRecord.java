@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,9 +38,11 @@ public class DeclaredVaccinationRecord {
     @Column(name = "dose_number")
     private Integer doseNumber;
 
+    @Nationalized
     @Column(name = "provider_name", length = 255)
     private String providerName;
 
+    @Nationalized
     @Column(name = "document_url", length = 512)
     private String documentUrl;
 
@@ -61,10 +64,12 @@ public class DeclaredVaccinationRecord {
     @Column(name = "verification_date")
     private LocalDate verificationDate;
 
-    @Column(name = "verification_notes", columnDefinition = "TEXT")
+    @Nationalized
+    @Column(name = "verification_notes", columnDefinition = "NVARCHAR(MAX)")
     private String verificationNotes;
 
-    @Column(columnDefinition = "TEXT", name = "parent_notes")
+    @Nationalized
+    @Column(columnDefinition = "NVARCHAR(MAX)", name = "parent_notes")
     private String parentNotes;
 
     @Column(name = "created_at", updatable = false)
@@ -84,9 +89,7 @@ public class DeclaredVaccinationRecord {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (this.student != null && this.student.getUser() != null) {
-            // Example of setting a default or derived value if needed
-        }
+        // Removed user-related logic since students no longer have user accounts
     }
 
     @PreUpdate

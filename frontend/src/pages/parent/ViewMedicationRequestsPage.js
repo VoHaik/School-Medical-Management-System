@@ -55,7 +55,7 @@ const ViewMedicationRequestsPage = () => {
     }, [location.state]);
 
     useEffect(() => {
-        if (!currentUser || !currentUser.roles.includes('ROLE_PARENT')) {
+        if (!currentUser || !(currentUser.roles.includes('Parent') || currentUser.roles.includes('ROLE_PARENT'))) {
             navigate('/login'); // Redirect if not logged in as a parent
             return;
         }

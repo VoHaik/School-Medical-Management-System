@@ -48,9 +48,8 @@ public class MedicationRequestServiceImpl implements MedicationRequestServiceInt
         String studentCode = null;
         if (request.getStudent() != null) {
             studentCode = request.getStudent().getStudentCode();
-            if (request.getStudent().getUser() != null) {
-                 studentName = request.getStudent().getUser().getFullName();
-            } else {
+            studentName = request.getStudent().getFullName(); // Use student's fullName directly
+            if (studentName == null || studentName.trim().isEmpty()) {
                 studentName = "Student Code: " + studentCode; // Fallback
             }
         }

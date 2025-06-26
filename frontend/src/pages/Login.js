@@ -21,7 +21,7 @@ const Login = () => {
   React.useEffect(() => {
     if (currentUser) {
       // Redirect based on role if currentUser is available
-      if (currentUser.roles && currentUser.roles.includes('ROLE_PARENT')) {
+      if (currentUser.roles && (currentUser.roles.includes('Parent') || currentUser.roles.includes('ROLE_PARENT'))) {
         navigate('/parent/dashboard');
       } else {
         navigate('/'); // Default redirect for other roles or if role is not yet defined
@@ -78,7 +78,7 @@ const Login = () => {
         
         // Redirect based on role
         // setTimeout(() => { // MODIFIED: Removed setTimeout for immediate redirection based on role
-          if (result.user.roles && result.user.roles.includes('ROLE_PARENT')) {
+          if (result.user.roles && (result.user.roles.includes('Parent') || result.user.roles.includes('ROLE_PARENT'))) {
             navigate('/parent/dashboard');
           } else {
             navigate('/'); // Default redirect for other roles

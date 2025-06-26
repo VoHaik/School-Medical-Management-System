@@ -23,7 +23,7 @@ const StudentHealthCheckupHistory = () => {
             const checkupsData = await getStudentHealthCheckupsByStudentId(user.userId);
             // Sort by event start date, most recent first
             const sortedCheckups = (checkupsData || []).sort((a, b) => 
-                new Date(b.healthCheckupEvent.startDate) - new Date(a.healthCheckupEvent.startDate)
+                new Date(b.healthEvent.startDate) - new Date(a.healthEvent.startDate)
             );
             setStudentCheckups(sortedCheckups);
             setError(null);

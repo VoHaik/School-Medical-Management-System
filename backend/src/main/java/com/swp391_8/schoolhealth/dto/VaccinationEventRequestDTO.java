@@ -8,14 +8,13 @@ import java.util.List;
 public class VaccinationEventRequestDTO {
     private String eventName;
     private String description;
-    private LocalDate startDate; // Changed from Date to LocalDate
-    private LocalDate endDate;   // Changed from Date to LocalDate
+    private LocalDate scheduledDateStart; // Use consistent field names
+    private LocalDate scheduledDateEnd;   // Use consistent field names
     private String location;
     private Integer vaccineId; // Changed from String to Integer
-    private List<String> targetGradeLevels;
-    private String targetAgeRange;
-    private Integer expectedParticipants;
+    
+    // Target grade information - use grade IDs instead of strings
+    private List<Integer> targetGradeIds; // IDs of target grade levels
+    
     private String status; // Added status field
-    private LocalDate scheduledDateStart; // Added scheduledDateStart field
-    private LocalDate scheduledDateEnd; // Added scheduledDateEnd field
 }

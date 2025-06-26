@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -42,9 +43,11 @@ public class StudentVaccination { // Renamed from Vaccination
     @Column(name = "dose_number")
     private Integer doseNumber; // e.g., 1, 2, or null if not applicable. Could be part of Vaccine info too.
 
+    @Nationalized
     @Column(name = "batch_number", length = 50)
     private String batchNumber;
 
+    @Nationalized
     @Column(name = "administering_location", length = 255) // e.g., "School Clinic", "City Hospital"
     private String administeringLocation;
 
@@ -76,13 +79,16 @@ public class StudentVaccination { // Renamed from Vaccination
     @Column(name = "consent_date")
     private LocalDate consentDate;
 
+    @Nationalized
     @Column(name = "consent_document_url", length = 512) // Link to scanned consent form
     private String consentDocumentUrl;
 
-    @Column(columnDefinition = "TEXT", name = "administration_notes")
+    @Nationalized
+    @Column(columnDefinition = "NVARCHAR(MAX)", name = "administration_notes")
     private String administrationNotes; // Notes by nurse during administration
 
-    @Column(name = "parent_notes", columnDefinition = "TEXT")
+    @Nationalized
+    @Column(name = "parent_notes", columnDefinition = "NVARCHAR(MAX)")
     private String parentNotes; // Notes from parent when submitting consent/request
 
     // Removed: result - typically not a "result" for vaccination, more like completion.

@@ -49,17 +49,18 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     // This query assumes a join table `user_children` where `parent_id` is the User with ROLE_PARENT
     // and `child_id` is the User with ROLE_STUDENT.
     // This is a placeholder and needs to match your actual data model for parent-child relationships.
-    @Query(value = "SELECT u.* FROM users u " +
-                   "JOIN student_parent sp ON u.user_id = sp.parent_id " +
-                   "JOIN roles r ON u.role_id = r.role_id " +
-                   "WHERE sp.student_id = :studentId AND r.role_name = 'PARENT'", nativeQuery = true)
-    List<User> findParentsByStudentId(@Param("studentId") Integer studentId);
-
     // Find parents associated with a student via ParentStudentRelationship
     @Query("SELECT psr.parent FROM ParentStudentRelationship psr WHERE psr.student.studentCode = :studentCode")
     List<User> findParentsByStudentCode(@Param("studentCode") String studentCode);
 
+    // Old method - commented out as it references removed student_id field
+    // @Query(value = "SELECT u.* FROM users u " +
+    //                "JOIN student_parent sp ON u.user_id = sp.parent_id " +
+    //                "JOIN roles r ON u.role_id = r.role_id " +
+    //                "WHERE sp.student_id = :studentId AND r.role_name = 'PARENT'", nativeQuery = true)
+    // List<User> findParentsByStudentId(@Param("studentId") Integer studentId);
+
     // Find students associated with a parent via ParentStudentRelationship
-    @Query("SELECT psr.student.user FROM ParentStudentRelationship psr WHERE psr.parent.parentCode = :parentCode") // Assuming Parent entity is a User, so psr.parent is a User
-    List<User> findStudentsByParentCode(@Param("parentCode") String parentCode);
+    @Query("SELECT psr.student FROM ParentStudentRelationship psr WHERE psr.parent.parentCode = :parentCode")
+    List<com.swp391_8.schoolhealth.model.Student> findStudentsByParentCode(@Param("parentCode") String parentCode);
 }

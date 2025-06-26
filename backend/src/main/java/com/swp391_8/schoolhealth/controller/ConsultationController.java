@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/consultations")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true") // Updated CORS for consistency
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"}, allowCredentials = "true") // Updated CORS for consistency
 public class ConsultationController {
 
     @Autowired

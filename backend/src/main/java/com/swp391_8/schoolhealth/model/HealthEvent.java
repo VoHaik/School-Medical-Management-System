@@ -11,11 +11,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "health_checkup_events")
+@Table(name = "health_events")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class HealthCheckupEvent {
+public class HealthEvent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "event_id")
@@ -26,7 +26,16 @@ public class HealthCheckupEvent {
     private String eventName;
 
     @Nationalized
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "event_type", length = 50, nullable = false)
+    private EventType eventType = EventType.HEALTH_CHECKUP;
+
+    public enum EventType {
+        HEALTH_CHECKUP, VACCINATION
+    }
+
+    @Nationalized
+    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
     @Column(name = "scheduled_date")
@@ -36,34 +45,40 @@ public class HealthCheckupEvent {
     @Column(name = "location", length = 255)
     private String location;
 
+    @Nationalized
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50)
-    private EventStatus status = EventStatus.PLANNED;
+    private Status status = Status.SCHEDULED;
 
-    public enum EventStatus {
-        PLANNED, CONSENT_COLLECTION, IN_PROGRESS, COMPLETED, CANCELLED
+    public enum Status {
+        SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED, POSTPONED
     }
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "health_checkup_event_types", joinColumns = @JoinColumn(name = "event_id"))
-    @Column(name = "checkup_type", length = 100)
-    private List<String> typesOfCheckups; // e.g., "VISION", "HEARING", "DENTAL"
-
     @Nationalized
-    @Column(name = "target_grade_levels", length = 255) // Could be a list or a more structured way to define target
-    private String targetGradeLevels; // Example: "Grade 1, Grade 2", or "ALL"
+    @Column(name = "target_grade_levels", length = 255)
+    private String targetGradeLevels;
 
-    // Consider adding targetClasses if more granularity is needed
-
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_user_id", referencedColumnName = "user_id")
-    private User createdBy;
+    @Column(name = "start_time")
+    private LocalDateTime startTime;
+
+    @Column(name = "end_time")
+    private LocalDateTime endTime;
+
+    @Column(name = "created_by_user_id")
+    private Integer createdByUserId;
+
+    @Column(name = "updated_by_user_id")
+    private Integer updatedByUserId;
+
+    // One-to-many relationship with StudentHealthCheckup
+    @OneToMany(mappedBy = "healthEvent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<StudentHealthCheckup> studentHealthCheckups;
 
     @PrePersist
     protected void onCreate() {

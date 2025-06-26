@@ -38,8 +38,8 @@ import HealthCheckups from './pages/medical/HealthCheckups';
 import StudentManagement from './pages/medical/StudentManagement';
 import MedicalReports from './pages/medical/Reports';
 import MedicalEvents from './pages/medical/MedicalEvents';
-import HealthCheckupEventManagement from './pages/nurse/HealthCheckupEventManagement'; // Added for nurse/admin
-import HealthCheckupEventStudentManagement from './pages/nurse/HealthCheckupEventStudentManagement'; // Added for nurse/admin
+import HealthEventManagement from './pages/nurse/HealthEventManagement'; // Updated for nurse/admin - renamed from HealthCheckupEventManagement
+import HealthEventStudentManagement from './pages/nurse/HealthEventStudentManagement'; // Updated for nurse/admin - renamed from HealthCheckupEventStudentManagement
 import HealthDeclarationApproval from './pages/nurse/HealthDeclarationApproval'; // Added for nurse approval of health declarations
 
 // Manager Pages
@@ -151,8 +151,8 @@ function App() {
                 <Route path="/medical/health-checkups" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_DOCTOR']}><HealthCheckups /></ProtectedRoute>} />
                 <Route path="/medical/student-management" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_DOCTOR']}><StudentManagement /></ProtectedRoute>} />
                 <Route path="/medical/reports" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_DOCTOR']}><MedicalReports /></ProtectedRoute>} />                <Route path="/medical/events" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_DOCTOR']}><MedicalEvents /></ProtectedRoute>} />
-                <Route path="/nurse/health-checkup-events" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_ADMIN']}><HealthCheckupEventManagement /></ProtectedRoute>} />
-                <Route path="/nurse/health-checkup-events/:eventId/students" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_ADMIN']}><HealthCheckupEventStudentManagement /></ProtectedRoute>} />
+                <Route path="/nurse/health-checkup-events" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_ADMIN']}><HealthEventManagement /></ProtectedRoute>} />
+                <Route path="/nurse/health-checkup-events/:eventId/students" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_ADMIN']}><HealthEventStudentManagement /></ProtectedRoute>} />
                 <Route path="/nurse/health-declaration-approval" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_ADMIN']}><HealthDeclarationApproval /></ProtectedRoute>} /> {/* Route cho phê duyệt khai báo sức khỏe */}
 
                 {/* Manager Routes */}

@@ -30,7 +30,7 @@ import {
 import { AuthContext } from '../../context/AuthContext';
 import authHeader from '../../services/auth-header'; // Add this import for direct header testing
 
-// Initial state for dashboard data
+// Trạng thái ban đầu cho dữ liệu bảng điều khiển
 const initialSummaryData = {
   pendingMedicationRequests: 0,
   pendingHealthDeclarations: 0,
@@ -56,12 +56,9 @@ function NurseDashboard() {
     try {
       setLoading(true);
       setError(null); // Clear previous errors
-      
-      // Check roles first
+        // Check roles first - using role names from database (Admin, SchoolNurse)
       if (!currentUser.roles || !currentUser.roles.some(role => 
-          role === 'SchoolNurse' || role === 'ROLE_SCHOOLNURSE' || 
-          role === 'Admin' || role === 'ROLE_ADMIN')) {
-        setError('You do not have the required role to access this page');
+          role === 'SchoolNurse' || role === 'Admin')) {        setError('You do not have permission to access this page');
         setLoading(false);
         return;
       }
@@ -356,10 +353,8 @@ function NurseDashboard() {
       setLoading(false);
     }
   };
-
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+    <Box sx={{ p: 3 }}>      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <PageHeader title="Nurse Dashboard" />
         <Button 
           variant="contained" 
@@ -376,15 +371,14 @@ function NurseDashboard() {
         <Box sx={{ mb: 2 }}>
           <Typography color="error" sx={{ mb: 1 }}>
             {error}
-          </Typography>
-          <Button 
+          </Typography>          <Button 
             variant="outlined" 
             color="secondary"
             onClick={testApiConnectivity}
             size="small"
             sx={{ mr: 1 }}
-          >
-            Test Auth Token
+          >            
+            Test Authentication
           </Button>
           <Button 
             variant="outlined" 
@@ -392,15 +386,13 @@ function NurseDashboard() {
             onClick={testBackendConnection}
             size="small"
           >
-            Test Backend Connection
+            Test Connection
           </Button>
         </Box>
       )}
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={6} lg={3}>
-          <Card>
-            <CardHeader title="Pending Medication Requests" avatar={<AssignmentLateIcon color="warning" />} />
+      <Grid container spacing={3} sx={{ mb: 3 }}>        <Grid item xs={12} md={6} lg={3}>
+          <Card>            <CardHeader title="Pending Medication Requests" avatar={<AssignmentLateIcon color="warning" />} />
             <CardContent>
               {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
@@ -412,7 +404,7 @@ function NurseDashboard() {
                 </Typography>
               )}
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                requests require your attention.
+                requests pending approval.
               </Typography>
               <Button 
                 variant="contained" 
@@ -424,11 +416,8 @@ function NurseDashboard() {
               </Button>
             </CardContent>
           </Card>
-        </Grid>
-
-        <Grid item xs={12} md={6} lg={3}>
-          <Card>
-            <CardHeader title="Pending Health Declarations" avatar={<AssessmentIcon color="primary" />} />
+        </Grid>        <Grid item xs={12} md={6} lg={3}>
+          <Card>            <CardHeader title="Pending Health Declarations" avatar={<AssessmentIcon color="primary" />} />
             <CardContent>
               {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
@@ -440,7 +429,7 @@ function NurseDashboard() {
                 </Typography>
               )}
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                health declarations need review.
+                health declarations to review.
               </Typography>
               <Button 
                 variant="contained" 
@@ -452,17 +441,14 @@ function NurseDashboard() {
               </Button>
             </CardContent>
           </Card>
-        </Grid>
-
-        <Grid item xs={12} md={6} lg={3}>
-          <Card>
-            <CardHeader title="Upcoming Health Checks/Events" avatar={<EventAvailableIcon color="info" />} />
+        </Grid>        <Grid item xs={12} md={6} lg={3}>
+          <Card>            <CardHeader title="Upcoming Events" avatar={<EventAvailableIcon color="info" />} />
             <CardContent>
               <Typography variant="h4" component="p" gutterBottom>
                 {summaryData.upcomingAppointments} 
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                scheduled events today.
+                events scheduled for today.
               </Typography>
               <Button 
                 variant="outlined" 
@@ -475,10 +461,8 @@ function NurseDashboard() {
             </CardContent>
           </Card>
         </Grid>
-        
-        <Grid item xs={12} md={6} lg={3}>
-          <Card>
-            <CardHeader title="Recent Alerts" avatar={<WarningIcon color="error" />} />
+          <Grid item xs={12} md={6} lg={3}>
+          <Card>            <CardHeader title="Recent Alerts" avatar={<WarningIcon color="error" />} />
             <CardContent>
               <Typography variant="h4" component="p" gutterBottom>
                 {summaryData.recentAlerts}
@@ -497,14 +481,12 @@ function NurseDashboard() {
             </CardContent>
           </Card>
         </Grid>
-      </Grid>
-
-      <Paper sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom>Quick Links</Typography>
+      </Grid>      <Paper sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom>Quick Access</Typography>
         <List>
           <ListItem button component={RouterLink} to="/medical/medication-management">
             <ListItemIcon><MedicationIcon /></ListItemIcon>
-            <ListItemText primary="Full Medication Management" />
+            <ListItemText primary="Medication Management" />
           </ListItem>
           <ListItem button component={RouterLink} to="/medical/medication-management?tab=4">
             <ListItemIcon><MedicalServicesIcon color="error" /></ListItemIcon>
@@ -512,11 +494,11 @@ function NurseDashboard() {
           </ListItem>
           <ListItem button component={RouterLink} to="/nurse/health-declaration-approval">
             <ListItemIcon><AssessmentIcon /></ListItemIcon>
-            <ListItemText primary="Health Declarations Review" />
+            <ListItemText primary="Health Declaration Approval" />
           </ListItem>
           <ListItem button component={RouterLink} to="/nurse/health-checkup-events">
             <ListItemIcon><EventAvailableIcon /></ListItemIcon>
-            <ListItemText primary="Create and Organize Event" />
+            <ListItemText primary="Create and Manage Events" />
           </ListItem>
           {/* Add more quick links as other nurse functionalities are developed */}
           {/* e.g., Vaccination Management */}

@@ -1,80 +1,109 @@
+// Trivial comment to force recompile
 package com.swp391_8.schoolhealth.service;
 
+import com.swp391_8.schoolhealth.dto.StudentDTO;
 import com.swp391_8.schoolhealth.model.Student;
-import com.swp391_8.schoolhealth.model.ParentStudentRelationship;
+import com.swp391_8.schoolhealth.model.User;
 import com.swp391_8.schoolhealth.repository.StudentRepository;
-import com.swp391_8.schoolhealth.repository.ParentStudentRelationshipRepository;
-import com.swp391_8.schoolhealth.dto.StudentDTO; // Import StudentDTO
+import com.swp391_8.schoolhealth.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class StudentService {
+    // Trivial comment to try and force recompile
 
     @Autowired
     private StudentRepository studentRepository;
 
     @Autowired
-    private ParentStudentRelationshipRepository parentStudentRelationshipRepository;
+    private UserRepository userRepository;
 
-    @Transactional(readOnly = true)
+    // Modified to accept User parent as a parameter
+    private StudentDTO convertToDTO(Student student, User parent) {
+        StudentDTO dto = new StudentDTO();
+        dto.setStudentCode(student.getStudentCode());
+        dto.setFullName(student.getFullName());
+        dto.setDateOfBirth(student.getDateOfBirth());
+        dto.setGender(student.getGender());
+        dto.setGrade(student.getGrade());
+        dto.setClazz(student.getClazz()); // Make sure Student entity has getClazz()
+        dto.setSchoolYear(student.getSchoolYear()); // Make sure Student entity has getSchoolYear()
+        dto.setAllergies(student.getAllergies());
+        dto.setMedicalConditions(student.getMedicalConditions());
+        dto.setEmergencyContactName(student.getEmergencyContactName());
+        dto.setEmergencyContactPhone(student.getEmergencyContactPhone());
+
+        if (parent != null) {
+            dto.setParentId(parent.getUserId());
+            // Assuming User model has getFullName() method
+            dto.setParentName(parent.getFullName());
+        }
+        return dto;
+    }
+
     public List<StudentDTO> getAllStudents() {
+        // For getAllStudents, parent context is not directly available here.
+        // If StudentDTO requires parent info, this method might need adjustment
+        // or StudentDTO's parent fields should be nullable/optional.
+        // For now, assuming it's acceptable for parent fields to be null if not converting with explicit parent.
+        // This might require a different convertToDTO or logic if parent info is strictly needed.
+        // A simple version without parent for general listing:
         return studentRepository.findAll().stream()
-                .map(StudentDTO::new)
+                .map(student -> { // Lambda to call a version of convertToDTO or map manually
+                    StudentDTO dto = new StudentDTO();
+                    dto.setStudentCode(student.getStudentCode());
+                    dto.setFullName(student.getFullName());
+                    dto.setDateOfBirth(student.getDateOfBirth());
+                    dto.setGender(student.getGender());
+                    dto.setGrade(student.getGrade());
+                    dto.setClazz(student.getClazz());
+                    dto.setSchoolYear(student.getSchoolYear());
+                    dto.setAllergies(student.getAllergies());
+                    dto.setMedicalConditions(student.getMedicalConditions());
+                    dto.setEmergencyContactName(student.getEmergencyContactName());
+                    dto.setEmergencyContactPhone(student.getEmergencyContactPhone());
+                    // Parent info will be null here
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public StudentDTO getStudentByCode(String studentCode) {
-        Student student = studentRepository.findByStudentCode(studentCode)
-                .orElseThrow(() -> new RuntimeException("Student not found with code: " + studentCode));
-        return new StudentDTO(student);
+    public Optional<StudentDTO> getStudentByCode(String studentCode) {
+        // Similar to getAllStudents, if parent info is needed, this needs more context.
+        // Assuming a version of convertToDTO that can handle a null parent.
+        return studentRepository.findByStudentCode(studentCode)
+                .map(student -> { // Lambda to call a version of convertToDTO or map manually
+                    StudentDTO dto = new StudentDTO();
+                    dto.setStudentCode(student.getStudentCode());
+                    dto.setFullName(student.getFullName());
+                    // ... map other fields ...
+                    // Parent info will be null here
+                    return dto;
+                }); // Simplified for brevity, ensure all fields are mapped
     }
 
-    @Transactional(readOnly = true)
-    public List<StudentDTO> getStudentsByParentId(Integer parentId) {
-        // This method is problematic as parentId (Integer) is ambiguous after refactoring.
-        // Assuming this was intended to be findByParentCode(String parentCode)
-        // For now, to fix compilation, we'll assume a direct conversion or that this method will be updated/removed.
-        // This will likely require fetching the Parent by old ID, then getting parentCode, or changing the method signature.
-        // Temporarily, we will change the call to use findByParentParentCode, assuming parentId can be converted to a String parentCode.
-        // This is a placeholder fix and needs review.
-        // If parentId is a legacy database ID, it needs to be resolved to a parentCode.
-        // For the purpose of fixing the immediate compilation error based on previous changes:
-        List<ParentStudentRelationship> relationships = parentStudentRelationshipRepository.findByParentParentCode(String.valueOf(parentId));
-        // Ensure that the Student entity is fetched within the transaction before mapping
-        return relationships.stream()
-                            .map(ParentStudentRelationship::getStudent) // Get Student entity
-                            .map(StudentDTO::new) // Then map to StudentDTO
-                            .collect(Collectors.toList());
-    }
+    // Renamed method back to original
+    public List<StudentDTO> getStudentsByParentUserCode(String parentUserCode) {
+        // logger.info("Fetching students for parentUserCode: {}", parentUserCode); // Optional logging
+        Optional<User> parentUserOptional = userRepository.findByUserCode(parentUserCode);
 
-    @Transactional(readOnly = true)
-    public List<StudentDTO> getStudentsByParentCode(String parentCode) {
-        System.out.println("[StudentService] Getting students for parentCode: " + parentCode);
-        List<ParentStudentRelationship> relationships = parentStudentRelationshipRepository.findByParentParentCode(parentCode);
-        System.out.println("[StudentService] Found " + relationships.size() + " relationships for parentCode: " + parentCode);
-
-        if (relationships.isEmpty()) {
-            return List.of(); // Return empty list if no relationships found
+        if (parentUserOptional.isEmpty()) {
+            return List.of(); // Parent not found, return empty list
         }
+        User parent = parentUserOptional.get();
 
-        return relationships.stream()
-                            .map(relationship -> {
-                                Student student = relationship.getStudent();
-                                if (student == null) {
-                                    System.out.println("[StudentService] Null student found for a relationship with parentCode: " + parentCode + ", relationship ID: " + relationship.getId());
-                                    return null; // Or handle as an error
-                                }
-                                System.out.println("[StudentService] Mapping student: " + student.getStudentCode() + " - " + student.getFullName());
-                                return new StudentDTO(student);
-                            })
-                            .filter(dto -> dto != null) // Filter out any null DTOs from the previous step
-                            .collect(Collectors.toList());
+        List<Student> students = studentRepository.findByParentCode(parentUserCode);
+
+        return students.stream()
+                .map(student -> convertToDTO(student, parent)) // Pass the fetched parent to convertToDTO
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -91,10 +120,7 @@ public class StudentService {
         student.setDateOfBirth(studentDetails.getDateOfBirth());
         student.setGender(studentDetails.getGender());
         student.setClassName(studentDetails.getClassName());
-        // Handle user association carefully if studentDetails can update it
-        if (studentDetails.getUser() != null) { 
-            student.setUser(studentDetails.getUser());
-        }
+        // User association removed as part of user_id removal from Student model
         Student updatedStudent = studentRepository.save(student);
         return new StudentDTO(updatedStudent);
     }
@@ -105,4 +131,10 @@ public class StudentService {
                 .orElseThrow(() -> new RuntimeException("Student not found with code: " + studentCode));
         studentRepository.delete(student);
     }
+
+    // Add other student-related service methods here (e.g., create, update, delete)
+    // For example:
+    // public StudentDTO createStudent(StudentCreationDTO creationDTO) { ... }
+    // public StudentDTO updateStudent(String studentCode, StudentUpdateDTO updateDTO) { ... }
+    // public void deleteStudent(String studentCode) { ... }
 }

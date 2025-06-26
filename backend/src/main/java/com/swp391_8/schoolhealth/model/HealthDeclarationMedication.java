@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Nationalized;
 import java.util.Date;
 
 @Entity
@@ -19,12 +20,15 @@ public class HealthDeclarationMedication {
     @JoinColumn(name = "health_declaration_id", nullable = false)
     private HealthDeclaration healthDeclaration;
 
+    @Nationalized
     @Column(name = "medication_name", nullable = false)
     private String medicationName;
 
+    @Nationalized
     @Column(name = "dosage", nullable = false)
     private String dosage;
 
+    @Nationalized
     @Column(name = "frequency", nullable = false)
     private String frequency;
 
@@ -34,9 +38,11 @@ public class HealthDeclarationMedication {
     @Column(name = "end_date")
     private Date endDate;
 
+    @Nationalized
     @Column(name = "reason", columnDefinition = "NVARCHAR(MAX)")
     private String reason;
 
+    @Nationalized
     @Column(name = "notes", columnDefinition = "NVARCHAR(MAX)")
     private String notes;
 }

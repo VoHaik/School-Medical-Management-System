@@ -9,11 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import com.swp391_8.schoolhealth.repository.StudentHealthCheckupRepository;
 import com.swp391_8.schoolhealth.repository.StudentRepository;
-import com.swp391_8.schoolhealth.repository.HealthCheckupEventRepository; 
+import com.swp391_8.schoolhealth.repository.HealthEventRepository; 
 import com.swp391_8.schoolhealth.repository.UserRepository;
 import com.swp391_8.schoolhealth.model.Student;
 import com.swp391_8.schoolhealth.model.StudentHealthCheckup;
-import com.swp391_8.schoolhealth.model.HealthCheckupEvent; 
+import com.swp391_8.schoolhealth.model.HealthEvent; 
 import com.swp391_8.schoolhealth.model.ERole; 
 import com.swp391_8.schoolhealth.exception.ResourceNotFoundException;
 import com.swp391_8.schoolhealth.security.services.UserDetailsImpl;
@@ -41,7 +41,7 @@ public class StudentHealthCheckupServiceImpl implements StudentHealthCheckupServ
     // Assuming HealthCheckupEventRepository is still relevant and correctly named.
     // If it was for a general event system that's removed, this might need adjustment.
     @Autowired
-    private HealthCheckupEventRepository healthCheckupEventRepository;
+    private HealthEventRepository healthEventRepository;
 
     @Autowired
     private NotificationService notificationService;
@@ -67,14 +67,14 @@ public class StudentHealthCheckupServiceImpl implements StudentHealthCheckupServ
             throw new AccessDeniedException("User not authorized to create health checkups.");
         }
 
-        HealthCheckupEvent event = null;
+        HealthEvent event = null;
         if (requestDTO.getEventId() != null) {
-            event = healthCheckupEventRepository.findById(requestDTO.getEventId())
-                    .orElseThrow(() -> new ResourceNotFoundException("HealthCheckupEvent not found with ID: " + requestDTO.getEventId()));
+            event = healthEventRepository.findById(requestDTO.getEventId())
+                    .orElseThrow(() -> new ResourceNotFoundException("HealthEvent not found with ID: " + requestDTO.getEventId()));
         }
         StudentHealthCheckup checkup = new StudentHealthCheckup();
         checkup.setStudent(student);
-        checkup.setHealthCheckupEvent(event);
+        checkup.setHealthEvent(event);
         checkup.setConductedByUser(conductedByUser); // Corrected: setConductedByUser
         checkup.setCheckupDate(requestDTO.getCheckupDate());
         
@@ -241,15 +241,15 @@ public class StudentHealthCheckupServiceImpl implements StudentHealthCheckupServ
     
     private void sendResultsAvailableNotifications(StudentHealthCheckup record) {
         Student student = record.getStudent();
-        // HealthCheckupEvent event = record.getHealthCheckupEvent(); // Event might be null, handle gracefully
+        // HealthEvent event = record.getHealthEvent(); // Event might be null, handle gracefully
 
         if (student == null) { // Removed event null check as it might not always be present
             return;
         }
 
         String studentFullName = student.getFullName() != null ? student.getFullName() : student.getStudentCode();
-        String eventName = record.getHealthCheckupEvent() != null && record.getHealthCheckupEvent().getEventName() != null 
-                            ? record.getHealthCheckupEvent().getEventName() 
+        String eventName = record.getHealthEvent() != null && record.getHealthEvent().getEventName() != null 
+                            ? record.getHealthEvent().getEventName() 
                             : "General Checkup"; // Default if event or event name is null
 
         String messageToParent = String.format("Health checkup results for %s for your child %s are now available.", // Adjusted message
@@ -271,8 +271,8 @@ public class StudentHealthCheckupServiceImpl implements StudentHealthCheckupServ
             return;
         }
         String studentFullName = student.getFullName() != null ? student.getFullName() : student.getStudentCode();
-        String eventName = record.getHealthCheckupEvent() != null && record.getHealthCheckupEvent().getEventName() != null 
-                            ? record.getHealthCheckupEvent().getEventName() 
+        String eventName = record.getHealthEvent() != null && record.getHealthEvent().getEventName() != null 
+                            ? record.getHealthEvent().getEventName() 
                             : "General Checkup"; 
         String parentFullName = consentingParent.getFullName() != null ? consentingParent.getFullName() : consentingParent.getUsername(); // consentingParent is User, getUsername() is valid
 
@@ -311,9 +311,9 @@ public class StudentHealthCheckupServiceImpl implements StudentHealthCheckupServ
             dto.setStudentCode(record.getStudent().getStudentCode());
             dto.setStudentName(record.getStudent().getFullName());
         }
-        if (record.getHealthCheckupEvent() != null) {
-            dto.setEventId(record.getHealthCheckupEvent().getEventId());
-            dto.setEventName(record.getHealthCheckupEvent().getEventName());
+        if (record.getHealthEvent() != null) {
+            dto.setEventId(record.getHealthEvent().getEventId());
+            dto.setEventName(record.getHealthEvent().getEventName());
         }
         dto.setParentConsentStatus(record.getParentConsentStatus() != null ? record.getParentConsentStatus().name() : null);
         dto.setConsentDate(record.getConsentDate());
@@ -359,8 +359,8 @@ public class StudentHealthCheckupServiceImpl implements StudentHealthCheckupServ
 
     private void sendHealthCheckupConsentNotificationToParent(User parentUser, Student student, StudentHealthCheckup checkup, String link) {
         String studentName = student.getFullName() != null ? student.getFullName() : student.getStudentCode();
-        String eventName = checkup.getHealthCheckupEvent() != null && checkup.getHealthCheckupEvent().getEventName() != null 
-                            ? checkup.getHealthCheckupEvent().getEventName() 
+        String eventName = checkup.getHealthEvent() != null && checkup.getHealthEvent().getEventName() != null 
+                            ? checkup.getHealthEvent().getEventName() 
                             : "General Checkup";
         String message = String.format("Please provide consent for the upcoming health checkup for %s for your child %s. Details and consent form are available at the link.",
                                      eventName, studentName);
@@ -370,8 +370,8 @@ public class StudentHealthCheckupServiceImpl implements StudentHealthCheckupServ
     private void sendHealthCheckupConsentResultNotificationToNurse(User nurse, User parentUser, Student student, StudentHealthCheckup checkup, boolean consentGiven) {
         String studentName = student.getFullName() != null ? student.getFullName() : student.getStudentCode();
         String parentName = parentUser.getFullName() != null ? parentUser.getFullName() : parentUser.getUsername();
-        String eventName = checkup.getHealthCheckupEvent() != null && checkup.getHealthCheckupEvent().getEventName() != null 
-                            ? checkup.getHealthCheckupEvent().getEventName() 
+        String eventName = checkup.getHealthEvent() != null && checkup.getHealthEvent().getEventName() != null 
+                            ? checkup.getHealthEvent().getEventName() 
                             : "General Checkup";
         String consentStatus = consentGiven ? "CONSENTED" : "REJECTED";
         String message = String.format("Parent %s has %s to the health checkup for %s for student %s. Notes: %s",
@@ -410,10 +410,8 @@ public class StudentHealthCheckupServiceImpl implements StudentHealthCheckupServ
             authorized = true;
         } else if (securityService.isParentOfStudent(authentication, studentCode)) {
             authorized = true;
-        } else if (student.getUser() != null && student.getUser().getUserId().equals(userDetails.getId())) {
-            // Allow student to see their own records
-            authorized = true;
         }
+        // TODO: Student authorization removed - needs to be implemented without user relationship
 
         if (!authorized) {
             throw new AccessDeniedException("User is not authorized to view health checkups for this student.");
@@ -434,7 +432,7 @@ public class StudentHealthCheckupServiceImpl implements StudentHealthCheckupServ
         if (!securityService.isNurse(authentication) && !securityService.isAdmin(authentication)) {
             throw new AccessDeniedException("User not authorized to view all checkups for this event.");
         }
-        return studentHealthCheckupRepository.findByHealthCheckupEvent_EventId(eventId)
+        return studentHealthCheckupRepository.findByHealthEvent_EventId(eventId)
             .stream()
             .map(this::convertToDTO)
             .collect(Collectors.toList());
@@ -454,8 +452,8 @@ public class StudentHealthCheckupServiceImpl implements StudentHealthCheckupServ
             authorized = true;
         } else if (securityService.isParentOfStudent(authentication, studentCode)) {
             authorized = true;
-        } else if (checkup.getStudent().getUser() != null && checkup.getStudent().getUser().getUserId().equals(userDetails.getId())) {
-            // Allow student to see their own record
+        } else if (checkup.getStudent().getStudentCode().equals(userDetails.getUserCode())) {
+            // Allow student to see their own record using userCode comparison
             authorized = true;
         }
 

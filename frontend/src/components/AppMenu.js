@@ -26,16 +26,15 @@ const AppMenu = ({ isOpen, closeMenu }) => {
     let items = [];
 
     // Determine the primary role for navigation.
-    let primaryRole = null;
-    if (roles.includes('ROLE_ADMIN')) {
+    let primaryRole = null;    if (roles.includes('Admin') || roles.includes('ROLE_ADMIN')) {
       primaryRole = 'ROLE_ADMIN';
-    } else if (roles.includes('ROLE_PARENT')) {
+    } else if (roles.includes('Parent') || roles.includes('ROLE_PARENT')) {
       primaryRole = 'ROLE_PARENT';
-    } else if (roles.includes('ROLE_SCHOOLNURSE')) {
+    } else if (roles.includes('SchoolNurse') || roles.includes('ROLE_SCHOOLNURSE')) {
       primaryRole = 'ROLE_SCHOOLNURSE';
-    } else if (roles.includes('ROLE_TEACHER')) {
+    } else if (roles.includes('Manager') || roles.includes('ROLE_TEACHER')) {
       primaryRole = 'ROLE_TEACHER';
-    } else if (roles.includes('ROLE_STUDENT')) {
+    } else if (roles.includes('Student') || roles.includes('ROLE_STUDENT')) {
       primaryRole = 'ROLE_STUDENT';
     } else if (roles.length > 0) {
       primaryRole = roles[0]; 
@@ -62,7 +61,7 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/medical/dashboard', label: 'Medical Dashboard', icon: 'fas fa-tachometer-alt' },
           { path: '/nurse/health-declaration-approval', label: 'Health Declaration Review', icon: 'fas fa-clipboard-check' },
           { path: '/medical/medication-management', label: 'Medication Management', icon: 'fas fa-capsules' },
-          { path: '/nurse/health-checkup-events', label: 'Health Checkup Events', icon: 'fas fa-calendar-check' },
+          { path: '/nurse/health-checkup-events', label: 'Create and Organize Event', icon: 'fas fa-calendar-check' },
           { path: '/medical/vaccination-management', label: 'Vaccination Management', icon: 'fas fa-syringe' },
           { path: '/medical/health-checkups', label: 'Health Checkups', icon: 'fas fa-stethoscope' },
           { path: '/medical/student-management', label: 'Student Management', icon: 'fas fa-users' },

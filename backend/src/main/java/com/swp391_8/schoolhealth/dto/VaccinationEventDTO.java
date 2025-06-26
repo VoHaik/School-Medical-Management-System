@@ -18,6 +18,11 @@ public class VaccinationEventDTO {
     private String vaccineName; // Name of the associated Vaccine (for convenience)
     private Integer coordinatorId; // Changed from String createdByUserId to Integer coordinatorId
     private String coordinatorName; // Added for display
+    
+    // Target grade information
+    private List<Integer> targetGradeIds; // IDs of target grade levels
+    private List<String> targetGradeNames; // Names of target grade levels for display
+    
     private LocalDateTime createdAt; // Changed from Date creationDate to LocalDateTime createdAt
     private LocalDateTime updatedAt; // Changed from Date lastUpdateDate to LocalDateTime updatedAt
 }

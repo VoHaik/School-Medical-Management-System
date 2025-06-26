@@ -78,7 +78,7 @@ const vaccinationRecordSchema = yup.object().shape({
 const vaccinationCampaignSchema = yup.object().shape({
   campaignName: yup.string().required('Campaign name is required'),
   vaccineType: yup.string().required('Vaccine type is required'),
-  targetGrades: yup.array().of(yup.string()).min(1, 'At least one grade must be selected'),
+  targetGrades: yup.array().of(yup.number()).min(1, 'At least one grade must be selected'),
   startDate: yup.date().required('Start date is required'),
   endDate: yup.date().required('End date is required'),
   venue: yup.string().required('Venue is required'),
@@ -96,6 +96,7 @@ function VaccinationManagement() {
   const [campaigns, setCampaigns] = useState([]);
   const [students, setStudents] = useState([]);
   const [vaccines, setVaccines] = useState([]);
+  const [gradeLevels, setGradeLevels] = useState([]); // Add state for grade levels
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterGrade, setFilterGrade] = useState('all');
@@ -125,6 +126,7 @@ function VaccinationManagement() {
     fetchCampaigns();
     fetchStudents();
     fetchVaccines();
+    fetchGradeLevels(); // Add fetch for grade levels
   }, []);
 
   const fetchVaccinationRecords = async () => {
@@ -233,6 +235,58 @@ function VaccinationManagement() {
       ]);
     } catch (error) {
       console.error('Error fetching vaccines:', error);
+    }
+  };
+
+  // Add function to fetch grade levels
+  const fetchGradeLevels = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/grade-levels/for-selection', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setGradeLevels(data);
+      } else {
+        console.error('Failed to fetch grade levels');
+        // Fallback to mock data if API fails
+        setGradeLevels([
+          { gradeId: 1, gradeName: 'Grade 1', isActive: true },
+          { gradeId: 2, gradeName: 'Grade 2', isActive: true },
+          { gradeId: 3, gradeName: 'Grade 3', isActive: true },
+          { gradeId: 4, gradeName: 'Grade 4', isActive: true },
+          { gradeId: 5, gradeName: 'Grade 5', isActive: true },
+          { gradeId: 6, gradeName: 'Grade 6', isActive: true },
+          { gradeId: 7, gradeName: 'Grade 7', isActive: true },
+          { gradeId: 8, gradeName: 'Grade 8', isActive: true },
+          { gradeId: 9, gradeName: 'Grade 9', isActive: true },
+          { gradeId: 10, gradeName: 'Grade 10', isActive: true },
+          { gradeId: 11, gradeName: 'Grade 11', isActive: true },
+          { gradeId: 12, gradeName: 'Grade 12', isActive: true }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error fetching grade levels:', error);
+      // Fallback to mock data
+      setGradeLevels([
+        { gradeId: 1, gradeName: 'Grade 1', isActive: true },
+        { gradeId: 2, gradeName: 'Grade 2', isActive: true },
+        { gradeId: 3, gradeName: 'Grade 3', isActive: true },
+        { gradeId: 4, gradeName: 'Grade 4', isActive: true },
+        { gradeId: 5, gradeName: 'Grade 5', isActive: true },
+        { gradeId: 6, gradeName: 'Grade 6', isActive: true },
+        { gradeId: 7, gradeName: 'Grade 7', isActive: true },
+        { gradeId: 8, gradeName: 'Grade 8', isActive: true },
+        { gradeId: 9, gradeName: 'Grade 9', isActive: true },
+        { gradeId: 10, gradeName: 'Grade 10', isActive: true },
+        { gradeId: 11, gradeName: 'Grade 11', isActive: true },
+        { gradeId: 12, gradeName: 'Grade 12', isActive: true }
+      ]);
     }
   };
 
@@ -721,8 +775,8 @@ function VaccinationManagement() {
               <Grid item xs={12} md={6}>
                 <Autocomplete
                   multiple
-                  options={['9', '10', '11', '12']}
-                  getOptionLabel={(option) => `Grade ${option}`}
+                  options={gradeLevels}
+                  getOptionLabel={(option) => option.gradeName || `Grade ${option.gradeNumber}`}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -732,8 +786,19 @@ function VaccinationManagement() {
                     />
                   )}
                   onChange={(event, value) => {
-                    campaignForm.setValue('targetGrades', value);
+                    // Convert selected grade levels to array of grade IDs
+                    const gradeIds = value.map(grade => grade.gradeId);
+                    campaignForm.setValue('targetGrades', gradeIds);
                   }}
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                      <Checkbox
+                        style={{ marginRight: 8 }}
+                        checked={selected}
+                      />
+                      {option.gradeName} ({option.vietnameseName})
+                    </li>
+                  )}
                 />
               </Grid>
             </Grid>

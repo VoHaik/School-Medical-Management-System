@@ -22,7 +22,7 @@ import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/students")
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"}, maxAge = 3600)
 public class StudentController {
 
     @Autowired
@@ -44,14 +44,18 @@ public class StudentController {
     @GetMapping("/{studentCode}")
     @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or @securityService.isParentOfStudentByCode(authentication, #studentCode)")
     public ResponseEntity<StudentDTO> getStudentByCode(@PathVariable String studentCode) {
-        StudentDTO student = studentService.getStudentByCode(studentCode);
-        return ResponseEntity.ok(student);
+        Optional<StudentDTO> studentOpt = studentService.getStudentByCode(studentCode);
+        if (studentOpt.isPresent()) {
+            return ResponseEntity.ok(studentOpt.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    @GetMapping("/parent/{parentId}")
-    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or authentication.principal.id == #parentId")
-    public ResponseEntity<List<StudentDTO>> getStudentsByParentId(@PathVariable Integer parentId) {
-        List<StudentDTO> students = studentService.getStudentsByParentId(parentId);
+    @GetMapping("/parent/{parentUserCode}")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or authentication.principal.userCode == #parentUserCode")
+    public ResponseEntity<List<StudentDTO>> getStudentsByParentUserCode(@PathVariable String parentUserCode) {
+        List<StudentDTO> students = studentService.getStudentsByParentUserCode(parentUserCode);
         return ResponseEntity.ok(students);
     }
 

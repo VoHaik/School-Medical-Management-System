@@ -24,10 +24,10 @@ const AuthDebug = () => {
     const condition1 = isAuthenticated();
     const condition2 = currentUser !== null;
     const condition3 = currentUser && currentUser.roles && (
-      currentUser.roles.includes('ROLE_STUDENT') || 
-      currentUser.roles.includes('ROLE_Student') ||
-      currentUser.roles.includes('ROLE_PARENT') ||
-      currentUser.roles.includes('ROLE_Parent')
+      currentUser.roles.includes('Student') || 
+      currentUser.roles.includes('ROLE_STUDENT') ||
+      currentUser.roles.includes('Parent') ||
+      currentUser.roles.includes('ROLE_PARENT')
     );
     
     return {

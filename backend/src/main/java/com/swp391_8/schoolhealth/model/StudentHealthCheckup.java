@@ -21,8 +21,8 @@ public class StudentHealthCheckup { // Renamed class
     private Integer checkupResultId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id", referencedColumnName = "event_id") // Link to HealthCheckupEvent
-    private HealthCheckupEvent healthCheckupEvent;
+    @JoinColumn(name = "event_id", referencedColumnName = "event_id") // Link to HealthEvent
+    private HealthEvent healthEvent;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_code", referencedColumnName = "student_code", nullable = false)
@@ -43,7 +43,7 @@ public class StudentHealthCheckup { // Renamed class
     private String visionRight;
     
     @Nationalized
-    @Column(name = "vision_notes", columnDefinition = "TEXT")
+    @Column(name = "vision_notes", columnDefinition = "NVARCHAR(MAX)")
     private String visionNotes;
 
     @Nationalized
@@ -55,7 +55,7 @@ public class StudentHealthCheckup { // Renamed class
     private String hearingRight;
 
     @Nationalized
-    @Column(name = "hearing_notes", columnDefinition = "TEXT")
+    @Column(name = "hearing_notes", columnDefinition = "NVARCHAR(MAX)")
     private String hearingNotes;
 
     @Nationalized
@@ -63,7 +63,7 @@ public class StudentHealthCheckup { // Renamed class
     private String dentalOralHealthStatus; // e.g., Good, Fair, Needs Attention
 
     @Nationalized
-    @Column(name = "dental_notes", columnDefinition = "TEXT")
+    @Column(name = "dental_notes", columnDefinition = "NVARCHAR(MAX)")
     private String dentalNotes;
     
     @Nationalized
@@ -71,7 +71,7 @@ public class StudentHealthCheckup { // Renamed class
     private String scoliosisScreeningResult; // e.g., Negative, Positive, Further Evaluation Needed
 
     @Nationalized
-    @Column(name = "scoliosis_notes", columnDefinition = "TEXT")
+    @Column(name = "scoliosis_notes", columnDefinition = "NVARCHAR(MAX)")
     private String scoliosisNotes;
 
     @Column(name = "blood_pressure_systolic")
@@ -100,11 +100,11 @@ public class StudentHealthCheckup { // Renamed class
     private String bmiCategory;
 
     @Nationalized
-    @Column(name = "general_observations", columnDefinition = "TEXT")
+    @Column(name = "general_observations", columnDefinition = "NVARCHAR(MAX)")
     private String generalObservations; // Overall notes from the nurse
 
     @Nationalized
-    @Column(name = "recommendations", columnDefinition = "TEXT")
+    @Column(name = "recommendations", columnDefinition = "NVARCHAR(MAX)")
     private String recommendations;
 
     @Enumerated(EnumType.STRING)
@@ -126,7 +126,7 @@ public class StudentHealthCheckup { // Renamed class
     private LocalDate consentDate;
 
     @Nationalized
-    @Column(name = "parent_communication_notes", columnDefinition = "TEXT")
+    @Column(name = "parent_communication_notes", columnDefinition = "NVARCHAR(MAX)")
     private String parentCommunicationNotes; // Notes about communication with parent regarding results
 
     @Column(name = "follow_up_needed")
@@ -136,7 +136,7 @@ public class StudentHealthCheckup { // Renamed class
     private LocalDate followUpDate;
     
     @Nationalized
-    @Column(name = "follow_up_notes", columnDefinition = "TEXT")
+    @Column(name = "follow_up_notes", columnDefinition = "NVARCHAR(MAX)")
     private String followUpNotes;
 
     @ManyToOne(fetch = FetchType.LAZY)

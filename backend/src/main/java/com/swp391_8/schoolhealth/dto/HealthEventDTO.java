@@ -6,9 +6,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class HealthCheckupEventDTO {
+public class HealthEventDTO {
     private Integer eventId;
     private String eventName;
+    private String eventType; // "HEALTH_CHECKUP" hoặc "VACCINATION"
     private String description;
     private LocalDate scheduledDate;
     private String location;

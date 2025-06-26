@@ -3,6 +3,7 @@ package com.swp391_8.schoolhealth.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Nationalized;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
@@ -22,16 +23,20 @@ public class MedicationInventory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "medication_id")
-    private Integer medicationId;
-
-    @Column(name = "medication_name", nullable = false, length = 255)
+    private Integer medicationId;    @Nationalized
+    @Column(name = "medication_name", nullable = false, length = 255, columnDefinition = "NVARCHAR(255)")
     private String medicationName;
 
-    @Column(nullable = false, length = 100)
+    @Nationalized
+    @Column(nullable = false, length = 100, columnDefinition = "NVARCHAR(255)")
     private String dosage;
 
-    @Column(nullable = false, length = 50)
-    private String form; // Viên nén, Siro, Kem bôi, v.v.    @Column(name = "batch_number", length = 50)
+    @Nationalized
+    @Column(nullable = false, length = 50, columnDefinition = "NVARCHAR(255)")
+    private String form; // Viên nén, Siro, Kem bôi, v.v.
+    
+    @Nationalized
+    @Column(name = "batch_number", length = 50, columnDefinition = "NVARCHAR(255)")
     private String batchNumber;
 
     @Column(name = "expiry_date", nullable = false)
@@ -39,20 +44,23 @@ public class MedicationInventory {
     
     @Column(nullable = false)
     private Integer quantity;
-      @Column(name = "prescription_required", nullable = false)    private Boolean prescriptionRequired = Boolean.FALSE; // Explicitly use Boolean.FALSE to ensure it's not null
-    
-    @Column(name = "manufacturer", length = 255, nullable = true)
+      @Column(name = "prescription_required", nullable = false)    private Boolean prescriptionRequired = Boolean.FALSE; // Explicitly use Boolean.FALSE to ensure it's not null    @Nationalized
+    @Column(name = "manufacturer", length = 255, nullable = true, columnDefinition = "NVARCHAR(255)")
     private String manufacturer;
     
-    @Column(name = "storage_location", length = 100, nullable = true)
+    @Nationalized
+    @Column(name = "storage_location", length = 100, nullable = true, columnDefinition = "NVARCHAR(255)")
     private String storageLocation;
     
     @Column(name = "unit_cost", nullable = true)
     private Double unitCost;
-      @Column(name = "created_by", nullable = true)
+
+    @Nationalized
+    @Column(name = "created_by", nullable = true, columnDefinition = "NVARCHAR(255)")
     private String createdBy;
     
-    @Column(name = "updated_by", nullable = true)
+    @Nationalized
+    @Column(name = "updated_by", nullable = true, columnDefinition = "NVARCHAR(255)")
     private String updatedBy;
 
     @Column(name = "created_at", nullable = false, updatable = false)

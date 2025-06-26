@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Button, CircularProgress, Alert, Paper, Grid, Modal } from '@mui/material'; // Added Modal
 import { AddCircleOutline as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import HealthCheckupEventForm from '../../components/healthcheckup/HealthCheckupEventForm'; // Corrected path
-import HealthCheckupEventListItem from '../../components/healthcheckup/HealthCheckupEventListItem'; // Corrected path
-import { getAllHealthCheckupEvents, createHealthCheckupEvent, updateHealthCheckupEvent, deleteHealthCheckupEvent } from '../../utils/api'; // Assuming API functions exist and added create/update
+import HealthEventForm from '../../components/healthcheckup/HealthEventForm'; // Corrected path
+import HealthEventListItem from '../../components/healthcheckup/HealthEventListItem'; // Corrected path
+import { getAllHealthEvents, createHealthEvent, updateHealthEvent, deleteHealthEvent } from '../../utils/api'; // Assuming API functions exist and added create/update
+import { useUIText } from '../../hooks/useUIText';
 
 // Modal style
 const style = {
@@ -21,7 +22,8 @@ const style = {
   overflowY: 'auto'
 };
 
-const HealthCheckupEventManagement = () => {
+const HealthEventManagement = () => {
+    const { t } = useUIText();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -32,11 +34,11 @@ const HealthCheckupEventManagement = () => {
     const fetchEvents = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await getAllHealthCheckupEvents();
+            const data = await getAllHealthEvents();
             setEvents(data || []);
             setError(null);
         } catch (err) {
-            setError(err.message || 'Failed to fetch health checkup events.');
+            setError(err.message || t.loadError);
             setEvents([]);
         } finally {
             setLoading(false);
@@ -68,9 +70,9 @@ const HealthCheckupEventManagement = () => {
     const handleFormSubmit = async (formData) => {
         try {
             if (isEditMode && selectedEvent) {
-                await updateHealthCheckupEvent(selectedEvent.eventId, formData);
+                await updateHealthEvent(selectedEvent.eventId, formData);
             } else {
-                await createHealthCheckupEvent(formData);
+                await createHealthEvent(formData);
             }
             fetchEvents(); // Refresh list after save
             handleCloseModal();
@@ -81,12 +83,12 @@ const HealthCheckupEventManagement = () => {
     };
 
     const handleDeleteEvent = async (eventId) => {
-        if (window.confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+        if (window.confirm(t.deleteConfirm)) {
             try {
-                await deleteHealthCheckupEvent(eventId);
+                await deleteHealthEvent(eventId);
                 fetchEvents(); // Refresh list
             } catch (err) {
-                setError(err.message || 'Failed to delete event.');
+                setError(err.message || t.deleteError);
             }
         }
     };
@@ -103,7 +105,7 @@ const HealthCheckupEventManagement = () => {
 
     return (
         <Paper sx={{ p: { xs: 1, sm: 2, md: 3 }, m: { xs: 1, sm: 2 } }}>
-            <Typography variant="h4" gutterBottom sx={{ mb: 2 }}>Health Checkup Event Management</Typography>
+            <Typography variant="h4" gutterBottom sx={{ mb: 2 }}>{t.createAndOrganizeEventManagement}</Typography>
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
             <Button
                 variant="contained"
@@ -111,7 +113,7 @@ const HealthCheckupEventManagement = () => {
                 onClick={handleOpenCreateModal}
                 sx={{ mb: 2 }}
             >
-                Create New Event
+                {t.createNewEvent}
             </Button>
 
             <Modal
@@ -120,7 +122,7 @@ const HealthCheckupEventManagement = () => {
                 aria-labelledby="health-checkup-event-form-title"
             >
                 <Box sx={style}>
-                    <HealthCheckupEventForm
+                    <HealthEventForm
                         onSubmit={handleFormSubmit}
                         initialData={selectedEvent}
                         isEdit={isEditMode}
@@ -129,7 +131,7 @@ const HealthCheckupEventManagement = () => {
             </Modal>
 
             {events.length === 0 && !loading && (
-                <Typography>No health checkup events found. Click "Create New Event" to add one.</Typography>
+                <Typography>{t.noData}</Typography>
             )}
 
             {loading && events.length > 0 && <CircularProgress sx={{display: 'block', margin: 'auto', my: 2}}/>}
@@ -137,7 +139,7 @@ const HealthCheckupEventManagement = () => {
             <Grid container spacing={2}>
                 {events.map(event => (
                     <Grid item xs={12} key={event.eventId}> {/* Changed to full width for list items */}
-                        <HealthCheckupEventListItem
+                        <HealthEventListItem
                             event={event}
                             onEdit={handleOpenEditModal}
                             onDelete={handleDeleteEvent}
@@ -150,4 +152,4 @@ const HealthCheckupEventManagement = () => {
     );
 };
 
-export default HealthCheckupEventManagement;
+export default HealthEventManagement;

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDateTime;
 
@@ -21,12 +22,14 @@ public class MedicalSupply {    @Id
     @JoinColumn(name = "event_id", nullable = false)
     private MedicalEvent event;
 
+    @Nationalized
     @Column(nullable = false, length = 100)
     private String name;
 
     @Column(name = "quantity_used", nullable = false)
     private Integer quantityUsed;
 
+    @Nationalized
     @Column(length = 50)
     private String unit;
 

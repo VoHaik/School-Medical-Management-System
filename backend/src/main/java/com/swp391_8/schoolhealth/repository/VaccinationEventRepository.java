@@ -1,5 +1,6 @@
 package com.swp391_8.schoolhealth.repository;
 
+import com.swp391_8.schoolhealth.model.GradeLevel;
 import com.swp391_8.schoolhealth.model.VaccinationEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
@@ -14,4 +15,7 @@ public interface VaccinationEventRepository extends JpaRepository<VaccinationEve
     List<VaccinationEvent> findByStatus(EventStatus status); // Changed parameter type to Enum
     List<VaccinationEvent> findByVaccine_VaccineId(Integer vaccineId);
     List<VaccinationEvent> findByVaccine(Vaccine vaccine);
+    
+    // Method to find events that target a specific grade level
+    List<VaccinationEvent> findByTargetGradesContaining(GradeLevel gradeLevel);
 }

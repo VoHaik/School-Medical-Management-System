@@ -3,6 +3,7 @@ package com.swp391_8.schoolhealth.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Nationalized;
 
 import java.util.Date;
 // import java.util.Set; // If using for target audience mapping
@@ -17,10 +18,12 @@ public class Event {
     @Column(name = "event_id")
     private Integer eventId;
 
+    @Nationalized
     @Column(name = "title", nullable = false, length = 255)
     private String title;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Nationalized
+    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
     @Temporal(TemporalType.TIMESTAMP)
@@ -31,14 +34,17 @@ public class Event {
     @Column(name = "end_date")
     private Date endDate;
 
+    @Nationalized
     @Column(name = "location", length = 255)
     private String location;
 
+    @Nationalized
     @Column(name = "type", length = 100) // E.g., 'SCHOOL_HOLIDAY', 'SPORTS_EVENT', 'PTM'
     private String type;
 
     // For simplicity, target audience can be a string or managed via a separate mapping table
     // For example, a comma-separated list of roles, grades, or 'ALL'
+    @Nationalized
     @Column(name = "target_audience", length = 255) // E.g., "PARENTS", "STUDENTS_GRADE_5", "ALL"
     private String targetAudience;
 
@@ -47,6 +53,7 @@ public class Event {
     // @JoinColumn(name = "student_id")
     // private Student student;
 
+    @Nationalized
     @Column(name = "created_by", length = 100) // Username or ID of creator
     private String createdBy;
 

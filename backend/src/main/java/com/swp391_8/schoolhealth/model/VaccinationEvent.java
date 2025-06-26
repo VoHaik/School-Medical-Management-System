@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,6 +30,7 @@ public class VaccinationEvent {
     // @Column(nullable = false)
     // private String vaccineName;
 
+    @Nationalized
     @Column(name = "event_name", nullable = false, length = 255) // e.g., "Annual Flu Shot Drive 2025"
     private String eventName;
 
@@ -38,7 +40,8 @@ public class VaccinationEvent {
     @Column(name = "scheduled_date_end")
     private LocalDate scheduledDateEnd; // For multi-day events
 
-    @Column(columnDefinition = "TEXT")
+    @Nationalized
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -54,21 +57,21 @@ public class VaccinationEvent {
         CANCELLED
     }
 
+    @Nationalized
     @Column(name = "location", length = 255) // e.g., "School Gymnasium"
     private String location;
 
-    // Students participating in this event - could be through StudentVaccination records linking here
-    // Or a direct list if needed before individual records are created.
-    // For simplicity, StudentVaccination linking to this event is preferred.
-    // @ManyToMany
-    // @JoinTable(
-    // name = "vaccination_event_participants", // Renamed table
-    // joinColumns = @JoinColumn(name = "vaccination_event_id"),
-    // inverseJoinColumns = @JoinColumn(name = "student_id")
-    // )
-    // private Set<Student> participants = new HashSet<>();
+    // Many-to-Many relationship with GradeLevel - which grades this event targets
+    @ManyToMany
+    @JoinTable(
+        name = "vaccination_event_grade_levels",
+        joinColumns = @JoinColumn(name = "vaccination_event_id"),
+        inverseJoinColumns = @JoinColumn(name = "grade_id")
+    )
+    private Set<GradeLevel> targetGrades = new HashSet<>();
+
     @OneToMany(mappedBy = "vaccinationEvent")
-    private Set<StudentVaccination> studentVaccinations;
+    private Set<StudentVaccination> studentVaccinations = new HashSet<>();
 
 
     @ManyToOne
