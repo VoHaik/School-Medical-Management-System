@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Modifying;
 
 import java.util.List;
 import java.util.Optional;
@@ -62,4 +63,17 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     // Find students associated with a parent via ParentStudentRelationship
     @Query("SELECT psr.student.user FROM ParentStudentRelationship psr WHERE psr.parent.parentCode = :parentCode") // Assuming Parent entity is a User, so psr.parent is a User
     List<User> findStudentsByParentCode(@Param("parentCode") String parentCode);
+
+    // Additional methods for user management
+    long countByIsActive(boolean isActive);
+
+    long countByRole_RoleName(String roleName);
+
+    // Override the default JpaRepository methods to work with Long ID
+    @Query("SELECT u FROM User u WHERE u.userId = :id")
+    Optional<User> findByLongId(@Param("id") Long id);
+
+    @Query("DELETE FROM User u WHERE u.userId = :id")
+    @Modifying
+    void deleteByLongId(@Param("id") Long id);
 }

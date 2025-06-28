@@ -107,7 +107,8 @@ public class HealthCheckupEventService {
         dto.setCreatedAt(event.getCreatedAt());
         dto.setUpdatedAt(event.getUpdatedAt());
         if (event.getCreatedBy() != null) {
-            dto.setCreatedByUserId(event.getCreatedBy().getUserId());
+
+            dto.setCreatedByUserId(event.getCreatedBy().getUserId().intValue());
             dto.setCreatedByUserName(event.getCreatedBy().getUsername()); // Or FullName if available
         }
         return dto;

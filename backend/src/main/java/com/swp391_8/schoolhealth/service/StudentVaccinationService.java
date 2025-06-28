@@ -54,12 +54,12 @@ public class StudentVaccinationService {
         dto.setBatchNumber(sv.getBatchNumber());
         dto.setAdministeringLocation(sv.getAdministeringLocation());
         if (sv.getAdministeredByNurse() != null) {
-            dto.setAdministeredByNurseId(sv.getAdministeredByNurse().getUserId());
+            dto.setAdministeredByNurseId(sv.getAdministeredByNurse().getUserId().intValue());
             dto.setAdministeredByNurseName(sv.getAdministeredByNurse().getFullName());
         }
         dto.setConsentStatus(sv.getConsentStatus().name());
         if (sv.getConsentGivenByParent() != null) {
-            dto.setConsentGivenByParentId(sv.getConsentGivenByParent().getUserId());
+            dto.setConsentGivenByParentId(sv.getConsentGivenByParent().getUserId().intValue());
             dto.setConsentGivenByParentName(sv.getConsentGivenByParent().getFullName());
         }
         dto.setConsentDate(sv.getConsentDate());

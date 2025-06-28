@@ -95,6 +95,7 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // API endpoints configuration - prioritize these
                 .requestMatchers("/api/auth/**").permitAll() // Authentication endpoints
+                .requestMatchers("/api/registration/**").permitAll() // Registration endpoints
                 .requestMatchers("/api/blog").permitAll() // Public blog endpoints
                 .requestMatchers("/api/blog/**").permitAll()
                 

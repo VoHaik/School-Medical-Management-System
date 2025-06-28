@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ParentRegister from './pages/ParentRegister';
 
 import StudentBlog from './pages/StudentBlog';
 import AuthDebug from './pages/AuthDebug';
@@ -102,6 +103,7 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/parent-register" element={<ParentRegister />} />
                 <Route path="/auth-debug" element={<AuthDebug />} />
                 {/* Public Blog Route - all roles can view */}
                 <Route path="/blog" element={<StudentBlog />} />

@@ -15,6 +15,7 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import PendingRegistrationManagement from './PendingRegistrationManagement';
 
 const UserManagement = () => {
   const [selectedTab, setSelectedTab] = useState(0);
@@ -26,6 +27,7 @@ const UserManagement = () => {
   const [userDialog, setUserDialog] = useState({ open: false, mode: 'add', user: null });
   const [showPassword, setShowPassword] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [pendingRegistrationsCount, setPendingRegistrationsCount] = useState(0);
 
   // Form validation schema
   const userSchema = yup.object().shape({
@@ -529,6 +531,36 @@ const UserManagement = () => {
     </div>
   );
 
+  const PendingRegistrationsTab = () => (
+    <div className="space-y-6">
+      <PendingRegistrationManagement onRegistrationProcessed={loadPendingRegistrationsCount} />
+    </div>
+  );
+
+  // Load pending registrations count
+  useEffect(() => {
+    loadPendingRegistrationsCount();
+  }, []);
+
+  const loadPendingRegistrationsCount = async () => {
+    try {
+      // Import getAuthAxios from AuthContext if needed
+      const response = await fetch('/api/registration/pending/count', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const count = await response.json();
+        setPendingRegistrationsCount(count);
+      }
+    } catch (error) {
+      console.error('Error loading pending registrations count:', error);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-6">
@@ -543,14 +575,31 @@ const UserManagement = () => {
       <Card>
         <Tabs value={selectedTab} onChange={handleTabChange}>
           <Tab label="User List" icon={<Group />} />
+          <Tab 
+            label={
+              <Box display="flex" alignItems="center">
+                Parent Registrations
+                {pendingRegistrationsCount > 0 && (
+                  <Chip 
+                    label={pendingRegistrationsCount} 
+                    color="warning" 
+                    size="small" 
+                    sx={{ ml: 1 }}
+                  />
+                )}
+              </Box>
+            } 
+            icon={<PersonAdd />} 
+          />
           <Tab label="Role Permissions" icon={<Security />} />
           <Tab label="System Logs" icon={<History />} />
         </Tabs>
         
         <CardContent>
           {selectedTab === 0 && <UserListTab />}
-          {selectedTab === 1 && <RolePermissionsTab />}
-          {selectedTab === 2 && <SystemLogsTab />}
+          {selectedTab === 1 && <PendingRegistrationsTab />}
+          {selectedTab === 2 && <RolePermissionsTab />}
+          {selectedTab === 3 && <SystemLogsTab />}
         </CardContent>
       </Card>
 

@@ -48,7 +48,7 @@ public class VaccinationEventService {
             dto.setVaccineName(event.getVaccine().getName());
         }
         if (event.getCoordinator() != null) {
-            dto.setCoordinatorId(event.getCoordinator().getUserId());
+            dto.setCoordinatorId(event.getCoordinator().getUserId().intValue());
             dto.setCoordinatorName(event.getCoordinator().getFullName());
         }
         dto.setCreatedAt(event.getCreatedAt());

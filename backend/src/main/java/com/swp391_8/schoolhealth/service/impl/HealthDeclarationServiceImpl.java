@@ -84,7 +84,7 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
 
         // Verify parentUser has a relationship with this student
         if (!parentStudentRelationshipRepository.existsByParentUserUserIdAndStudentStudentCode(
-                parentUser.getUserId(), student.getStudentCode())) { // Use Integer directly
+                parentUser.getUserId().intValue(), student.getStudentCode())) { // Convert Long to Integer
             throw new SecurityException("User " + username + " is not authorized to submit health declarations for student " + dto.getStudentCode());
         }
 
@@ -507,7 +507,7 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
         }
         
         if (entity.getReviewedBy() != null) {
-            dto.setReviewedByUserId(entity.getReviewedBy().getUserId());
+            dto.setReviewedByUserId(entity.getReviewedBy().getUserId().intValue());
             dto.setReviewedByUsername(entity.getReviewedBy().getUsername());
             dto.setReviewedByName(entity.getReviewedBy().getFullName());
         }

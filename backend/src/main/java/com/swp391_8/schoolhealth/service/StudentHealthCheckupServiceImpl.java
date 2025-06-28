@@ -324,7 +324,7 @@ public class StudentHealthCheckupServiceImpl implements StudentHealthCheckupServ
         dto.setCheckupDate(record.getCheckupDate());
         if (record.getConductedByUser() != null) {
             dto.setConductedByUserName(record.getConductedByUser().getUsername()); // Corrected: use getUsername()
-            dto.setConductedByUserId(record.getConductedByUser().getUserId()); // Also set ID
+            dto.setConductedByUserId(record.getConductedByUser().getUserId().intValue()); // Also set ID with conversion
         }
         dto.setVisionLeft(record.getVisionLeft());
         dto.setVisionRight(record.getVisionRight());

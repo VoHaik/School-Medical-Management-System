@@ -45,7 +45,7 @@ public class Notification {
     // Add getters if not already present due to Lombok or other reasons.
     // Assuming fields: Integer userId, String title, String notificationType
     public Integer getUserId() {
-        return user.getUserId();
+        return user.getUserId().intValue();
     }
 
     public String getTitle() {

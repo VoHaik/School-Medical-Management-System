@@ -28,7 +28,7 @@ public class StudentDTO {
         this.className = student.getClassName();
         if (student.getUser() != null) {
             this.userUsername = student.getUser().getUsername();
-            this.userId = student.getUser().getUserId();
+            this.userId = student.getUser().getUserId().intValue();
         }
     }
 }

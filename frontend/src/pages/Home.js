@@ -478,7 +478,7 @@ const Home = () => {
                     </Button>
                     <Button
                       component={Link}
-                      to="/register"
+                      to="/parent-register"
                       variant="outlined"
                       size="large"
                       sx={{ 
@@ -490,7 +490,7 @@ const Home = () => {
                         }
                       }}
                     >
-                      Register
+                      Register as Parent
                     </Button>
                   </>
                 )}
