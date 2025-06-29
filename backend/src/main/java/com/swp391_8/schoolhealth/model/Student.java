@@ -4,7 +4,10 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.Nationalized;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,11 +17,8 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"gradeLevel"})
 public class Student {
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", unique = true)
-    private User user;
-
     @Id
     @Nationalized
     @Column(name = "student_code", nullable = false, unique = true, length = 20)
@@ -39,9 +39,35 @@ public class Student {
     @Column(name = "gender", length = 10)
     private String gender;
 
+    // Many-to-one relationship with GradeLevel
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "grade_level_id", nullable = false)
+    @JsonIgnore
+    private GradeLevel gradeLevel;
+
     @Nationalized
     @Column(name = "class_name", length = 20)
-    private String className;
+    private String className; // Keep for specific class within grade level (e.g., "10A", "10B")
+
+    @Nationalized
+    @Column(name = "school_year", length = 20)
+    private String schoolYear;
+
+    @Nationalized
+    @Column(name = "allergies", columnDefinition = "NVARCHAR(MAX)")
+    private String allergies;
+
+    @Nationalized
+    @Column(name = "medical_conditions", columnDefinition = "NVARCHAR(MAX)")
+    private String medicalConditions;
+
+    @Nationalized
+    @Column(name = "emergency_contact_name", length = 100)
+    private String emergencyContactName;
+
+    @Nationalized
+    @Column(name = "emergency_contact_phone", length = 20)
+    private String emergencyContactPhone;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -69,14 +95,6 @@ public class Student {
     }
 
     // Explicit getters/setters to fix compilation issues
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
     public String getStudentCode() {
         return studentCode;
     }
@@ -149,5 +167,46 @@ public class Student {
 
     public String getLastName() {
         return lastName;
+    }
+
+    // Getters and setters for additional fields
+    public String getSchoolYear() {
+        return schoolYear;
+    }
+
+    public void setSchoolYear(String schoolYear) {
+        this.schoolYear = schoolYear;
+    }
+
+    public String getAllergies() {
+        return allergies;
+    }
+
+    public void setAllergies(String allergies) {
+        this.allergies = allergies;
+    }
+
+    public String getMedicalConditions() {
+        return medicalConditions;
+    }
+
+    public void setMedicalConditions(String medicalConditions) {
+        this.medicalConditions = medicalConditions;
+    }
+
+    public String getEmergencyContactName() {
+        return emergencyContactName;
+    }
+
+    public void setEmergencyContactName(String emergencyContactName) {
+        this.emergencyContactName = emergencyContactName;
+    }
+
+    public String getEmergencyContactPhone() {
+        return emergencyContactPhone;
+    }
+
+    public void setEmergencyContactPhone(String emergencyContactPhone) {
+        this.emergencyContactPhone = emergencyContactPhone;
     }
 }

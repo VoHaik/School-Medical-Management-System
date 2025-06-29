@@ -26,16 +26,15 @@ const Navigation = () => {
     ];
 
     // Determine the primary role for navigation.
-    let primaryRole = null;
-    if (currentUser.roles.includes('ROLE_ADMIN')) {
+    let primaryRole = null;    if (currentUser.roles.includes('Admin') || currentUser.roles.includes('ROLE_ADMIN')) {
       primaryRole = 'ROLE_ADMIN';
-    } else if (currentUser.roles.includes('ROLE_PARENT')) {
+    } else if (currentUser.roles.includes('Parent') || currentUser.roles.includes('ROLE_PARENT')) {
       primaryRole = 'ROLE_PARENT';
-    } else if (currentUser.roles.includes('ROLE_SCHOOLNURSE')) {
+    } else if (currentUser.roles.includes('SchoolNurse') || currentUser.roles.includes('ROLE_SCHOOLNURSE')) {
       primaryRole = 'ROLE_SCHOOLNURSE';
-    } else if (currentUser.roles.includes('ROLE_TEACHER')) {
+    } else if (currentUser.roles.includes('Manager') || currentUser.roles.includes('ROLE_TEACHER')) {
       primaryRole = 'ROLE_TEACHER';
-    } else if (currentUser.roles.includes('ROLE_STUDENT')) {
+    } else if (currentUser.roles.includes('Student') || currentUser.roles.includes('ROLE_STUDENT')) {
       primaryRole = 'ROLE_STUDENT';
     } else if (currentUser.roles.length > 0) {
       primaryRole = currentUser.roles[0]; // Fallback to first role if specific ones aren't matched
@@ -54,6 +53,10 @@ const Navigation = () => {
           { path: '/parent/medication-submission', label: 'Submit Medication', icon: 'fas fa-pills' },
           { path: '/parent/vaccination-consent', label: 'Vaccination Consent', icon: 'fas fa-syringe' },
           { path: '/parent/checkup-history', label: 'Checkup History', icon: 'fas fa-history' },
+          { path: '/parent/notifications', label: 'Notifications', icon: 'fas fa-bell' },
+          { path: '/parent/emergency-contacts', label: 'Emergency Contacts', icon: 'fas fa-phone' },
+          { path: '/student-blog', label: 'Blog/News', icon: 'fas fa-blog' },
+          { path: '/profile', label: 'Profile', icon: 'fas fa-user' }, // Keep profile accessible
         ];
       case 'ROLE_SCHOOLNURSE':
         console.log('[Navigation.js] Matched ROLE_SCHOOLNURSE');
@@ -66,7 +69,6 @@ const Navigation = () => {
           { path: '/medical/health-checkups', label: 'Health Checkups', icon: 'fas fa-stethoscope' }, // Corrected path
           { path: '/medical/student-management', label: 'Student Management', icon: 'fas fa-users' }, // Corrected path
           { path: '/medical/reports', label: 'Reports', icon: 'fas fa-chart-bar' }, // Corrected path
-          { path: '/medical/blog-management', label: 'Blog Management', icon: 'fas fa-blog' },
         ];
       case 'ROLE_TEACHER':
         console.log('[Navigation.js] Matched ROLE_TEACHER');
@@ -97,6 +99,7 @@ const Navigation = () => {
           { path: '/health-profile', label: 'Health Profile', icon: 'fas fa-heart' },
           { path: '/medical-history', label: 'Medical History', icon: 'fas fa-file-medical' },
           { path: '/vaccination-record', label: 'Vaccination Record', icon: 'fas fa-syringe' },
+          { path: '/blog', label: 'Health Blog', icon: 'fas fa-blog' },
         ];
       default:
         console.log('[Navigation.js] Defaulting navigation items. No specific role match or primaryRole is null.');

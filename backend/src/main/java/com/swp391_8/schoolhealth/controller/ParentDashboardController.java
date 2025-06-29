@@ -20,7 +20,7 @@ import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"}, allowCredentials = "true")
 public class ParentDashboardController {
 
     @Autowired
@@ -94,7 +94,7 @@ public class ParentDashboardController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); 
         }
 
-        List<StudentDTO> students = studentService.getStudentsByParentCode(parentCode);
+        List<StudentDTO> students = studentService.getStudentsByParentUserCode(parentCode);
         if (students.isEmpty()) {
             System.out.println("No students found for parentCode: " + parentCode); // Added logging
             return ResponseEntity.noContent().build();

@@ -1,6 +1,7 @@
 package com.swp391_8.schoolhealth.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Nationalized;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,17 +17,19 @@ public class HealthDeclaration {
     private Integer declarationId;    @ManyToOne
     @JoinColumn(name = "student_code", referencedColumnName = "student_code", nullable = false)
     private Student student;
-    
-    // Các trường emergency_contact_name và emergency_contact_phone đã hoàn toàn bị loại bỏ
+      // Các trường emergency_contact_name và emergency_contact_phone đã hoàn toàn bị loại bỏ
     // và được thay thế bằng bảng health_declaration_emergency_contacts
 
+    @Nationalized
     @Column(name = "physician_name")
     private String physicianName;
 
+    @Nationalized
     @Column(name = "physician_phone")
     private String physicianPhone;    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "health_declaration_allergies", joinColumns = @JoinColumn(name = "declaration_id"))
-    @Column(name = "allergy", columnDefinition = "NVARCHAR(255)")
+    @Column(name = "allergy")
+    @Nationalized
     private List<String> allergies;
     
     // Bảng health_declaration_conditions đã được thay thế hoàn toàn bằng health_declaration_chronic_illnesses
@@ -35,6 +38,7 @@ public class HealthDeclaration {
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "health_declaration_chronic_illnesses", joinColumns = @JoinColumn(name = "health_declaration_id"))
     @Column(name = "chronic_illness")
+    @Nationalized
     private List<String> medicalConditions;
 
     @OneToMany(mappedBy = "healthDeclaration", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -50,26 +54,28 @@ public class HealthDeclaration {
     
     // Thêm mối quan hệ với bảng health_declaration_chronic_illnesses
     @OneToMany(mappedBy = "healthDeclaration", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<HealthDeclarationChronicIllness> chronicIllnesses = new ArrayList<>();
-
+    private List<HealthDeclarationChronicIllness> chronicIllnesses = new ArrayList<>();    @Nationalized
     @Column(name = "vision_screening_result")
     private String visionScreeningResult;
 
     @Column(name = "vision_screening_date")
     private LocalDate visionScreeningDate;
 
+    @Nationalized
     @Column(name = "hearing_screening_result")
     private String hearingScreeningResult;
 
     @Column(name = "hearing_screening_date")
     private LocalDate hearingScreeningDate;
 
+    @Nationalized
     @Column(name = "dental_screening_result")
     private String dentalScreeningResult;
 
     @Column(name = "dental_screening_date")
     private LocalDate dentalScreeningDate;
 
+    @Nationalized
     @Column(name = "scoliosis_screening_result")
     private String scoliosisScreeningResult;
 
@@ -77,7 +83,8 @@ public class HealthDeclaration {
     private LocalDate scoliosisScreeningDate;
 
     @Lob
-    @Column(name = "notes", columnDefinition = "TEXT")
+    @Nationalized
+    @Column(name = "notes", columnDefinition = "NVARCHAR(MAX)")
     private String notes;
 
     @Column(name = "consent_signature")
@@ -89,6 +96,7 @@ public class HealthDeclaration {
     @Column(name = "is_draft")
     private Boolean isDraft = false; // For save as draft functionality    // Các trường liên quan đến COVID-19 có thể xem xét loại bỏ trong tương lai nếu không còn cần thiết
     
+    @Nationalized
     @Column(name = "symptoms")
     private String symptoms;
 
@@ -96,31 +104,39 @@ public class HealthDeclaration {
     private boolean hasSymptoms;
 
     @Column(name = "close_contact")
-    private boolean closeContact;
+    private boolean closeContact;    @Column(name = "travel_history")
+    private boolean travelHistory;
 
-    @Column(name = "travel_history")
-    private boolean travelHistory;@Column(name = "additional_info")
+    @Nationalized
+    @Column(name = "additional_info")
     private String additionalInfo;
     
     // Các trường bổ sung theo form frontend
+    @Nationalized
     @Column(name = "vision_status")
     private String visionStatus;
     
+    @Nationalized
     @Column(name = "hearing_status")
     private String hearingStatus;
     
+    @Nationalized
     @Column(name = "special_needs")
     private String specialNeeds;
     
+    @Nationalized
     @Column(name = "physical_limitations")
     private String physicalLimitations;
     
+    @Nationalized
     @Column(name = "mental_health_concerns")
     private String mentalHealthConcerns;
     
+    @Nationalized
     @Column(name = "dietary_restrictions")
     private String dietaryRestrictions;
     
+    @Nationalized
     @Column(name = "medical_history")
     private String medicalHistory;
     
@@ -136,8 +152,8 @@ public class HealthDeclaration {
     
     // Thêm ngày duyệt/từ chối
     @Column(name = "reviewed_at")
-    private LocalDate reviewedAt;
-      // Thêm ghi chú từ người duyệt
+    private LocalDate reviewedAt;    // Thêm ghi chú từ người duyệt
+    @Nationalized
     @Column(name = "review_notes")
     private String reviewNotes;
     
@@ -145,6 +161,7 @@ public class HealthDeclaration {
     @Column(name = "last_modified_date")
     private LocalDate lastModifiedDate;
     
+    @Nationalized
     @Column(name = "last_modified_by")
     private String lastModifiedBy;
     

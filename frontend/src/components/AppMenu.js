@@ -26,16 +26,15 @@ const AppMenu = ({ isOpen, closeMenu }) => {
     let items = [];
 
     // Determine the primary role for navigation.
-    let primaryRole = null;
-    if (roles.includes('ROLE_ADMIN')) {
+    let primaryRole = null;    if (roles.includes('Admin') || roles.includes('ROLE_ADMIN')) {
       primaryRole = 'ROLE_ADMIN';
-    } else if (roles.includes('ROLE_PARENT')) {
+    } else if (roles.includes('Parent') || roles.includes('ROLE_PARENT')) {
       primaryRole = 'ROLE_PARENT';
-    } else if (roles.includes('ROLE_SCHOOLNURSE')) {
+    } else if (roles.includes('SchoolNurse') || roles.includes('ROLE_SCHOOLNURSE')) {
       primaryRole = 'ROLE_SCHOOLNURSE';
-    } else if (roles.includes('ROLE_TEACHER')) {
+    } else if (roles.includes('Manager') || roles.includes('ROLE_TEACHER')) {
       primaryRole = 'ROLE_TEACHER';
-    } else if (roles.includes('ROLE_STUDENT')) {
+    } else if (roles.includes('Student') || roles.includes('ROLE_STUDENT')) {
       primaryRole = 'ROLE_STUDENT';
     } else if (roles.length > 0) {
       primaryRole = roles[0]; 
@@ -52,6 +51,9 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/parent/my-requests', label: 'View Medication Requests', icon: 'fas fa-list-alt' },
           { path: '/parent/vaccination-consent', label: 'Vaccination Consent', icon: 'fas fa-syringe' },
           { path: '/parent/checkup-history', label: 'Checkup History', icon: 'fas fa-history' },
+          { path: '/parent/notifications', label: 'Notifications', icon: 'fas fa-bell' },
+          { path: '/parent/emergency-contacts', label: 'Emergency Contacts', icon: 'fas fa-phone' },
+          { path: '/student-blog', label: 'Blog/News', icon: 'fas fa-blog' },
         ];
         break;
       case 'ROLE_SCHOOLNURSE':
@@ -59,12 +61,11 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/medical/dashboard', label: 'Medical Dashboard', icon: 'fas fa-tachometer-alt' },
           { path: '/nurse/health-declaration-approval', label: 'Health Declaration Review', icon: 'fas fa-clipboard-check' },
           { path: '/medical/medication-management', label: 'Medication Management', icon: 'fas fa-capsules' },
-          { path: '/nurse/health-checkup-events', label: 'Health Checkup Events', icon: 'fas fa-calendar-check' },
+          { path: '/nurse/health-checkup-events', label: 'Create and Organize Event', icon: 'fas fa-calendar-check' },
           { path: '/medical/vaccination-management', label: 'Vaccination Management', icon: 'fas fa-syringe' },
           { path: '/medical/health-checkups', label: 'Health Checkups', icon: 'fas fa-stethoscope' },
           { path: '/medical/student-management', label: 'Student Management', icon: 'fas fa-users' },
           { path: '/medical/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
-          { path: '/medical/blog-management', label: 'Blog Management', icon: 'fas fa-blog' },
         ];
         break;
       case 'ROLE_TEACHER': // Assuming manager role is teacher
@@ -91,16 +92,15 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/student/dashboard', label: 'Student Dashboard', icon: 'fas fa-user-graduate' },
           { path: '/health-profile', label: 'Health Profile', icon: 'fas fa-heart' },
           { path: '/medical-history', label: 'Medical History', icon: 'fas fa-file-medical' },
-          { path: '/vaccination-record', label: 'Vaccination Record', icon: 'fas fa-syringe' },
+          { path: '/vaccination-record', label: 'Vaccination Record', icon: 'fas fa-syringe' },          { path: '/blog', label: 'Health Blog', icon: 'fas fa-blog' },
           { path: '/student/profile', label: 'Profile', icon: 'fas fa-user-circle' },
         ];
         break;
       default:
         items = []; // No specific items if role doesn't match known ones
     }
-    // Add Profile link for authenticated users except PARENT role
-    // Đã có mục Profile đúng cho student, không thêm /profile mặc định nữa
-    if (primaryRole !== 'ROLE_PARENT' && !items.find(item => item.path === '/profile' || item.path === '/student/profile')) {
+    // Add Profile link for all authenticated users if not already present    // Đã có mục Profile đúng cho student, không thêm /profile mặc định nữa
+    if (!items.find(item => item.path === '/profile' || item.path === '/student/profile')) {
         items.push({ path: '/profile', label: 'Profile', icon: 'fas fa-user-circle' });
     }
     return items;

@@ -16,7 +16,6 @@
         <class>com.swp391_8.schoolhealth.model.Student</class>
         <class>com.swp391_8.schoolhealth.model.User</class>
         <class>com.swp391_8.schoolhealth.model.Vaccination</class>
-        <class>com.swp391_8.schoolhealth.model.VaccinationEvent</class>
         <class>com.swp391_8.schoolhealth.model.BlogPost</class>
 
         <!-- Cấu hình kết nối CSDL -->

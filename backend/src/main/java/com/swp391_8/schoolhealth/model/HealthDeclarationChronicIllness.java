@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Nationalized;
 
 @Entity
 @Table(name = "health_declaration_chronic_illnesses")
@@ -19,6 +20,7 @@ public class HealthDeclarationChronicIllness {
     @JoinColumn(name = "health_declaration_id", nullable = false)
     private HealthDeclaration healthDeclaration;
     
+    @Nationalized
     @Column(name = "chronic_illness")
     private String chronicIllness;
 }

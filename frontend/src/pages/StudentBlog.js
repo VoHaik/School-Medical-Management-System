@@ -35,25 +35,11 @@ const StudentBlog = () => {
     ];
 
     const isStudent = currentUser && currentUser.roles && (
+        currentUser.roles.includes('Student') ||
         currentUser.roles.includes('ROLE_STUDENT') ||
-        currentUser.roles.includes('ROLE_Student') ||
-        currentUser.roles.includes('ROLE_PARENT') ||
-        currentUser.roles.includes('ROLE_Parent')
+        currentUser.roles.includes('Parent') ||
+        currentUser.roles.includes('ROLE_PARENT')
     );
-
-    // Check if user is nurse (can create/edit blog posts)
-    const isNurse = currentUser && currentUser.roles && (
-        currentUser.roles.includes('ROLE_NURSE') ||
-        currentUser.roles.includes('ROLE_SCHOOLNURSE') ||
-        currentUser.roles.includes('ROLE_Nurse') ||
-        currentUser.roles.includes('ROLE_SchoolNurse')
-    );
-
-    // Check if user can view blog (all authenticated users + guests)
-    const canViewBlog = true; // Everyone can view blog
-
-    // Check if user can create/edit blog posts (only nurses)
-    const canManageBlog = isNurse;
 
     // Utility functions
     const showMessage = (msg, type = 'info') => {
@@ -254,10 +240,10 @@ const StudentBlog = () => {
     // Load data on component mount
     useEffect(() => {
         loadAllPosts();
-        if (canManageBlog) {
+        if (isStudent) {
             loadMyPosts();
         }
-    }, [canManageBlog]);
+    }, [isStudent]);
 
     // Enhanced render functions
     const renderMessage = () => {
@@ -271,7 +257,7 @@ const StudentBlog = () => {
             </div>
         );
     };    const renderCreateForm = () => {
-        if (!canManageBlog) return null; // Only nurses can create/edit blog posts
+        if (!isStudent) return null;
 
         return (
             <div className={`blog-editor-container mb-5 ${showCreateForm ? 'expanded' : ''}`} style={{borderRadius: '1.5rem'}}>
@@ -335,42 +321,38 @@ const StudentBlog = () => {
                                 <span className="fw-semibold">Start Writing</span>
                             </button>
                         )}
-                        {/* Test buttons for debugging - only for nurses */}
-                        {canManageBlog && (
-                            <>
-                                <button
-                                    type="button"
-                                    className="btn btn-outline-info btn-sm ms-3"
-                                    onClick={testBackendConnection}
-                                    style={{
-                                        borderRadius: '30px',
-                                        padding: '12px 24px',
-                                        fontSize: '14px',
-                                        fontWeight: '600',
-                                        transition: 'all 0.3s ease'
-                                    }}
-                                >
-                                    <i className="fas fa-wifi me-2"></i>
-                                    Test Backend
-                                </button>
+                          {/* Test buttons for debugging */}
+                        <button
+                            type="button"
+                            className="btn btn-outline-info btn-sm ms-3"
+                            onClick={testBackendConnection}
+                            style={{
+                                borderRadius: '30px',
+                                padding: '12px 24px',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                transition: 'all 0.3s ease'
+                            }}
+                        >
+                            <i className="fas fa-wifi me-2"></i>
+                            Test Backend
+                        </button>
                         
-                                <button
-                                    type="button"
-                                    className="btn btn-outline-secondary btn-sm ms-2"
-                                    onClick={createTestPost}
-                                    style={{
-                                        borderRadius: '30px',
-                                        padding: '12px 24px',
-                                        fontSize: '14px',
-                                        fontWeight: '600',
-                                        transition: 'all 0.3s ease'
-                                    }}
-                                >
-                                    <i className="fas fa-vial me-2"></i>
-                                    Create Test Post
-                                </button>
-                            </>
-                        )}
+                        <button
+                            type="button"
+                            className="btn btn-outline-secondary btn-sm ms-2"
+                            onClick={createTestPost}
+                            style={{
+                                borderRadius: '30px',
+                                padding: '12px 24px',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                transition: 'all 0.3s ease'
+                            }}
+                        >
+                            <i className="fas fa-vial me-2"></i>
+                            Create Test Post
+                        </button>
                     </div>
                 </div>
 
@@ -723,7 +705,7 @@ const StudentBlog = () => {
                                 </div>
                             </div>
                         </div>
-                        {showActions && canManageBlog && (
+                        {showActions && (
                             <div className="dropdown">
                                 <button
                                     className="btn btn-link text-white p-2 rounded-circle"
@@ -903,7 +885,7 @@ const StudentBlog = () => {
                         </div>
                     ) : (
                         <div className="posts-grid">
-                            {posts.filter(validatePost).map(post => renderPostCard(post, canManageBlog))}
+                            {posts.filter(validatePost).map(post => renderPostCard(post, true))}
                         </div>
                     )}
                 </div>
@@ -943,15 +925,12 @@ const StudentBlog = () => {
                                 <div style={{position: 'relative', zIndex: 1}}>
                                     <h1 className="display-3 fw-bold mb-3">
                                         <i className="fas fa-hospital-alt me-3"></i>
-                                        Health Blog
+                                        Student Health Blog
                                     </h1>
                                     <p className="lead fs-4 mb-4">
-                                        {canManageBlog 
-                                            ? "Share health knowledge and tips with students and parents"
-                                            : "Stay informed with the latest health articles and tips from our medical team"
-                                        }
+                                        Share your health experiences, tips, and knowledge with fellow students
                                     </p>
-                                    {canManageBlog && (
+                                    {isStudent && (
                                         <div className="mt-4">
                                             <button
                                                 className="btn btn-light btn-lg px-5 py-3 rounded-pill shadow-sm"
@@ -1013,7 +992,7 @@ const StudentBlog = () => {
                         </span>
                                             </button>
                                         </li>
-                                        {canManageBlog && (
+                                        {isStudent && (
                                             <li className="nav-item">
                                                 <button
                                                     className={`nav-link px-4 py-3 fw-semibold rounded-3 ${activeTab === 'my' ? 'active shadow-sm' : 'text-muted'}`}

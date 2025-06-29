@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import { Box, Typography, CircularProgress, Alert, Grid, Paper, Select, MenuItem, FormControl, InputLabel } from '@mui/material'; // Removed Button as it's in Item
 import ParentHealthCheckupEventItem from '../../components/healthcheckup/ParentHealthCheckupEventItem';
 import { 
-    getAllHealthCheckupEvents, 
+    getAllHealthEvents, 
     getStudentHealthCheckupsByStudentId,
     recordStudentHealthCheckupConsent // Use the new API function
 } from '../../utils/api'; 
@@ -42,7 +42,7 @@ const ParentHealthCheckupOverview = () => {
         setLoading(true);
         try {
             const [allEventsData, studentCheckupsData] = await Promise.all([
-                getAllHealthCheckupEvents(),
+                getAllHealthEvents(),
                 getStudentHealthCheckupsByStudentId(selectedChildId)
             ]);
             
@@ -51,7 +51,7 @@ const ParentHealthCheckupOverview = () => {
             const checkupMap = {};
             if (studentCheckupsData) {
                 studentCheckupsData.forEach(chk => {
-                    const eventId = chk.eventId || (chk.healthCheckupEvent && chk.healthCheckupEvent.eventId);
+                    const eventId = chk.eventId || (chk.healthEvent && chk.healthEvent.eventId);
                     if (eventId) {
                         checkupMap[eventId] = {
                             recordId: chk.recordId, // Store the recordId
@@ -121,7 +121,7 @@ const ParentHealthCheckupOverview = () => {
 
     return (
         <Paper sx={{ p: 3, m: 2 }}>
-            <Typography variant="h4" gutterBottom sx={{ mb: 2 }}>Health Checkup Events</Typography>
+            <Typography variant="h4" gutterBottom sx={{ mb: 2 }}>Health Checkup & Events</Typography>
             
             {children.length > 0 && (
                 <FormControl fullWidth sx={{ mb: 3 }}>
@@ -145,7 +145,7 @@ const ParentHealthCheckupOverview = () => {
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
             {!loading && !error && events.length === 0 && (
-                <Typography>No health checkup events scheduled at this time.</Typography>
+                <Typography>No health checkups or events scheduled at this time.</Typography>
             )}
 
             {!loading && !error && events.length > 0 && (

@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"}, maxAge = 3600, allowCredentials = "true")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -182,6 +182,39 @@ public class AuthController {
                 userDetails.getEmail(),
                 userDetails.getFullName(),
                 userDetails.getPhoneNumber(), // Added missing phoneNumber
+                roles
+        ));
+    }
+
+    @GetMapping("/user/profile")
+    public ResponseEntity<?> getUserProfile() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity
+                    .status(401)
+                    .body(new MessageResponse("Error: User not authenticated", false));
+        }
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        
+        if (userDetails == null) {
+            return ResponseEntity
+                    .status(401)
+                    .body(new MessageResponse("Error: User not authenticated", false));
+        }
+
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(item -> item.getAuthority())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(new JwtResponse(
+                null, // No token in profile response
+                userDetails.getId(),
+                userDetails.getUsername(),
+                userDetails.getEmail(),
+                userDetails.getFullName(),
+                userDetails.getPhoneNumber(),
                 roles
         ));
     }

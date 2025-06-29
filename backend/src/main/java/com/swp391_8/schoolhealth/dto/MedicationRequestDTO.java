@@ -1,8 +1,10 @@
 package com.swp391_8.schoolhealth.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class MedicationRequestDTO {
+    private Integer requestId;
     private String studentCode; // Changed from Integer studentId
     private String medicationName;
     private String dosage;
@@ -11,6 +13,12 @@ public class MedicationRequestDTO {
     private LocalDate endDate;
     private String reason;
     private String notes; // Parent's notes for the request
+    private String status;
+    private LocalDateTime requestDate;
+    private LocalDateTime approvalDate;
+    private String requestedByUsername;
+    private String approvedByUsername;
+    private String administeredByUsername;
 
     public MedicationRequestDTO() {}
 
@@ -23,6 +31,15 @@ public class MedicationRequestDTO {
         this.endDate = endDate;
         this.reason = reason;
         this.notes = notes;
+    }
+
+    // Getters and Setters
+    public Integer getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(Integer requestId) {
+        this.requestId = requestId;
     }
 
     public String getStudentCode() {
@@ -87,5 +104,53 @@ public class MedicationRequestDTO {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getRequestDate() {
+        return requestDate;
+    }
+
+    public void setRequestDate(LocalDateTime requestDate) {
+        this.requestDate = requestDate;
+    }
+
+    public LocalDateTime getApprovalDate() {
+        return approvalDate;
+    }
+
+    public void setApprovalDate(LocalDateTime approvalDate) {
+        this.approvalDate = approvalDate;
+    }
+
+    public String getRequestedByUsername() {
+        return requestedByUsername;
+    }
+
+    public void setRequestedByUsername(String requestedByUsername) {
+        this.requestedByUsername = requestedByUsername;
+    }
+
+    public String getApprovedByUsername() {
+        return approvedByUsername;
+    }
+
+    public void setApprovedByUsername(String approvedByUsername) {
+        this.approvedByUsername = approvedByUsername;
+    }
+
+    public String getAdministeredByUsername() {
+        return administeredByUsername;
+    }
+
+    public void setAdministeredByUsername(String administeredByUsername) {
+        this.administeredByUsername = administeredByUsername;
     }
 }

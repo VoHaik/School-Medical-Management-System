@@ -57,6 +57,13 @@ import {
   Timeline as TimelineIcon,
   BarChart as BarChartIcon
 } from '@mui/icons-material';
+import {
+  getAllVaccinationRecords,
+  getVaccinationStatistics,
+  getVaccinationRecordsByStatus,
+  createVaccinationRecord,
+  updateVaccinationRecord
+} from '../../utils/api';
 import PageHeader from '../../components/PageHeader';
 
 const vaccinationRecordSchema = yup.object().shape({
@@ -78,7 +85,7 @@ const vaccinationRecordSchema = yup.object().shape({
 const vaccinationCampaignSchema = yup.object().shape({
   campaignName: yup.string().required('Campaign name is required'),
   vaccineType: yup.string().required('Vaccine type is required'),
-  targetGrades: yup.array().of(yup.string()).min(1, 'At least one grade must be selected'),
+  targetGrades: yup.array().of(yup.number()).min(1, 'At least one grade must be selected'),
   startDate: yup.date().required('Start date is required'),
   endDate: yup.date().required('End date is required'),
   venue: yup.string().required('Venue is required'),
@@ -96,9 +103,16 @@ function VaccinationManagement() {
   const [campaigns, setCampaigns] = useState([]);
   const [students, setStudents] = useState([]);
   const [vaccines, setVaccines] = useState([]);
+  const [gradeLevels, setGradeLevels] = useState([]); // Add state for grade levels
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterGrade, setFilterGrade] = useState('all');
+  const [statistics, setStatistics] = useState({
+    totalVaccinations: 0,
+    activeCampaigns: 0,
+    totalStudents: 0,
+    vaccinationRate: 0
+  });
 
   const recordForm = useForm({
     resolver: yupResolver(vaccinationRecordSchema),
@@ -125,11 +139,52 @@ function VaccinationManagement() {
     fetchCampaigns();
     fetchStudents();
     fetchVaccines();
+    fetchGradeLevels(); // Add fetch for grade levels
+    fetchStatistics(); // Add fetch for statistics
   }, []);
 
   const fetchVaccinationRecords = async () => {
     try {
-      // Mock data - replace with actual API call
+      console.log('Fetching vaccination records from API...');
+      const records = await getAllVaccinationRecords();
+      console.log('Vaccination records received:', records);
+      
+      if (records && Array.isArray(records)) {
+        // Transform API data to match UI format
+        const transformedRecords = records.map(record => ({
+          id: record.recordId,
+          studentId: record.student?.studentCode || record.studentCode,
+          studentName: record.student?.fullName || 'Unknown Student',
+          grade: record.student?.gradeLevel?.gradeName || record.student?.className || 'N/A',
+          vaccineType: record.healthEvent?.eventType || 'VACCINATION',
+          vaccineName: record.healthEvent?.description || record.vaccineName || 'Unknown Vaccine',
+          eventName: record.healthEvent?.eventName || 'Vaccination Event',
+          batchNumber: record.batchNumber || 'N/A',
+          manufacturer: record.manufacturer || 'N/A',
+          administeredDate: record.administeredDate || record.scheduledDate,
+          administeredBy: record.administeredBy || 'TBD',
+          site: record.site || 'TBD',
+          dose: record.dose || 'Standard',
+          nextDueDate: record.nextDueDate,
+          reactions: record.reactions ? record.reactions.split(',').filter(r => r.trim()) : [],
+          notes: record.notes || '',
+          status: record.vaccinationStatus?.toLowerCase() || 'scheduled',
+          consentStatus: record.consentStatus || 'PENDING',
+          consentDate: record.consentDate,
+          scheduledDate: record.scheduledDate
+        }));
+        
+        setVaccinationRecords(transformedRecords);
+        
+        // Update statistics based on loaded records
+        fetchStatistics();
+      } else {
+        console.log('No vaccination records found or invalid format');
+        setVaccinationRecords([]);
+      }
+    } catch (error) {
+      console.error('Error fetching vaccination records:', error);
+      // Keep mock data as fallback if API fails
       setVaccinationRecords([
         {
           id: '1',
@@ -147,27 +202,8 @@ function VaccinationManagement() {
           nextDueDate: '2024-07-15',
           reactions: [],
           status: 'completed'
-        },
-        {
-          id: '2',
-          studentId: 'S002',
-          studentName: 'Jane Smith',
-          grade: '9B',
-          vaccineType: 'HPV',
-          vaccineName: 'Gardasil',
-          batchNumber: 'GD002',
-          manufacturer: 'Merck',
-          administeredDate: '2024-01-10',
-          administeredBy: 'Nurse Johnson',
-          site: 'Right arm',
-          dose: '0.5ml',
-          nextDueDate: '2024-03-10',
-          reactions: ['Mild soreness'],
-          status: 'completed'
         }
       ]);
-    } catch (error) {
-      console.error('Error fetching vaccination records:', error);
     }
   };
 
@@ -233,6 +269,86 @@ function VaccinationManagement() {
       ]);
     } catch (error) {
       console.error('Error fetching vaccines:', error);
+    }
+  };
+
+  // Add function to fetch grade levels
+  const fetchGradeLevels = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/grade-levels/for-selection', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setGradeLevels(data);
+      } else {
+        console.error('Failed to fetch grade levels');
+        // Fallback to mock data if API fails
+        setGradeLevels([
+          { gradeId: 1, gradeName: 'Grade 1', isActive: true },
+          { gradeId: 2, gradeName: 'Grade 2', isActive: true },
+          { gradeId: 3, gradeName: 'Grade 3', isActive: true },
+          { gradeId: 4, gradeName: 'Grade 4', isActive: true },
+          { gradeId: 5, gradeName: 'Grade 5', isActive: true },
+          { gradeId: 6, gradeName: 'Grade 6', isActive: true },
+          { gradeId: 7, gradeName: 'Grade 7', isActive: true },
+          { gradeId: 8, gradeName: 'Grade 8', isActive: true },
+          { gradeId: 9, gradeName: 'Grade 9', isActive: true },
+          { gradeId: 10, gradeName: 'Grade 10', isActive: true },
+          { gradeId: 11, gradeName: 'Grade 11', isActive: true },
+          { gradeId: 12, gradeName: 'Grade 12', isActive: true }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error fetching grade levels:', error);
+      // Fallback to mock data
+      setGradeLevels([
+        { gradeId: 1, gradeName: 'Grade 1', isActive: true },
+        { gradeId: 2, gradeName: 'Grade 2', isActive: true },
+        { gradeId: 3, gradeName: 'Grade 3', isActive: true },
+        { gradeId: 4, gradeName: 'Grade 4', isActive: true },
+        { gradeId: 5, gradeName: 'Grade 5', isActive: true },
+        { gradeId: 6, gradeName: 'Grade 6', isActive: true },
+        { gradeId: 7, gradeName: 'Grade 7', isActive: true },
+        { gradeId: 8, gradeName: 'Grade 8', isActive: true },
+        { gradeId: 9, gradeName: 'Grade 9', isActive: true },
+        { gradeId: 10, gradeName: 'Grade 10', isActive: true },
+        { gradeId: 11, gradeName: 'Grade 11', isActive: true },
+        { gradeId: 12, gradeName: 'Grade 12', isActive: true }
+      ]);
+    }
+  };
+
+  // Add function to fetch statistics
+  const fetchStatistics = async () => {
+    try {
+      console.log('Fetching vaccination statistics...');
+      const stats = await getVaccinationStatistics();
+      console.log('Statistics received:', stats);
+      
+      if (stats) {
+        setStatistics({
+          totalVaccinations: stats.totalVaccinations || 0,
+          activeCampaigns: stats.activeCampaigns || 0,
+          totalStudents: students.length || 2, // Use current students count as fallback
+          vaccinationRate: stats.vaccinationRate || 0
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+      // Keep default values if API fails
+      setStatistics({
+        totalVaccinations: vaccinationRecords.length,
+        activeCampaigns: campaigns.filter(c => c.status === 'active').length,
+        totalStudents: students.length || 2,
+        vaccinationRate: vaccinationRecords.length > 0 ? 
+          Math.round((vaccinationRecords.filter(r => r.status === 'completed').length / vaccinationRecords.length) * 100) : 100
+      });
     }
   };
 
@@ -311,6 +427,15 @@ function VaccinationManagement() {
     }
   };
 
+  const getConsentStatusColor = (consentStatus) => {
+    switch (consentStatus) {
+      case 'APPROVED': return 'success';
+      case 'REJECTED': return 'error';
+      case 'PENDING': return 'warning';
+      default: return 'default';
+    }
+  };
+
   const getCompletionPercentage = (completed, total) => {
     return total > 0 ? Math.round((completed / total) * 100) : 0;
   };
@@ -329,7 +454,7 @@ function VaccinationManagement() {
           <Card>
             <CardContent className="text-center">
               <VaccinesIcon className="text-4xl text-blue-500 mb-2" />
-              <Typography variant="h4">{vaccinationRecords.length}</Typography>
+              <Typography variant="h4">{statistics.totalVaccinations}</Typography>
               <Typography color="textSecondary">Total Vaccinations</Typography>
             </CardContent>
           </Card>
@@ -338,7 +463,7 @@ function VaccinationManagement() {
           <Card>
             <CardContent className="text-center">
               <ScheduleIcon className="text-4xl text-green-500 mb-2" />
-              <Typography variant="h4">{campaigns.filter(c => c.status === 'active').length}</Typography>
+              <Typography variant="h4">{statistics.activeCampaigns}</Typography>
               <Typography color="textSecondary">Active Campaigns</Typography>
             </CardContent>
           </Card>
@@ -347,7 +472,7 @@ function VaccinationManagement() {
           <Card>
             <CardContent className="text-center">
               <GroupIcon className="text-4xl text-purple-500 mb-2" />
-              <Typography variant="h4">{students.length}</Typography>
+              <Typography variant="h4">{statistics.totalStudents}</Typography>
               <Typography color="textSecondary">Total Students</Typography>
             </CardContent>
           </Card>
@@ -356,9 +481,7 @@ function VaccinationManagement() {
           <Card>
             <CardContent className="text-center">
               <CheckCircleIcon className="text-4xl text-orange-500 mb-2" />
-              <Typography variant="h4">
-                {Math.round((vaccinationRecords.filter(r => r.status === 'completed').length / students.length) * 100)}%
-              </Typography>
+              <Typography variant="h4">{statistics.vaccinationRate}%</Typography>
               <Typography color="textSecondary">Vaccination Rate</Typography>
             </CardContent>
           </Card>
@@ -438,6 +561,7 @@ function VaccinationManagement() {
                     <TableCell>Date</TableCell>
                     <TableCell>Administered By</TableCell>
                     <TableCell>Site</TableCell>
+                    <TableCell>Consent Status</TableCell>
                     <TableCell>Next Due</TableCell>
                     <TableCell>Reactions</TableCell>
                     <TableCell>Status</TableCell>
@@ -463,9 +587,21 @@ function VaccinationManagement() {
                           </Typography>
                         </div>
                       </TableCell>
-                      <TableCell>{new Date(record.administeredDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(record.administeredDate || record.scheduledDate).toLocaleDateString()}</TableCell>
                       <TableCell>{record.administeredBy}</TableCell>
                       <TableCell>{record.site}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={record.consentStatus === 'REJECTED' ? 'DECLINED' : (record.consentStatus || 'PENDING')}
+                          color={getConsentStatusColor(record.consentStatus)}
+                          size="small"
+                        />
+                        {record.consentDate && (
+                          <Typography variant="caption" display="block" color="textSecondary">
+                            {new Date(record.consentDate).toLocaleDateString()}
+                          </Typography>
+                        )}
+                      </TableCell>
                       <TableCell>
                         {record.nextDueDate ? new Date(record.nextDueDate).toLocaleDateString() : 'N/A'}
                       </TableCell>
@@ -721,8 +857,8 @@ function VaccinationManagement() {
               <Grid item xs={12} md={6}>
                 <Autocomplete
                   multiple
-                  options={['9', '10', '11', '12']}
-                  getOptionLabel={(option) => `Grade ${option}`}
+                  options={gradeLevels}
+                  getOptionLabel={(option) => option.gradeName || `Grade ${option.gradeNumber}`}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -732,8 +868,19 @@ function VaccinationManagement() {
                     />
                   )}
                   onChange={(event, value) => {
-                    campaignForm.setValue('targetGrades', value);
+                    // Convert selected grade levels to array of grade IDs
+                    const gradeIds = value.map(grade => grade.gradeId);
+                    campaignForm.setValue('targetGrades', gradeIds);
                   }}
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                      <Checkbox
+                        style={{ marginRight: 8 }}
+                        checked={selected}
+                      />
+                      {option.gradeName} ({option.vietnameseName})
+                    </li>
+                  )}
                 />
               </Grid>
             </Grid>

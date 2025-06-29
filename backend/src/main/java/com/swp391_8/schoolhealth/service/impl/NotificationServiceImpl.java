@@ -47,10 +47,7 @@ public class NotificationServiceImpl implements NotificationService {
         }
         // Example: If notifications are directly for the parent related to a student:
         // return notificationRepository.findByUserAndStudent_StudentCodeOrderByCreatedAtDesc(parent, studentCode).stream().map(this::convertToDTO).collect(Collectors.toList());
-        // Or if notifications are for the student, but fetched by parent:
-        // Student student = studentRepository.findByStudentCode(studentCode).orElse(null);
-        // if (student == null) return List.of();
-        // return notificationRepository.findByUser_UserIdAndStudent_StudentIdOrderByCreatedAtDesc(student.getUser().getUserId(), student.getStudentId())...;
+        // TODO: Student notifications need to be redesigned without user relationship
         return List.of(); // Placeholder - requires more specific logic
     }
 

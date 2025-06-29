@@ -84,7 +84,7 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
 
         // Verify parentUser has a relationship with this student
         if (!parentStudentRelationshipRepository.existsByParentUserUserIdAndStudentStudentCode(
-                parentUser.getUserId().intValue(), student.getStudentCode())) { // Convert Long to Integer
+                parentUser.getUserId(), student.getStudentCode())) { // Use Integer directly
             throw new SecurityException("User " + username + " is not authorized to submit health declarations for student " + dto.getStudentCode());
         }
 
@@ -457,12 +457,9 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
             dto.setEmergencyContacts(contactDTOs);
         }
 
-        if (entity.getStudent().getUser() != null) { // Student might not always have a direct User link, but if it does
-            // This part is tricky as HealthDeclaration doesn't store parent directly.
-            // The "submitted by" context would typically come from who called the service.
-            // For now, we'll leave parent username out of the DTO from this conversion,
-            // as it's not directly on the HealthDeclaration entity.
-        }        // Không cần đặt các trường emergency_contact_name/phone nữa vì đã có trong emergencyContacts
+        // Student user relationship removed - no need to check getUser()
+        // Parent information would be handled separately through authentication context
+        // as it's not directly stored on the HealthDeclaration entity.        // Không cần đặt các trường emergency_contact_name/phone nữa vì đã có trong emergencyContacts
         // Các getter này được giữ lại chỉ để tương thích ngược và trả về giá trị từ bảng mới
         dto.setPhysicianName(entity.getPhysicianName());
         dto.setPhysicianPhone(entity.getPhysicianPhone());
@@ -507,7 +504,7 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
         }
         
         if (entity.getReviewedBy() != null) {
-            dto.setReviewedByUserId(entity.getReviewedBy().getUserId().intValue());
+            dto.setReviewedByUserId(entity.getReviewedBy().getUserId());
             dto.setReviewedByUsername(entity.getReviewedBy().getUsername());
             dto.setReviewedByName(entity.getReviewedBy().getFullName());
         }

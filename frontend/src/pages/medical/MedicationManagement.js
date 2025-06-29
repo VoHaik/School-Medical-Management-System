@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { useSearchParams } from 'react-router-dom'; // Added for URL query parameters
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import axiosWithAuth from '../../utils/axiosWithAuth'; // Import the auth utility
+import MedicalEventTab from '../../components/medical/MedicalEventTab'; // Import MedicalEventTab component
 import {
   Card,
   CardContent,
@@ -49,10 +51,11 @@ import {
   Inventory as InventoryIcon,
   LocalPharmacy as PharmacyIcon,
   Assignment as AssignmentIcon,
-  CheckCircleOutline as ApproveIcon, // Added
-  CancelOutlined as RejectIcon, // Added
-  Visibility as ViewIcon, // Added
-  MedicalServices as AdministerIcon // Added
+  CheckCircleOutline as ApproveIcon,
+  CancelOutlined as RejectIcon,
+  Visibility as ViewIcon,
+  MedicalServices as AdministerIcon,
+  MedicalInformation as MedicalEventIcon // Added for Medical Event tab
 } from '@mui/icons-material';
 import PageHeader from '../../components/PageHeader';
 // import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers'; // Consider if full DateTimePicker is needed
@@ -60,8 +63,7 @@ import PageHeader from '../../components/PageHeader';
 
 const medicationSchema = yup.object().shape({
   medicationName: yup.string().required('Medication name is required'),
-  // ... existing medicationSchema
-  genericName: yup.string(),
+  // Removed genericName as per requirements
   dosage: yup.string().required('Dosage is required'),
   form: yup.string().required('Medication form is required'),
   manufacturer: yup.string(),
@@ -98,7 +100,9 @@ const recordAdministrationSchema = yup.object().shape({
 
 
 function MedicationManagement() {
-  const [activeTab, setActiveTab] = useState(0); // Default to "Pending Requests"
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') ? parseInt(searchParams.get('tab'), 10) : 0;
+  const [activeTab, setActiveTab] = useState(initialTab); // Read initial tab from URL if available
   const [medicationDialogOpen, setMedicationDialogOpen] = useState(false);
   const [administrationDialogOpen, setAdministrationDialogOpen] = useState(false); // For direct administration log
   const [selectedMedication, setSelectedMedication] = useState(null);
@@ -124,11 +128,21 @@ function MedicationManagement() {
 
   const medicationForm = useForm({
     resolver: yupResolver(medicationSchema),
-    // ... existing medicationForm setup
     defaultValues: {
+      medicationName: '',
+      // Removed genericName as per requirements
+      dosage: '',
+      form: '',
+      manufacturer: '',
+      batchNumber: '',
+      expiryDate: null,
+      quantity: 0,
+      unitCost: 0,
+      storageLocation: '',
       contraindications: [],
       sideEffects: [],
-      prescriptionRequired: false
+      prescriptionRequired: false,
+      instructions: ''
     }
   });
 
@@ -244,14 +258,55 @@ function MedicationManagement() {
 
 
   const fetchMedications = async () => {
-    // ... existing fetchMedications (inventory)
     try {
-      // Mock data - replace with actual API call for inventory
-      setMedications([
-        { id: '1', medicationName: 'Paracetamol Stock', genericName: 'Acetaminophen', dosage: '500mg', form: 'Tablet', manufacturer: 'Pharma Co.', batchNumber: 'PC001', expiryDate: '2025-12-31', quantity: 100, unitCost: 0.50, storageLocation: 'Cabinet A1', prescriptionRequired: false, contraindications: ['Liver disease'], sideEffects: ['Nausea', 'Skin rash'], instructions: 'Take with food'}
-      ]);
+      console.log('Fetching medications inventory...');
+      const authAxios = axiosWithAuth();
+      
+      // Add debugging headers
+      authAxios.defaults.headers.common['X-Debug-Request'] = 'FetchMedications';
+      
+      // Call API to get medication data from backend
+      const response = await authAxios.get('/api/medications/inventory');
+      console.log('Medications fetched from API:', response.data);
+      
+      if (Array.isArray(response.data)) {
+        // Convert API response to a format compatible with the UI
+        // Make sure we map medicationId to id for frontend compatibility
+        const medications = response.data.map(med => ({
+          ...med,
+          id: med.medicationId // Ensure frontend compatibility
+        }));
+        
+        console.log('Processed medications:', medications);
+        setMedications(medications);
+      } else {
+        console.error('API returned non-array data:', response.data);
+        setAlertMessage({
+          message: 'Error: API returned invalid data format',
+          severity: 'error',
+          show: true
+        });
+        // Set empty array to avoid UI errors
+        setMedications([]);
+      }
     } catch (error) {
       console.error('Error fetching medications:', error);
+      
+      // Log detailed error information for debugging
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+      }
+      
+      // Show error message to user
+      setAlertMessage({
+        message: `Error fetching medications: ${error.response?.data?.error || error.message}`,
+        severity: 'error',
+        show: true
+      });
+      
+      // Set empty array to avoid UI errors
+      setMedications([]);
     }
   };
 
@@ -282,30 +337,135 @@ function MedicationManagement() {
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
+    setSearchParams({ tab: newValue.toString() });
   };
 
   // --- Medication Inventory Handlers ---
   const handleAddMedication = () => {
-    // ... existing handleAddMedication
     setSelectedMedication(null);
-    medicationForm.reset({ contraindications: [], sideEffects: [], prescriptionRequired: false, expiryDate: null, quantity: 0, unitCost: 0 });
+    
+    // Reset form with default values
+    medicationForm.reset({
+      medicationName: '',
+      // Removed genericName as per requirements
+      dosage: '',
+      form: '',
+      manufacturer: '',
+      batchNumber: '',
+      expiryDate: new Date().toISOString().split('T')[0], // Set today's date in YYYY-MM-DD format
+      quantity: 0,
+      unitCost: 0,
+      storageLocation: '',
+      contraindications: [],
+      sideEffects: [],
+      prescriptionRequired: false,
+      instructions: ''
+    });
+    
     setMedicationDialogOpen(true);
   };
 
   const handleEditMedication = (medication) => {
-    // ... existing handleEditMedication
     setSelectedMedication(medication);
-    medicationForm.reset(medication);
+    
+    console.log('Editing medication:', medication);
+    
+    // Format date to match the expected input format (YYYY-MM-DD)
+    let formattedData = { ...medication };
+    
+    if (medication.expiryDate) {
+      if (typeof medication.expiryDate === 'string') {
+        formattedData.expiryDate = new Date(medication.expiryDate).toISOString().split('T')[0];
+      } else {
+        formattedData.expiryDate = medication.expiryDate.toISOString().split('T')[0];
+      }
+    }
+    
+    // Ensure we're using the correct ID field from the backend
+    if (medication.medicationId && !medication.id) {
+      formattedData.id = medication.medicationId;
+    }
+    
+    // Ensure other fields are properly initialized
+    formattedData.contraindications = formattedData.contraindications || [];
+    formattedData.sideEffects = formattedData.sideEffects || [];
+    
+    medicationForm.reset(formattedData);
     setMedicationDialogOpen(true);
   };
   
+  const [alertMessage, setAlertMessage] = useState({ message: '', severity: 'info', show: false });
+  
   const handleMedicationFormSubmit = async (data) => {
-    // ... existing handleMedicationFormSubmit (for inventory)
-    console.log('Medication inventory data:', data);
-    // Replace with actual API call to add/update medication inventory
-    // Example: if (selectedMedication) { await axios.put(`/api/inventory/medications/${selectedMedication.id}`, data); } else { await axios.post('/api/inventory/medications', data); }
-    fetchMedications();
-    setMedicationDialogOpen(false);
+    try {
+      console.log('Medication inventory data:', data);
+      const authAxios = axiosWithAuth();
+      
+      // Format date properly before submitting
+      if (data.expiryDate) {
+        // Ensure expiryDate is a proper Date object
+        data.expiryDate = new Date(data.expiryDate);
+      }
+      
+      // Prepare the medication data to match the backend DTO
+      const medicationDTO = {
+        medicationId: selectedMedication ? selectedMedication.medicationId : null,
+        medicationName: data.medicationName,
+        dosage: data.dosage,
+        form: data.form,
+        batchNumber: data.batchNumber || "",
+        expiryDate: data.expiryDate,
+        quantity: data.quantity,
+        prescriptionRequired: false, // Always set a default value (false) for this required field
+        manufacturer: data.manufacturer || "",
+        storageLocation: data.storageLocation || "",
+        unitCost: data.unitCost || 0
+      };
+      
+      console.log('Sending medication data to API:', medicationDTO);
+      
+      console.log('Sending medication data to API:', medicationDTO);
+      
+      // Use the actual backend API endpoints to save medication data
+      if (selectedMedication) {
+        await authAxios.put(`/api/medications/inventory/${selectedMedication.medicationId}`, medicationDTO);
+        setAlertMessage({
+          message: `Medication "${data.medicationName}" updated successfully!`,
+          severity: 'success',
+          show: true
+        });
+      } else {
+        await authAxios.post('/api/medications/inventory', medicationDTO);
+        setAlertMessage({
+          message: `New medication "${data.medicationName}" added to inventory!`,
+          severity: 'success',
+          show: true
+        });
+      }
+      
+      // Update UI by fetching the latest data from the backend
+      fetchMedications();
+      setMedicationDialogOpen(false);
+      
+      // Auto-hide message after 5 seconds
+      setTimeout(() => {
+        setAlertMessage(prev => ({ ...prev, show: false }));
+      }, 5000);
+    } catch (error) {
+      console.error('Error saving medication:', error);
+      
+      // More detailed error logging for debugging
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+      }
+      
+      setAlertMessage({
+        message: `Error: ${error.response?.data?.error || error.message || 'Failed to save medication'}`,
+        severity: 'error',
+        show: true
+      });
+    }
   };
 
   // --- Direct Administration Log Handlers ---
@@ -516,6 +676,77 @@ function MedicationManagement() {
   };
 
 
+  // Function to test medication API connection
+  const testMedicationAPI = async () => {
+    try {
+      setAlertMessage({
+        message: 'Testing medication inventory API connection...',
+        severity: 'info',
+        show: true
+      });
+      
+      const authAxios = axiosWithAuth();
+      
+      // Add debugging headers
+      authAxios.defaults.headers.common['X-Debug'] = 'TestMedicationAPI';
+      console.log('Headers being sent:', authAxios.defaults.headers);
+      
+      // Test GET endpoint
+      console.log('Testing GET /api/medications/inventory');
+      const getResponse = await authAxios.get('/api/medications/inventory');
+      console.log('GET response:', getResponse.data);
+      
+      // Test POST endpoint with a test medication (if there's no data)
+      if (Array.isArray(getResponse.data) && getResponse.data.length === 0) {
+        console.log('No medications found, testing POST endpoint');
+        
+        const testMedication = {
+          medicationName: 'Test Medication API',
+          dosage: '10mg',
+          form: 'Tablet',
+          batchNumber: 'TEST123',
+          expiryDate: new Date(new Date().getFullYear() + 1, 0, 1), // Next year
+          quantity: 50,
+          prescriptionRequired: false,
+          manufacturer: 'Test Manufacturer',
+          storageLocation: 'Test Location',
+          unitCost: 10.0
+        };
+        
+        const postResponse = await authAxios.post('/api/medications/inventory', testMedication);
+        console.log('POST response:', postResponse.data);
+      }
+      
+      // Show success message
+      setAlertMessage({
+        message: 'Medication API connection successful! Refreshing data...',
+        severity: 'success',
+        show: true
+      });
+      
+      // Refresh the medication data
+      fetchMedications();
+      
+    } catch (error) {
+      console.error('API test error:', error);
+      
+      // Log detailed error information
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+        console.error('Request URL:', error.config.url);
+        console.error('Request headers:', error.config.headers);
+        console.error('Request data:', error.config.data);
+      }
+      
+      setAlertMessage({
+        message: `API test failed: ${error.response?.data?.error || error.message}`,
+        severity: 'error',
+        show: true
+      });
+    }
+  };
+
   return (
     // <LocalizationProvider dateAdapter={AdapterDateFns}> // Needed if using MUI X Date/Time Pickers
     <Box sx={{ p: 3 }}>
@@ -525,6 +756,7 @@ function MedicationManagement() {
         <Tab label="Medication Inventory" icon={<InventoryIcon />} />
         <Tab label="Medication Administration Log" icon={<ScheduleIcon />} />
         <Tab label="Low Stock Alerts" icon={<WarningIcon />} badgeContent={lowStockAlerts.length} color="error" />
+        <Tab label="Medical Events" icon={<MedicalEventIcon />} />
       </Tabs>
 
       {/* Tab 0: Pending Medication Requests */}
@@ -633,17 +865,52 @@ function MedicationManagement() {
         <Card>
           <CardHeader
             title="Medication Inventory"
-            action={<Button variant="contained" startIcon={<AddIcon />} onClick={handleAddMedication}>Add Medication</Button>}
+            action={
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button variant="outlined" onClick={testMedicationAPI}>
+                  Test API Connection
+                </Button>
+                <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddMedication}>
+                  Add Medication
+                </Button>
+              </Box>
+            }
           />
           <CardContent>
-            {/* Existing inventory table and search/filter UI would go here */}
-            {/* For brevity, only showing the dialog logic was present in previous context */}
-            <Typography>Medication inventory management UI goes here.</Typography>
-             <TableContainer component={Paper}>
+            {/* Success/Error Alert */}
+            {alertMessage.show && (
+              <Alert 
+                severity={alertMessage.severity} 
+                sx={{ mb: 2 }}
+                onClose={() => setAlertMessage(prev => ({...prev, show: false}))}
+              >
+                {alertMessage.message}
+              </Alert>
+            )}
+            
+            {/* Search bar and filters for inventory */}
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  variant="outlined"
+                  placeholder="Search medications..."
+                  size="small"
+                  InputProps={{
+                    startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />
+                  }}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </Grid>
+            </Grid>
+            
+            <TableContainer component={Paper}>
                 <Table>
                   <TableHead>
                     <TableRow>
                       <TableCell>Name</TableCell>
+                      <TableCell>Form</TableCell>
                       <TableCell>Dosage</TableCell>
                       <TableCell>Quantity</TableCell>
                       <TableCell>Expiry</TableCell>
@@ -651,18 +918,37 @@ function MedicationManagement() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {medications.map((med) => (
-                      <TableRow key={med.id}>
-                        <TableCell>{med.medicationName}</TableCell>
-                        <TableCell>{med.dosage}</TableCell>
-                        <TableCell>{med.quantity}</TableCell>
-                        <TableCell>{formatDate(med.expiryDate)}</TableCell>
-                        <TableCell>
-                          <IconButton onClick={() => handleEditMedication(med)}><EditIcon /></IconButton>
-                          {/* Add delete button if needed */}
-                        </TableCell>
+                    {medications.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center">No medications in inventory.</TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      medications.map((med) => (
+                        <TableRow key={med.medicationId || med.id}>
+                          <TableCell>{med.medicationName}</TableCell>
+                          <TableCell>{med.form || '-'}</TableCell>
+                          <TableCell>{med.dosage}</TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={med.quantity} 
+                              color={med.quantity < 20 ? 'warning' : 'default'} 
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell>{formatDate(med.expiryDate)}</TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <Tooltip title="Edit">
+                                <IconButton onClick={() => handleEditMedication(med)} size="small">
+                                  <EditIcon />
+                                </IconButton>
+                              </Tooltip>
+                              {/* Add delete button if needed */}
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -741,6 +1027,16 @@ function MedicationManagement() {
         </Card>
       )}
 
+      {/* Tab 4: Medical Events */}
+      {activeTab === 4 && (
+        <Card>
+          <CardHeader title="Medical Event Management" />
+          <CardContent>
+            <MedicalEventTab />
+          </CardContent>
+        </Card>
+      )}
+
       {/* Dialog for Adding/Editing Medication Inventory */}
       <Dialog open={medicationDialogOpen} onClose={() => setMedicationDialogOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>{selectedMedication ? 'Edit Medication' : 'Add New Medication'} to Inventory</DialogTitle>
@@ -761,7 +1057,22 @@ function MedicationManagement() {
                 <Controller name="quantity" control={medicationForm.control} render={({ field, fieldState }) => <TextField {...field} label="Quantity" type="number" fullWidth required error={!!fieldState.error} helperText={fieldState.error?.message} />} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Controller name="expiryDate" control={medicationForm.control} render={({ field, fieldState }) => <TextField {...field} label="Expiry Date" type="date" InputLabelProps={{ shrink: true }} fullWidth required error={!!fieldState.error} helperText={fieldState.error?.message} />} />
+                <Controller 
+                  name="expiryDate" 
+                  control={medicationForm.control} 
+                  render={({ field, fieldState }) => (
+                    <TextField 
+                      {...field} 
+                      label="Expiry Date" 
+                      type="date" 
+                      InputLabelProps={{ shrink: true }} 
+                      fullWidth 
+                      required 
+                      error={!!fieldState.error} 
+                      helperText={fieldState.error?.message || "Format: YYYY-MM-DD"}
+                    />
+                  )} 
+                />
               </Grid>
               {/* Add other fields from medicationSchema as needed: genericName, manufacturer, batchNumber, unitCost, storageLocation, prescriptionRequired, contraindications, sideEffects, instructions */}
             </Grid>

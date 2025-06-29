@@ -1,6 +1,5 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import {
   Container,
   Typography,
@@ -11,8 +10,7 @@ import {
   Box,
   Paper,
   Chip,
-  Avatar,
-  Skeleton
+  Avatar
 } from '@mui/material';
 import {
   LocalHospital as MedicalIcon,
@@ -31,35 +29,6 @@ import { AuthContext } from '../context/AuthContext';
 
 const Home = () => {
   const { currentUser } = useContext(AuthContext);
-  
-  // State for blog posts
-  const [blogPosts, setBlogPosts] = useState([]);
-  const [loadingBlog, setLoadingBlog] = useState(true);
-  const [blogError, setBlogError] = useState(null);
-
-  // Load blog posts from API
-  useEffect(() => {
-    const loadBlogPosts = async () => {
-      try {
-        setLoadingBlog(true);
-        const response = await axios.get('/api/blog');
-        const posts = response.data || [];
-        
-        // Take only the latest 3 posts for homepage display
-        setBlogPosts(posts.slice(0, 3));
-        setBlogError(null);
-      } catch (error) {
-        console.error('Error loading blog posts for homepage:', error);
-        setBlogError('Failed to load blog posts');
-        // Fallback to static data if API fails
-        setBlogPosts(staticHealthBlogPosts);
-      } finally {
-        setLoadingBlog(false);
-      }
-    };
-
-    loadBlogPosts();
-  }, []);
 
   const features = [
     {
@@ -94,70 +63,32 @@ const Home = () => {
     }
   ];
 
-  const staticHealthBlogPosts = [
+  const healthBlogPosts = [
     {
-      id: 'static-1',
       title: "Importance of Regular Health Checkups for Students",
-      content: "Regular health screenings help identify potential health issues early and ensure students stay healthy throughout the academic year.",
-      createdAt: "2024-01-15",
-      author: { fullName: "Dr. Sarah Johnson" },
-      categoryId: 1,
-      tags: ["Prevention", "Health"]
+      excerpt: "Regular health screenings help identify potential health issues early and ensure students stay healthy throughout the academic year.",
+      date: "2024-01-15",
+      author: "Dr. Sarah Johnson",
+      readTime: "5 min read",
+      category: "Prevention"
     },
     {
-      id: 'static-2', 
       title: "Managing Food Allergies in School Environment",
-      content: "A comprehensive guide for parents and school staff on creating a safe environment for students with food allergies.",
-      createdAt: "2024-01-10",
-      author: { fullName: "Nurse Lisa Chen" },
-      categoryId: 2,
-      tags: ["Safety", "Allergies"]
+      excerpt: "A comprehensive guide for parents and school staff on creating a safe environment for students with food allergies.",
+      date: "2024-01-10",
+      author: "Nurse Lisa Chen",
+      readTime: "7 min read",
+      category: "Safety"
     },
     {
-      id: 'static-3',
-      title: "Mental Health Awareness for Students", 
-      content: "Understanding the signs of mental health challenges and providing appropriate support for student wellbeing.",
-      createdAt: "2024-01-05",
-      author: { fullName: "Dr. Michael Brown" },
-      categoryId: 3,
-      tags: ["Mental Health", "Wellness"]
+      title: "Mental Health Awareness for Students",
+      excerpt: "Understanding the signs of mental health challenges and providing appropriate support for student wellbeing.",
+      date: "2024-01-05",
+      author: "Dr. Michael Brown",
+      readTime: "6 min read",
+      category: "Mental Health"
     }
   ];
-
-  // Categories mapping for blog posts
-  const blogCategories = [
-    { id: 1, name: 'Health Tips', icon: '🏥', color: '#10b981' },
-    { id: 2, name: 'Mental Health', icon: '🧠', color: '#8b5cf6' },
-    { id: 3, name: 'Nutrition', icon: '🥗', color: '#f59e0b' },
-    { id: 4, name: 'Physical Activity', icon: '🏃', color: '#ef4444' },
-    { id: 5, name: 'School Health Services', icon: '⚕️', color: '#3b82f6' }
-  ];
-
-  const getCategoryInfo = (categoryId) => {
-    return blogCategories.find(cat => cat.id === categoryId) || blogCategories[0];
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  const truncateContent = (content, maxLength = 150) => {
-    if (!content || typeof content !== 'string') return '';
-    if (content.length <= maxLength) return content;
-    return content.substring(0, maxLength) + '...';
-  };
-
-  const getReadTime = (content) => {
-    if (!content) return '5 min read';
-    const wordsPerMinute = 200;
-    const wordCount = content.split(' ').length;
-    const readTime = Math.ceil(wordCount / wordsPerMinute);
-    return `${readTime} min read`;
-  };
 
   const healthDocuments = [
     {
@@ -210,14 +141,6 @@ const Home = () => {
         roles: ['parent']
       },
       {
-        title: "Health Blog",
-        description: "Read latest health tips and articles",
-        link: "/blog",
-        icon: <DocumentIcon />,
-        color: "info",
-        roles: ['parent', 'student']
-      },
-      {
         title: "Medical Records",
         description: "Access your medical history",
         link: "/student/medical-history",
@@ -247,180 +170,6 @@ const Home = () => {
   };
 
   const quickActions = getQuickActions();
-
-  const renderBlogCard = (post) => {
-    const category = getCategoryInfo(post.categoryId);
-    const isStaticPost = typeof post.id === 'string' && post.id.startsWith('static-');
-    
-    return (
-      <Grid item xs={12} md={4} key={post.id}>
-        <Card 
-          sx={{ 
-            height: '100%', 
-            '&:hover': { boxShadow: 6, transform: 'translateY(-2px)' }, 
-            transition: 'all 0.3s ease',
-            borderRadius: 2,
-            overflow: 'hidden'
-          }}
-        >
-          {/* Category Header */}
-          <Box 
-            sx={{
-              background: `linear-gradient(135deg, ${category.color}, ${category.color}dd)`,
-              color: 'white',
-              p: 1.5,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}
-          >
-            <Typography variant="body2" sx={{ fontSize: '1.1em' }}>
-              {category.icon}
-            </Typography>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-              {category.name}
-            </Typography>
-          </Box>
-          
-          <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                {getReadTime(post.content)}
-              </Typography>
-            </Box>
-            
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                mb: 2, 
-                fontWeight: 600,
-                display: '-webkit-box',
-                '-webkit-line-clamp': 2,
-                '-webkit-box-orient': 'vertical',
-                overflow: 'hidden',
-                lineHeight: 1.3
-              }}
-            >
-              {post.title}
-            </Typography>
-            
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: 'text.secondary', 
-                mb: 3,
-                display: '-webkit-box',
-                '-webkit-line-clamp': 3,
-                '-webkit-box-orient': 'vertical',
-                overflow: 'hidden',
-                lineHeight: 1.5
-              }}
-            >
-              {truncateContent(post.content, 120)}
-            </Typography>
-            
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Avatar 
-                  sx={{ 
-                    width: 24, 
-                    height: 24, 
-                    bgcolor: category.color,
-                    fontSize: '0.75rem'
-                  }}
-                >
-                  {post.author?.fullName?.charAt(0) || 'N'}
-                </Avatar>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {post.author?.fullName || 'Anonymous'}
-                </Typography>
-              </Box>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                {formatDate(post.createdAt)}
-              </Typography>
-            </Box>
-            
-            {/* Tags */}
-            {post.tags && post.tags.length > 0 && (
-              <Box sx={{ mt: 2, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                {post.tags.slice(0, 2).map((tag, index) => (
-                  <Chip
-                    key={index}
-                    label={tag}
-                    size="small"
-                    variant="outlined"
-                    sx={{ 
-                      fontSize: '0.7rem',
-                      height: 20,
-                      borderColor: category.color,
-                      color: category.color
-                    }}
-                  />
-                ))}
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      </Grid>
-    );
-  };
-
-  const renderBlogSection = () => {
-    if (loadingBlog) {
-      return (
-        <Grid container spacing={4}>
-          {[1, 2, 3].map((i) => (
-            <Grid item xs={12} md={4} key={i}>
-              <Card sx={{ height: '100%' }}>
-                <Skeleton variant="rectangular" height={60} />
-                <CardContent>
-                  <Skeleton variant="text" height={30} />
-                  <Skeleton variant="text" height={20} />
-                  <Skeleton variant="text" height={20} />
-                  <Box sx={{ mt: 2 }}>
-                    <Skeleton variant="circular" width={24} height={24} sx={{ display: 'inline-block', mr: 1 }} />
-                    <Skeleton variant="text" width={120} sx={{ display: 'inline-block' }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      );
-    }
-
-    if (blogError) {
-      return (
-        <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'warning.light' }}>
-          <Typography variant="h6" sx={{ mb: 1, color: 'warning.dark' }}>
-            Unable to load blog posts
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {blogError}. Please try again later.
-          </Typography>
-        </Paper>
-      );
-    }
-
-    if (blogPosts.length === 0) {
-      return (
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            No blog posts available
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Check back later for new health articles and tips.
-          </Typography>
-        </Paper>
-      );
-    }
-
-    return (
-      <Grid container spacing={4}>
-        {blogPosts.map(renderBlogCard)}
-      </Grid>
-    );
-  };
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
@@ -478,7 +227,7 @@ const Home = () => {
                     </Button>
                     <Button
                       component={Link}
-                      to="/parent-register"
+                      to="/register"
                       variant="outlined"
                       size="large"
                       sx={{ 
@@ -490,7 +239,7 @@ const Home = () => {
                         }
                       }}
                     >
-                      Register as Parent
+                      Register
                     </Button>
                   </>
                 )}
@@ -680,21 +429,48 @@ const Home = () => {
         {/* Health Blog Section */}
         <Box sx={{ mb: 6 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                Health Blog & Resources
-              </Typography>
-              {(currentUser?.roles?.includes('ROLE_PARENT') || currentUser?.roles?.includes('ROLE_STUDENT')) && (
-                <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-                  Stay informed with the latest health tips and news from our medical team
-                </Typography>
-              )}
-            </Box>
-            <Button variant="outlined" color="primary" component={Link} to="/blog">
+            <Typography variant="h4" sx={{ fontWeight: 600, color: 'text.primary' }}>
+              Health Blog & Resources
+            </Typography>
+            <Button variant="outlined" color="primary">
               View All Posts
             </Button>
           </Box>
-          {renderBlogSection()}
+          <Grid container spacing={4}>
+            {healthBlogPosts.map((post, index) => (
+              <Grid item xs={12} md={4} key={index}>
+                <Card sx={{ height: '100%', '&:hover': { boxShadow: 6 }, transition: 'box-shadow 0.3s' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Chip
+                        label={post.category}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        {post.readTime}
+                      </Typography>
+                    </Box>
+                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+                      {post.title}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                      {post.excerpt}
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        By {post.author}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        {new Date(post.date).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
         </Box>
 
         {/* Health Tips Section */}

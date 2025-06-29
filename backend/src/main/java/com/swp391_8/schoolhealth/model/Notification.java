@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Nationalized;
 
 import java.util.Date;
 
@@ -25,9 +26,11 @@ public class Notification {
     @JoinColumn(name = "student_id") // Optional: if the notification is related to a specific student
     private Student student;
 
-    @Column(name = "message", nullable = false, columnDefinition = "TEXT")
+    @Nationalized
+    @Column(name = "message", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String message;
 
+    @Nationalized
     @Column(name = "type", length = 50) // E.g., 'MEDICATION_UPDATE', 'EVENT_REMINDER', 'FORM_APPROVAL'
     private String type;
 
@@ -39,13 +42,14 @@ public class Notification {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Date createdAt;
 
+    @Nationalized
     @Column(name = "link_to", length = 255) // Optional: A URL or path to navigate to
     private String linkTo;
 
     // Add getters if not already present due to Lombok or other reasons.
     // Assuming fields: Integer userId, String title, String notificationType
     public Integer getUserId() {
-        return user.getUserId().intValue();
+        return user.getUserId();
     }
 
     public String getTitle() {

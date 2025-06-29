@@ -58,13 +58,11 @@ public class WebSecurityConfig {
         
         // For production, use BCrypt:
         // return new BCryptPasswordEncoder(); // COMMENTED OUT for testing
-    }
-
-    @Bean
+    }    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         // Set up a more permissive CORS configuration for development
-        configuration.setAllowedOriginPatterns(java.util.Arrays.asList("http://localhost:3000")); // MODIFIED: Use specific origin pattern
+        configuration.setAllowedOriginPatterns(java.util.Arrays.asList("http://localhost:3000", "http://localhost:5173")); // Support both React dev servers
         configuration.setAllowedHeaders(java.util.Arrays.asList("*"));
         configuration.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
         configuration.setAllowCredentials(true);
@@ -95,9 +93,9 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // API endpoints configuration - prioritize these
                 .requestMatchers("/api/auth/**").permitAll() // Authentication endpoints
-                .requestMatchers("/api/registration/**").permitAll() // Registration endpoints
                 .requestMatchers("/api/blog").permitAll() // Public blog endpoints
                 .requestMatchers("/api/blog/**").permitAll()
+                .requestMatchers("/api/grade-levels/**").permitAll() // Grade levels endpoints for selection
                 
                 // Explicitly define API endpoints that require authentication
                 .requestMatchers("/api/medication-requests/**").authenticated()

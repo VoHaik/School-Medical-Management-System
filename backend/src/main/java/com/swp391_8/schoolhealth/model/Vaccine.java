@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Nationalized;
 
 import java.util.Set;
 
@@ -18,15 +19,19 @@ public class Vaccine {
     @Column(name = "vaccine_id")
     private Integer vaccineId;
 
+    @Nationalized
     @Column(name = "vaccine_name", nullable = false, unique = true, length = 150)
     private String name;
 
+    @Nationalized
     @Column(name = "disease_targeted", length = 255)
     private String diseaseTargeted; // e.g., "Influenza", "Measles, Mumps, Rubella"
 
-    @Column(columnDefinition = "TEXT")
+    @Nationalized
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
+    @Nationalized
     @Column(length = 100)
     private String manufacturer;
 
@@ -42,6 +47,5 @@ public class Vaccine {
     @OneToMany(mappedBy = "vaccine")
     private Set<DeclaredVaccinationRecord> declaredVaccinationRecords;
 
-    @OneToMany(mappedBy = "vaccine")
-    private Set<VaccinationEvent> vaccinationEvents;
+    // Note: VaccinationEvent is now replaced by HealthEvent with EventType.VACCINATION
 }

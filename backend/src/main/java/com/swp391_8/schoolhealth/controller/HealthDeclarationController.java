@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/health-declaration")
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"}, maxAge = 3600)
 public class HealthDeclarationController {
     
     private static final Logger logger = LoggerFactory.getLogger(HealthDeclarationController.class);

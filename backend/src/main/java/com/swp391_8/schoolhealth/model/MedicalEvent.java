@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -36,13 +37,15 @@ public class MedicalEvent {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", referencedColumnName = "student_code")
+    @JoinColumn(name = "student_code", referencedColumnName = "student_code")
     private Student student;
 
-    @Column(name = "event_type")
+    @Nationalized
+    @Column(name = "event_type", columnDefinition = "NVARCHAR(255)")
     private String eventType;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Nationalized
+    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
     @Column(name = "event_datetime")
@@ -51,35 +54,29 @@ public class MedicalEvent {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recorded_by_user_id", referencedColumnName = "user_id")
     private User recordedBy;
-
-    // New fields
     @ElementCollection
     @CollectionTable(name = "medical_event_symptoms", joinColumns = @JoinColumn(name = "event_id"))
     @Column(name = "symptom")
+    @Nationalized
     private List<String> symptoms;
 
-    @Column(name = "severity")
+    @Nationalized
+    @Column(name = "severity", columnDefinition = "NVARCHAR(255)")
     private String severity; // Consider Enum: LOW, MEDIUM, HIGH, CRITICAL
 
-    @Column(name = "action_taken", columnDefinition = "TEXT")
+    @Nationalized
+    @Column(name = "action_taken", columnDefinition = "NVARCHAR(MAX)")
     private String actionTaken;
 
-    @Column(name = "medication_given")
+    @Nationalized
+    @Column(name = "medication_given", columnDefinition = "NVARCHAR(255)")
     private String medicationGiven;
+    
+    @Column(name = "medication_quantity")
+    private Integer medicationQuantity;
 
-    @Column(name = "parent_notified")
-    private Boolean parentNotified;
-
-    @Column(name = "referred_to")
-    private String referredTo; // e.g., Doctor's name, Hospital name
-
-    @Column(name = "follow_up_required")
-    private Boolean followUpRequired;
-
-    @Column(name = "follow_up_date")
-    private LocalDateTime followUpDate;
-
-    @Column(name = "status")
+    @Nationalized
+    @Column(name = "status", columnDefinition = "NVARCHAR(255)")
     private String status; // Consider Enum: ACTIVE, RESOLVED, FOLLOW_UP, REFERRED
 
     @Column(name = "created_at")

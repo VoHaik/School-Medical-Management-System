@@ -54,12 +54,8 @@ public class MedicationRequestService {
             if (student.getFullName() != null && !student.getFullName().isEmpty()) {
                 studentName = student.getFullName();
                 studentFullName = student.getFullName(); // Store for the new field
-            } else if (student.getUser() != null && student.getUser().getFullName() != null) {
-                // If student fullName not available, try user's fullName
-                studentName = student.getUser().getFullName();
-                studentFullName = student.getUser().getFullName();
             } else if (student.getFirstName() != null && student.getLastName() != null) {
-                // If both methods above fail, try to construct from first and last name
+                // If fullName not available, try to construct from first and last name
                 studentName = student.getFirstName() + " " + student.getLastName();
                 studentFullName = studentName;
             } else {
