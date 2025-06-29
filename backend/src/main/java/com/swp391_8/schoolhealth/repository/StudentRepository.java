@@ -35,4 +35,8 @@ public interface StudentRepository extends JpaRepository<Student, String> { // C
     @Query("SELECT DISTINCT u FROM User u JOIN ParentStudentRelationship psr ON u.userCode = psr.parent.parentCode " +
            "JOIN Student s ON psr.student.studentCode = s.studentCode WHERE s.className IN :classIds")
     List<User> findParentUsersByClassIds(@Param("classIds") List<String> classIds);
+    
+    // Find students by grade level IDs for vaccination consent
+    @Query("SELECT s FROM Student s LEFT JOIN FETCH s.gradeLevel WHERE s.gradeLevel.gradeId IN :gradeLevelIds")
+    List<Student> findStudentsByGradeLevelIds(@Param("gradeLevelIds") List<Integer> gradeLevelIds);
 }

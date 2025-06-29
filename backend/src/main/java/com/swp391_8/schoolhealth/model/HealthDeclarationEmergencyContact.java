@@ -49,4 +49,13 @@ public class HealthDeclarationEmergencyContact {
     @Nationalized
     @Column(name = "notes", columnDefinition = "NVARCHAR(MAX)")
     private String notes;
+
+    // Explicit getter methods to ensure proper naming
+    public String getContactName() {
+        return contactName;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
 }

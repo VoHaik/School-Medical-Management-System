@@ -14,8 +14,7 @@ public class StudentDTO {
     private LocalDate dateOfBirth;
     private String gender;
     private String className;
-    private String grade;
-    private String clazz;
+    private String gradeName; // Changed from 'grade' to 'gradeName' to be more explicit
     private String schoolYear;
     private String allergies;
     private String medicalConditions;
@@ -31,8 +30,8 @@ public class StudentDTO {
         this.dateOfBirth = student.getDateOfBirth();
         this.gender = student.getGender();
         this.className = student.getClassName();
-        this.grade = student.getGrade();
-        this.clazz = student.getClazz();
+        // Get grade name from the gradeLevel relationship
+        this.gradeName = student.getGradeLevel() != null ? student.getGradeLevel().getGradeName() : null;
         this.schoolYear = student.getSchoolYear();
         this.allergies = student.getAllergies();
         this.medicalConditions = student.getMedicalConditions();

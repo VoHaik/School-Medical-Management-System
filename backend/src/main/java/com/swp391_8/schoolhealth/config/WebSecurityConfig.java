@@ -95,6 +95,7 @@ public class WebSecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll() // Authentication endpoints
                 .requestMatchers("/api/blog").permitAll() // Public blog endpoints
                 .requestMatchers("/api/blog/**").permitAll()
+                .requestMatchers("/api/grade-levels/**").permitAll() // Grade levels endpoints for selection
                 
                 // Explicitly define API endpoints that require authentication
                 .requestMatchers("/api/medication-requests/**").authenticated()

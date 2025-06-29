@@ -13,7 +13,7 @@ public interface StudentVaccinationRepository extends JpaRepository<StudentVacci
     List<StudentVaccination> findByStudent_StudentCode(String studentCode);
     List<StudentVaccination> findByStudent_StudentCodeIn(List<String> studentCodes);
     List<StudentVaccination> findByVaccineVaccineId(Integer vaccineId);
-    List<StudentVaccination> findByVaccinationEventId(Integer eventId);
+    List<StudentVaccination> findByHealthEvent_EventId(Integer eventId);
     List<StudentVaccination> findByAdministeredByNurseUserId(Integer nurseId);
     List<StudentVaccination> findByConsentGivenByParentUserId(Integer parentId);
 

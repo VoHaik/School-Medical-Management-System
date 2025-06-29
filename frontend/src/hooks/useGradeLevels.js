@@ -10,75 +10,101 @@ export const useGradeLevels = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Helper to extract grade number from grade name - move outside useCallback to prevent dependencies
+  const getGradeNumber = (gradeName) => {
+    if (gradeName) {
+      // Handle format like "6A", "7A", "8A", "9A"
+      if (gradeName.match(/^\d+[A-Z]$/)) {
+        const num = parseInt(gradeName.substring(0, gradeName.length - 1));
+        return isNaN(num) ? null : num;
+      }
+      // Handle format like "Grade 1", "Grade 2", etc.
+      if (gradeName.startsWith('Grade ')) {
+        const num = parseInt(gradeName.substring(6));
+        return isNaN(num) ? null : num;
+      }
+    }
+    return null;
+  };
+
   const fetchGradeLevels = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Fetch both detailed grade levels and display options
-      const [levels, options] = await Promise.all([
-        getAllActiveGradeLevels(),
-        getGradeDisplayOptions()
-      ]);
+      console.log('Fetching grade levels from API...');
+      const gradeLevels = await getAllActiveGradeLevels();
+      console.log('Grade levels response:', gradeLevels);
       
-      setGradeLevels(levels || []);
-      setGradeOptions(options || []);
+      if (gradeLevels && Array.isArray(gradeLevels)) {
+        // Sort by grade number
+        const sortedGrades = gradeLevels.sort((a, b) => {
+          const numA = getGradeNumber(a.gradeName);
+          const numB = getGradeNumber(b.gradeName);
+          return (numA || 0) - (numB || 0);
+        });
+        
+        setGradeLevels(sortedGrades);
+        
+        const options = sortedGrades.map(grade => grade.gradeName);
+        setGradeOptions(options);
+        
+        console.log('Grade levels loaded successfully:', sortedGrades);
+      } else {
+        throw new Error('Invalid response format from API');
+      }
     } catch (err) {
       console.error('Error fetching grade levels:', err);
       setError(err.message || 'Failed to fetch grade levels');
       
-      // Fallback to static grades 1-12 if API fails
-      const fallbackGrades = Array.from({ length: 12 }, (_, i) => ({
-        gradeId: i + 1,
-        gradeName: `Grade ${i + 1}`,
-        isActive: true
-      }));
-      
-      const fallbackOptions = fallbackGrades.map(grade => grade.gradeName);
-      
-      setGradeLevels(fallbackGrades);
-      setGradeOptions(fallbackOptions);
+      // No fallback data - only show what's actually in the database
+      setGradeLevels([]);
+      setGradeOptions([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, []); // Remove getGradeNumber dependency
 
   useEffect(() => {
     fetchGradeLevels();
-  }, [fetchGradeLevels]);
-
-  // Helper to extract grade number from grade name
-  const getGradeNumber = useCallback((gradeName) => {
-    if (gradeName && gradeName.startsWith('Grade ')) {
-      const num = parseInt(gradeName.substring(6));
-      return isNaN(num) ? null : num;
-    }
-    return null;
-  }, []);
+  }, []); // Empty dependency array to run only once
 
   // Get grade name by number
   const getGradeNameByNumber = useCallback((gradeNumber) => {
     const grade = gradeLevels.find(g => getGradeNumber(g.gradeName) === gradeNumber);
     return grade ? grade.gradeName : `Grade ${gradeNumber}`;
-  }, [gradeLevels, getGradeNumber]);
+  }, [gradeLevels]);
 
   // Get Vietnamese grade name by number (derived from English name)
   const getVietnameseGradeNameByNumber = useCallback((gradeNumber) => {
     return `Lớp ${gradeNumber}`;
   }, []);
 
-  // Get grade options for select components
-  const getGradeSelectOptions = useCallback((useVietnamese = false) => {
+  // Get grade options for select components (using grade names)
+  const getGradeSelectOptionsByName = useCallback((useVietnamese = false) => {
     return gradeLevels.map(grade => {
       const gradeNumber = getGradeNumber(grade.gradeName);
       return {
-        value: gradeNumber ? gradeNumber.toString() : grade.gradeId.toString(),
+        value: grade.gradeName, // Use gradeName as value
         label: useVietnamese ? getVietnameseGradeNameByNumber(gradeNumber) : grade.gradeName,
         gradeId: grade.gradeId,
         gradeNumber: gradeNumber
       };
     }).filter(option => option.gradeNumber !== null);
-  }, [gradeLevels, getGradeNumber, getVietnameseGradeNameByNumber]);
+  }, [gradeLevels, getVietnameseGradeNameByNumber]);
+
+  // Get grade options for select components (using grade IDs)
+  const getGradeSelectOptions = useCallback((useVietnamese = false) => {
+    return gradeLevels.map(grade => {
+      const gradeNumber = getGradeNumber(grade.gradeName);
+      return {
+        value: grade.gradeId, // Use gradeId instead of gradeNumber
+        label: useVietnamese ? getVietnameseGradeNameByNumber(gradeNumber) : grade.gradeName,
+        gradeId: grade.gradeId,
+        gradeNumber: gradeNumber
+      };
+    }).filter(option => option.gradeNumber !== null);
+  }, [gradeLevels, getVietnameseGradeNameByNumber]);
 
   // Get multiple grade selection options (for events targeting multiple grades)
   const getMultipleGradeOptions = useCallback((selectedGrades = [], useVietnamese = false) => {
@@ -91,7 +117,7 @@ export const useGradeLevels = () => {
         displayName: useVietnamese ? getVietnameseGradeNameByNumber(gradeNumber) : grade.gradeName
       };
     }).filter(option => option.gradeNumber !== null);
-  }, [gradeLevels, getGradeNumber, getVietnameseGradeNameByNumber]);
+  }, [gradeLevels, getVietnameseGradeNameByNumber]);
 
   // Format grade range for display
   const formatGradeRange = useCallback((minGrade, maxGrade, useVietnamese = false) => {
@@ -167,6 +193,7 @@ export const useGradeLevels = () => {
     getGradeNameByNumber,
     getVietnameseGradeNameByNumber,
     getGradeSelectOptions,
+    getGradeSelectOptionsByName,
     getMultipleGradeOptions,
     formatGradeRange,
     parseGradeLevelsString,

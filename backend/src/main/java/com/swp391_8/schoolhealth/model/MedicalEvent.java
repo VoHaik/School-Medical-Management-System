@@ -34,8 +34,10 @@ public class MedicalEvent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "event_id")
-    private Integer id;    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", referencedColumnName = "student_code")
+    private Integer id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "student_code", referencedColumnName = "student_code")
     private Student student;
 
     @Nationalized
@@ -51,7 +53,7 @@ public class MedicalEvent {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recorded_by_user_id", referencedColumnName = "user_id")
-    private User recordedBy;    // New fields
+    private User recordedBy;
     @ElementCollection
     @CollectionTable(name = "medical_event_symptoms", joinColumns = @JoinColumn(name = "event_id"))
     @Column(name = "symptom")

@@ -15,7 +15,8 @@ public class HealthEventDTO {
     private String location;
     private String status; // String representation of EventStatus enum
     private List<String> typesOfCheckups;
-    private String targetGradeLevels;
+    private List<Integer> targetGradeIds;
+    private List<String> targetGradeNames;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Integer createdByUserId;

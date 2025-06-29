@@ -225,6 +225,16 @@ export const markAllNotificationsAsRead = async () => {
   }
 };
 
+// User Profile APIs
+export const getUserProfile = async () => {
+  try {
+    const response = await apiClient.get('/auth/user/profile');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch user profile');
+  }
+};
+
 // Add other API functions here as needed for other features (Medication, Vaccination, etc.)
 
 // Example for Medication Request (assuming similar structure)
@@ -329,9 +339,10 @@ export const nurseEditHealthDeclaration = async (studentCode, healthData) => {
 // Grade Level APIs
 export const getAllActiveGradeLevels = async () => {
   try {
-    const response = await apiClient.get('/grade-levels');
+    const response = await apiClient.get('/grade-levels/for-selection');
     return response.data;
   } catch (error) {
+    console.error('Error fetching grade levels:', error);
     handleApiError(error, 'fetch active grade levels');
   }
 };
@@ -408,11 +419,105 @@ export const deleteGradeLevel = async (gradeId) => {
   }
 };
 
-export const initializeStandardGradeLevels = async () => {  try {
+export const initializeStandardGradeLevels = async () => {
+  try {
     const response = await apiClient.post('/grade-levels/initialize');
     return response.data;
   } catch (error) {
     handleApiError(error, 'initialize standard grade levels');
+  }
+};
+
+// Vaccination Consent APIs
+export const getPendingVaccinationConsents = async (studentCode) => {
+  try {
+    const response = await apiClient.get(`/parent/vaccination-consent/student/${studentCode}/pending`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch pending vaccination consents');
+  }
+};
+
+export const getSubmittedVaccinationConsents = async (studentCode) => {
+  try {
+    const response = await apiClient.get(`/parent/vaccination-consent/student/${studentCode}/submitted`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch submitted vaccination consents');
+  }
+};
+
+export const submitVaccinationConsent = async (consentId, consentData) => {
+  try {
+    const response = await apiClient.post(`/parent/vaccination-consent/${consentId}/submit`, consentData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'submit vaccination consent');
+  }
+};
+
+export const getStudentVaccinationInfo = async (studentId) => {
+  try {
+    const response = await apiClient.get(`/students/${studentId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch student vaccination info');
+  }
+};
+
+// Get parent's children (students)
+export const getParentStudents = async () => {
+  try {
+    const response = await apiClient.get('/parent/students');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch parent students');
+  }
+};
+
+// Vaccination Management APIs for Nurses/Admins
+export const sendVaccinationConsents = async (eventId) => {
+  try {
+    const response = await apiClient.post(`/vaccination-management/event/${eventId}/send-consents`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'send vaccination consents');
+  }
+};
+
+export const getVaccinationEventConsents = async (eventId) => {
+  try {
+    const response = await apiClient.get(`/vaccination-management/event/${eventId}/consents`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch vaccination event consents');
+  }
+};
+
+export const getVaccinationRecords = async (eventId) => {
+  try {
+    const response = await apiClient.get(`/vaccination-management/event/${eventId}/records`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch vaccination records');
+  }
+};
+
+export const createVaccinationRecord = async (recordData) => {
+  try {
+    const response = await apiClient.post('/vaccination-management/records', recordData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'create vaccination record');
+  }
+};
+
+export const updateVaccinationRecord = async (recordId, recordData) => {
+  try {
+    const response = await apiClient.put(`/vaccination-management/records/${recordId}`, recordData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'update vaccination record');
   }
 };
 

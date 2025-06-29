@@ -4,7 +4,7 @@ import { Edit as EditIcon, Delete as DeleteIcon, Visibility as ViewIcon,
          VaccinesOutlined as VaccineIcon, HealthAndSafety as HealthCheckupIcon } from '@mui/icons-material';
 import { useUIText } from '../../hooks/useUIText';
 
-const HealthEventListItem = ({ event, onEdit, onDelete, onViewStudents }) => {
+const HealthEventListItem = ({ event, onEdit, onDelete, onView, onSendConsents }) => {
   const { t, getStatusColor, getEventTypeColor, formatDate, getEventTypeLabel, getStatusLabel } = useUIText();
   
   if (!event) {
@@ -60,23 +60,49 @@ const HealthEventListItem = ({ event, onEdit, onDelete, onViewStudents }) => {
           <Typography variant="caption" display="block">
             {t.location}: {event.location || t.notSpecified}
           </Typography>
-          {event.targetGradeLevels && (
-            <Typography variant="caption" display="block">
-              {t.gradeLevels}: {event.targetGradeLevels}
-            </Typography>
-          )}
+          {/* Display target grade levels with fallback options */}
+          {(() => {
+            let gradeDisplay = '';
+            if (event.targetGradeNames && event.targetGradeNames.length > 0) {
+              gradeDisplay = event.targetGradeNames.join(', ');
+            } else if (event.targetGradeIds && event.targetGradeIds.length > 0) {
+              gradeDisplay = `Grade IDs: ${event.targetGradeIds.join(', ')}`;
+            } else if (event.targetGradeLevels && typeof event.targetGradeLevels === 'string') {
+              gradeDisplay = event.targetGradeLevels;
+            }
+            
+            return gradeDisplay ? (
+              <Typography variant="caption" display="block">
+                {t.gradeLevels}: {gradeDisplay}
+              </Typography>
+            ) : null;
+          })()}
         </Grid>
         <Grid item xs={12} sm={4} container justifyContent={{ xs: 'flex-start', sm: 'flex-end' }} spacing={1}>
-          {onViewStudents && (
+          {/* Send Consent Requests button for vaccination events */}
+          {event.eventType === 'VACCINATION' && onSendConsents && (
+            <Grid item>
+              <Button
+                variant="contained"
+                size="small"
+                color="success"
+                onClick={() => onSendConsents(event)}
+                sx={{ mr: {sm: 1}, mb: {xs: 1, sm: 0} }}
+              >
+                Send Consents
+              </Button>
+            </Grid>
+          )}
+          {onView && (
             <Grid item>
               <Button
                 variant="outlined"
                 size="small"
                 startIcon={<ViewIcon />}
-                onClick={() => onViewStudents(event.eventId)}
+                onClick={() => onView(event)}
                 sx={{ mr: {sm: 1}, mb: {xs: 1, sm: 0} }}
               >
-                {t.viewStudents}
+                {t.view}
               </Button>
             </Grid>
           )}

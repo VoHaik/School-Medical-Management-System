@@ -16,7 +16,8 @@ import HealthDeclaration from './pages/parent/HealthDeclaration';
 import HealthRecordsPage from './pages/parent/HealthRecordsPage'; // Add import for Health Records page
 import HealthDeclarationDetailPage from './pages/parent/HealthDeclarationDetailPage'; // Add import for Health Declaration Detail page
 import StudentHealthProfilePage from './pages/parent/StudentHealthProfilePage'; // Import for Student Health Profile page
-import VaccinationConsent from './pages/parent/VaccinationConsent';
+// import VaccinationConsent from './pages/parent/VaccinationConsent';
+import VaccinationConsent from './pages/parent/VaccinationConsentSimple';
 import CheckupHistory from './pages/parent/CheckupHistory';
 // import Notifications from './pages/parent/Notifications'; // To be replaced by common notifications page
 import EmergencyContacts from './pages/parent/EmergencyContacts';
@@ -41,6 +42,9 @@ import MedicalEvents from './pages/medical/MedicalEvents';
 import HealthEventManagement from './pages/nurse/HealthEventManagement'; // Updated for nurse/admin - renamed from HealthCheckupEventManagement
 import HealthEventStudentManagement from './pages/nurse/HealthEventStudentManagement'; // Updated for nurse/admin - renamed from HealthCheckupEventStudentManagement
 import HealthDeclarationApproval from './pages/nurse/HealthDeclarationApproval'; // Added for nurse approval of health declarations
+
+// Debug Pages
+import VaccinationDebug from './pages/VaccinationDebug';
 
 // Manager Pages
 import ManagerDashboard from './pages/manager/ManagerDashboard';
@@ -168,6 +172,7 @@ function App() {
                 <Route path="/admin/analytics-reports" element={<ProtectedRoute roles={['ROLE_ADMIN']}><AnalyticsReports /></ProtectedRoute>} />
                 <Route path="/admin/health-programs" element={<ProtectedRoute roles={['ROLE_ADMIN']}><HealthPrograms /></ProtectedRoute>} />
                 <Route path="/admin/data-export" element={<ProtectedRoute roles={['ROLE_ADMIN']}><DataExport /></ProtectedRoute>} />
+                <Route path="/debug/vaccination" element={<ProtectedRoute roles={['ROLE_ADMIN', 'ROLE_NURSE']}><VaccinationDebug /></ProtectedRoute>} />
 
                 {/* Fallback for unmatched routes - consider a 404 page */}
                 <Route path="*" element={<Navigate to="/" replace />} />

@@ -98,8 +98,8 @@ public class StudentVaccination { // Renamed from Vaccination
     private LocalDate nextDueDate;
 
     @ManyToOne
-    @JoinColumn(name = "vaccination_event_id") // If this vaccination was part of a school event
-    private VaccinationEvent vaccinationEvent;
+    @JoinColumn(name = "health_event_id") // If this vaccination was part of a school health event
+    private HealthEvent healthEvent;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

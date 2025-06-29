@@ -32,9 +32,10 @@ public class StudentService {
         dto.setFullName(student.getFullName());
         dto.setDateOfBirth(student.getDateOfBirth());
         dto.setGender(student.getGender());
-        dto.setGrade(student.getGrade());
-        dto.setClazz(student.getClazz()); // Make sure Student entity has getClazz()
-        dto.setSchoolYear(student.getSchoolYear()); // Make sure Student entity has getSchoolYear()
+        dto.setClassName(student.getClassName());
+        // Get grade name from the gradeLevel relationship
+        dto.setGradeName(student.getGradeLevel() != null ? student.getGradeLevel().getGradeName() : null);
+        dto.setSchoolYear(student.getSchoolYear());
         dto.setAllergies(student.getAllergies());
         dto.setMedicalConditions(student.getMedicalConditions());
         dto.setEmergencyContactName(student.getEmergencyContactName());
@@ -62,8 +63,9 @@ public class StudentService {
                     dto.setFullName(student.getFullName());
                     dto.setDateOfBirth(student.getDateOfBirth());
                     dto.setGender(student.getGender());
-                    dto.setGrade(student.getGrade());
-                    dto.setClazz(student.getClazz());
+                    dto.setClassName(student.getClassName());
+                    // Get grade name from the gradeLevel relationship
+                    dto.setGradeName(student.getGradeLevel() != null ? student.getGradeLevel().getGradeName() : null);
                     dto.setSchoolYear(student.getSchoolYear());
                     dto.setAllergies(student.getAllergies());
                     dto.setMedicalConditions(student.getMedicalConditions());

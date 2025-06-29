@@ -18,8 +18,13 @@ public class GradeLevelController {
     private final GradeLevelService gradeLevelService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SCHOOLNURSE', 'ADMIN', 'PARENT', 'STUDENT')")
     public ResponseEntity<List<GradeLevelDTO>> getAllActiveGradeLevels() {
+        List<GradeLevelDTO> gradeLevels = gradeLevelService.getAllActiveGradeLevels();
+        return ResponseEntity.ok(gradeLevels);
+    }
+
+    @GetMapping("/for-selection")
+    public ResponseEntity<List<GradeLevelDTO>> getGradeLevelsForSelection() {
         List<GradeLevelDTO> gradeLevels = gradeLevelService.getAllActiveGradeLevels();
         return ResponseEntity.ok(gradeLevels);
     }
@@ -89,16 +94,5 @@ public class GradeLevelController {
     public ResponseEntity<String> initializeStandardGradeLevels() {
         gradeLevelService.initializeStandardGradeLevels();
         return ResponseEntity.ok("Standard grade levels (1-12) initialized successfully");
-    }
-
-    /**
-     * Get all active grade levels for dropdown/selection in forms
-     * This endpoint is specifically for UI components like event creation forms
-     */
-    @GetMapping("/for-selection")
-    @PreAuthorize("hasAnyRole('SCHOOLNURSE', 'ADMIN')")
-    public ResponseEntity<List<GradeLevelDTO>> getGradeLevelsForSelection() {
-        List<GradeLevelDTO> gradeLevels = gradeLevelService.getAllActiveGradeLevels();
-        return ResponseEntity.ok(gradeLevels);
     }
 }

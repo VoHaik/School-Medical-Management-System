@@ -4,7 +4,10 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.Nationalized;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.HashSet;
 import java.util.List;
@@ -15,6 +18,8 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"students", "healthEvents"})
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class GradeLevel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,19 +35,32 @@ public class GradeLevel {
 
     // One-to-many relationship with Students
     @OneToMany(mappedBy = "gradeLevel", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Student> students;
 
-    // Many-to-Many relationship with VaccinationEvent - which events target this grade
-    @ManyToMany(mappedBy = "targetGrades")
-    private Set<VaccinationEvent> vaccinationEvents = new HashSet<>();
+    // Many-to-Many relationship with HealthEvent - which health events target this grade
+    @ManyToMany(mappedBy = "targetGradeLevels")
+    @JsonIgnore
+    private Set<HealthEvent> healthEvents = new HashSet<>();
 
     // Convenience method to get grade number from grade name
     public Integer getGradeNumber() {
-        if (gradeName != null && gradeName.startsWith("Grade ")) {
-            try {
-                return Integer.parseInt(gradeName.substring(6));
-            } catch (NumberFormatException e) {
-                return null;
+        if (gradeName != null) {
+            // Handle format like "6A", "7A", "8A", "9A"
+            if (gradeName.matches("\\d+[A-Z]")) {
+                try {
+                    return Integer.parseInt(gradeName.substring(0, gradeName.length() - 1));
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+            // Handle format like "Grade 1", "Grade 2", etc.
+            if (gradeName.startsWith("Grade ")) {
+                try {
+                    return Integer.parseInt(gradeName.substring(6));
+                } catch (NumberFormatException e) {
+                    return null;
+                }
             }
         }
         return null;

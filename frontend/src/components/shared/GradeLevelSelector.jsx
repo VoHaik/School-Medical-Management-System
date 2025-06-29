@@ -30,10 +30,20 @@ const GradeLevelSelector = ({
   sx = {}
 }) => {
   const { t } = useUIText();
-  const { gradeLevels, loading, getGradeSelectOptions } = useGradeLevels();
+  const { gradeLevels, loading, getGradeSelectOptionsByName } = useGradeLevels();
   const [open, setOpen] = useState(false);
 
-  const gradeOptions = getGradeSelectOptions(useVietnamese);
+  // Compute gradeOptions only when gradeLevels or useVietnamese changes
+  const gradeOptions = React.useMemo(() => {
+    return getGradeSelectOptionsByName(useVietnamese);
+  }, [getGradeSelectOptionsByName, useVietnamese]);
+  
+  // Debug logging - only log when values actually change
+  React.useEffect(() => {
+    console.log('GradeLevelSelector - gradeLevels:', gradeLevels);
+    console.log('GradeLevelSelector - gradeOptions:', gradeOptions);
+    console.log('GradeLevelSelector - loading:', loading);
+  }, [gradeLevels, gradeOptions, loading]);
 
   const handleChange = (event) => {
     const selectedValue = event.target.value;

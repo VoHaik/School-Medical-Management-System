@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.Nationalized;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,6 +16,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"healthEvent", "student"})
 public class StudentHealthCheckup { // Renamed class
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,6 +25,7 @@ public class StudentHealthCheckup { // Renamed class
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", referencedColumnName = "event_id") // Link to HealthEvent
+    @JsonIgnore
     private HealthEvent healthEvent;
 
     @ManyToOne(fetch = FetchType.LAZY)

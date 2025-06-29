@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { TextField, Button, Grid, Typography, Paper, FormControl, InputLabel, Select, MenuItem, FormHelperText, Chip, OutlinedInput, Box, Checkbox, FormControlLabel, FormGroup, Snackbar, Alert, CircularProgress } from '@mui/material';
+import { TextField, Button, Grid, Typography, Paper, FormControl, InputLabel, Select, MenuItem, FormHelperText, Chip, OutlinedInput, Box, Snackbar, Alert, CircularProgress } from '@mui/material';
 import axios from 'axios';
 import axiosWithAuth from '../../utils/axiosWithAuth';
 import GradeLevelSelector from '../shared/GradeLevelSelector';
@@ -8,7 +8,13 @@ import { useGradeLevels } from '../../hooks/useGradeLevels';
 
 const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
   const { t } = useUIText();
-  const { formatGradeNumbersToString, parseGradeLevelsString } = useGradeLevels();
+  const { gradeLevels, loading: gradeLevelsLoading, formatGradeNumbersToString, parseGradeLevelsString } = useGradeLevels();
+  
+  // Debug logging
+  console.log('HealthEventForm - gradeLevels:', gradeLevels);
+  console.log('HealthEventForm - gradeLevelsLoading:', gradeLevelsLoading);
+  console.log('HealthEventForm - initialData:', initialData);
+  console.log('HealthEventForm - isEdit:', isEdit);
   
   const [formData, setFormData] = useState({
     eventName: '',
@@ -18,80 +24,70 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
     endDate: '',
     location: '',
     typesOfCheckups: [],
-    targetGradeLevels: [], // Changed to array for better handling
-    classesToNotify: []
+    targetGradeNames: [] // Changed to use names for backend compatibility
   });
   
-  const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  // Load list of classes from API when component mounts
   useEffect(() => {
-    const fetchClasses = async () => {
-      setLoading(true);
-      try {
-        // Use the newly installed classes API
-        const response = await axiosWithAuth().get('/api/classes');
-        console.log('Classes API response:', response.data);
-        setClasses(response.data);
-      } catch (error) {
-        console.error('Error loading class list:', error);
-        console.log('Error details:', error.response?.data || error.message);
-        
-        // Use sample data if API fails
-        setClasses([
-          { classId: '1A', className: 'Class 1A' },
-          { classId: '1B', className: 'Class 1B' },
-          { classId: '2A', className: 'Class 2A' },
-          { classId: '2B', className: 'Class 2B' },
-          { classId: '3A', className: 'Class 3A' },
-        ]);
-        
-        // Hiển thị thông báo lỗi nhưng không làm gián đoạn trải nghiệm người dùng
-        setSnackbarMessage('Không thể tải danh sách lớp. Đang sử dụng dữ liệu mẫu.');
-        setSnackbarSeverity('warning');
-        setSnackbarOpen(true);
-      } finally {
-        setLoading(false);
+    if (initialData && gradeLevels.length > 0) {
+      // Handle targetGradeNames - convert from existing data
+      let targetGradeNames = [];
+      if (initialData.targetGradeNames && Array.isArray(initialData.targetGradeNames)) {
+        targetGradeNames = initialData.targetGradeNames;
+      } else if (initialData.targetGradeIds && Array.isArray(initialData.targetGradeIds)) {
+        // Convert grade IDs to names if needed
+        targetGradeNames = initialData.targetGradeIds.map(id => {
+          const gradeLevel = gradeLevels.find(gl => gl.gradeId === id);
+          return gradeLevel ? gradeLevel.gradeName : null;
+        }).filter(name => name !== null);
+      } else if (typeof initialData.targetGradeLevels === 'string' && initialData.targetGradeLevels) {
+        // Legacy support for string format
+        const gradeNumbers = parseGradeLevelsString(initialData.targetGradeLevels);
+        targetGradeNames = gradeNumbers.map(gradeNum => `Grade ${gradeNum}`);
       }
-    };
-
-    fetchClasses();
-  }, []);
-
-  useEffect(() => {
-    if (initialData) {
-      // Handle targetGradeLevels - convert from string to array if needed
-      let targetGradeLevels = [];
-      if (typeof initialData.targetGradeLevels === 'string' && initialData.targetGradeLevels) {
-        // Parse grade levels from string like "Grade 1, Grade 3, Grade 5"
-        targetGradeLevels = parseGradeLevelsString(initialData.targetGradeLevels)
-          .map(num => num.toString());
-      } else if (Array.isArray(initialData.targetGradeLevels)) {
-        targetGradeLevels = initialData.targetGradeLevels.map(g => g.toString());
+      
+      // Handle dates - support both scheduledDate and startDate/endDate
+      let startDate = '';
+      let endDate = '';
+      
+      if (initialData.scheduledDate) {
+        // If scheduledDate exists, use it for both start and end
+        const dateStr = typeof initialData.scheduledDate === 'string' ? 
+          initialData.scheduledDate.split('T')[0] : 
+          initialData.scheduledDate;
+        startDate = dateStr;
+        endDate = dateStr;
+      } else {
+        // Use individual start/end dates if available
+        startDate = initialData.startDate ? 
+          (typeof initialData.startDate === 'string' ? initialData.startDate.split('T')[0] : initialData.startDate) : '';
+        endDate = initialData.endDate ? 
+          (typeof initialData.endDate === 'string' ? initialData.endDate.split('T')[0] : initialData.endDate) : '';
       }
       
       setFormData({
         eventName: initialData.eventName || '',
         eventType: initialData.eventType || 'HEALTH_CHECKUP',
         description: initialData.description || '',
-        startDate: initialData.startDate ? initialData.startDate.split('T')[0] : '', // Assuming ISO string, take date part
-        endDate: initialData.endDate ? initialData.endDate.split('T')[0] : '', // Assuming ISO string, take date part
+        startDate: startDate,
+        endDate: endDate,
         location: initialData.location || '',
         typesOfCheckups: initialData.typesOfCheckups || [],
-        targetGradeLevels: targetGradeLevels,
-        classesToNotify: initialData.classesToNotify || []
+        targetGradeNames: targetGradeNames
       });
       
-      console.log('Initial form data set:', {
+      console.log('Form populated with initial data:', {
         ...initialData,
-        targetGradeLevels
+        targetGradeNames,
+        startDate,
+        endDate
       });
     }
-  }, [initialData]);
+  }, [initialData, gradeLevels, parseGradeLevelsString]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -99,18 +95,8 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
   };
   
   const handleGradeLevelsChange = (selectedGrades) => {
-    setFormData(prev => ({ ...prev, targetGradeLevels: selectedGrades }));
-  };
-  
-  const handleClassToggle = (classId) => {
-    setFormData(prev => {
-      const currentClasses = prev.classesToNotify || [];
-      if (currentClasses.includes(classId)) {
-        return { ...prev, classesToNotify: currentClasses.filter(id => id !== classId) };
-      } else {
-        return { ...prev, classesToNotify: [...currentClasses, classId] };
-      }
-    });
+    console.log('Grade levels changed to:', selectedGrades);
+    setFormData(prev => ({ ...prev, targetGradeNames: selectedGrades }));
   };
 
   const handleSubmit = (e) => {
@@ -124,35 +110,36 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
         return;
       }
       
-      // Prepare data for submission
+      if (!formData.targetGradeNames || formData.targetGradeNames.length === 0) {
+        setSnackbarMessage('At least one target grade level must be selected.');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+        return;
+      }
+      
+      // Validate typesOfCheckups only for HEALTH_CHECKUP events
+      if (formData.eventType === 'HEALTH_CHECKUP') {
+        if (!formData.typesOfCheckups || formData.typesOfCheckups.length === 0) {
+          setSnackbarMessage('At least one checkup type must be selected for health checkup events.');
+          setSnackbarSeverity('error');
+          setSnackbarOpen(true);
+          return;
+        }
+      }
+      
+      // Prepare data for submission - targetGradeIds is already in correct format
       const finalData = {...formData};
       
-      // Convert targetGradeLevels array to string format for backend
-      if (Array.isArray(finalData.targetGradeLevels)) {
-        // Convert grade numbers back to grade names and join as string
-        const gradeNames = finalData.targetGradeLevels.map(gradeNum => `Grade ${gradeNum}`);
-        finalData.targetGradeLevels = gradeNames.join(', ');
-      } else if (typeof finalData.targetGradeLevels !== 'string') {
-        finalData.targetGradeLevels = '';
+      // Remove typesOfCheckups if not needed (for VACCINATION events)
+      if (formData.eventType !== 'HEALTH_CHECKUP') {
+        delete finalData.typesOfCheckups;
       }
       
       // Rename fields to match backend DTO
       finalData.scheduledDate = finalData.startDate;  // Map startDate to scheduledDate
       
-      // For vaccination events, always need to select classes to manage
-      if (formData.eventType === 'VACCINATION') {
-        if (!finalData.classesToNotify || finalData.classesToNotify.length === 0) {
-          setSnackbarMessage('Please select at least one class to manage the vaccination.');
-          setSnackbarSeverity('error');
-          setSnackbarOpen(true);
-          return;
-        }
-      } else {
-        // For health checkup events, no need to notify by class
-        finalData.classesToNotify = [];
-      }
-      
       console.log('Submitting health checkup event data:', finalData);
+      console.log('Target grade names being sent:', finalData.targetGradeNames);
       onSubmit(finalData);
       
     } catch (error) {
@@ -249,7 +236,16 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
         <Typography variant="h6" gutterBottom>
           {isEdit ? 'Edit Event' : 'Create New Event'}
         </Typography>
-      <form onSubmit={handleSubmit}>
+        
+        {gradeLevelsLoading ? (
+          <Box display="flex" justifyContent="center" p={3}>
+            <CircularProgress />
+            <Typography variant="body2" sx={{ ml: 2 }}>
+              Loading grade levels...
+            </Typography>
+          </Box>
+        ) : (
+          <form onSubmit={handleSubmit}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <TextField
@@ -380,7 +376,7 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
           
           <Grid item xs={12}>
             <GradeLevelSelector
-              value={formData.targetGradeLevels}
+              value={formData.targetGradeNames}
               onChange={handleGradeLevelsChange}
               multiple={true}
               label={t.targetGradeLevels}
@@ -389,35 +385,6 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
               sx={{ mb: 2 }}
             />
           </Grid>
-          
-          {formData.eventType === 'VACCINATION' && (
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" gutterBottom>
-                <strong>Select Classes for Vaccination Management:</strong>
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Parents will receive vaccination notifications through the "Vaccine Consent" section
-              </Typography>
-              <FormGroup row>
-                {loading ? (
-                  <FormHelperText>Loading class list...</FormHelperText>
-                ) : (
-                  classes.map((cls) => (
-                    <FormControlLabel
-                      key={cls.classId}
-                      control={
-                        <Checkbox
-                          checked={formData.classesToNotify?.includes(cls.classId) || false}
-                          onChange={() => handleClassToggle(cls.classId)}
-                        />
-                      }
-                      label={cls.className}
-                    />
-                  ))
-                )}
-              </FormGroup>
-            </Grid>
-          )}
           
           {formData.eventType === 'HEALTH_CHECKUP' && (
             <Grid item xs={12}>
@@ -437,6 +404,7 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
           </Grid>
         </Grid>
       </form>
+        )}
       </Paper>
       <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleCloseSnackbar}>
         <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>

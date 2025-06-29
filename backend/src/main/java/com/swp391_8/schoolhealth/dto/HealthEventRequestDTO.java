@@ -29,10 +29,11 @@ public class HealthEventRequestDTO {
     // Status will likely be managed by the system, not directly set on creation by user in this DTO
     // private String status; 
 
-    @NotEmpty(message = "At least one checkup type must be specified")
+    // Only required for HEALTH_CHECKUP events, optional for VACCINATION events
     private List<String> typesOfCheckups;
 
-    private String targetGradeLevels;
+    @NotEmpty(message = "At least one target grade level must be specified")
+    private List<String> targetGradeNames;
     
     // Thêm trường để chỉ định danh sách các lớp cần thông báo
     private List<String> classesToNotify;

@@ -4,17 +4,24 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.Nationalized;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 @Entity
 @Table(name = "health_events")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"targetGradeLevels", "studentHealthCheckups"})
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class HealthEvent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,9 +61,14 @@ public class HealthEvent {
         SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED, POSTPONED
     }
 
-    @Nationalized
-    @Column(name = "target_grade_levels", length = 255)
-    private String targetGradeLevels;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "health_event_grade_levels",
+        joinColumns = @JoinColumn(name = "event_id"),
+        inverseJoinColumns = @JoinColumn(name = "grade_id")
+    )
+    @JsonIgnore
+    private Set<GradeLevel> targetGradeLevels = new HashSet<>();
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -78,6 +90,7 @@ public class HealthEvent {
 
     // One-to-many relationship with StudentHealthCheckup
     @OneToMany(mappedBy = "healthEvent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<StudentHealthCheckup> studentHealthCheckups;
 
     @PrePersist

@@ -3,6 +3,7 @@ package com.swp391_8.schoolhealth.repository;
 import com.swp391_8.schoolhealth.model.GradeLevel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -35,4 +36,11 @@ public interface GradeLevelRepository extends JpaRepository<GradeLevel, Integer>
     
     @Query("SELECT CASE WHEN COUNT(g) > 0 THEN true ELSE false END FROM GradeLevel g WHERE g.gradeName = CONCAT('Grade ', :gradeNumber)")
     boolean existsByGradeNumber(Integer gradeNumber);
+    
+    // Find grade levels associated with a health event
+    @Query("SELECT g FROM GradeLevel g JOIN g.healthEvents e WHERE e.id = :eventId")
+    List<GradeLevel> findGradeLevelsByEventId(@Param("eventId") Integer eventId);
+    
+    // Find by list of grade names
+    List<GradeLevel> findByGradeNameIn(List<String> gradeNames);
 }

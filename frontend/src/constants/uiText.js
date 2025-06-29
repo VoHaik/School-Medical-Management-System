@@ -113,6 +113,7 @@ export const UI_TEXT = {
   result: 'Result',
   results: 'Results',
   details: 'Details',
+  eventDetails: 'Event Details',
   information: 'Information',
   summary: 'Summary',
   

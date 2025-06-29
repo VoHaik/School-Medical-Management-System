@@ -8,7 +8,7 @@ import com.swp391_8.schoolhealth.repository.StudentRepository;
 import com.swp391_8.schoolhealth.repository.StudentVaccinationRepository;
 import com.swp391_8.schoolhealth.repository.UserRepository;
 import com.swp391_8.schoolhealth.repository.VaccineRepository;
-import com.swp391_8.schoolhealth.repository.VaccinationEventRepository;
+import com.swp391_8.schoolhealth.repository.HealthEventRepository;
 import com.swp391_8.schoolhealth.security.services.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -34,7 +34,7 @@ public class StudentVaccinationService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private VaccinationEventRepository vaccinationEventRepository;
+    private HealthEventRepository healthEventRepository;
     @Autowired
     private SecurityService securityService;
     @Autowired
@@ -67,9 +67,9 @@ public class StudentVaccinationService {
         dto.setAdministrationNotes(sv.getAdministrationNotes());
         dto.setParentNotes(sv.getParentNotes());
         dto.setNextDueDate(sv.getNextDueDate());
-        if (sv.getVaccinationEvent() != null) {
-            dto.setVaccinationEventId(sv.getVaccinationEvent().getId());
-            dto.setVaccinationEventName(sv.getVaccinationEvent().getEventName());
+        if (sv.getHealthEvent() != null) {
+            dto.setVaccinationEventId(sv.getHealthEvent().getEventId());
+            dto.setVaccinationEventName(sv.getHealthEvent().getEventName());
         }
         dto.setCreatedAt(sv.getCreatedAt());
         dto.setUpdatedAt(sv.getUpdatedAt());
@@ -98,11 +98,11 @@ public class StudentVaccinationService {
         }
         
         if (dto.getVaccinationEventId() != null) {
-            VaccinationEvent event = vaccinationEventRepository.findById(dto.getVaccinationEventId())
-                .orElseThrow(() -> new ResourceNotFoundException("VaccinationEvent not found with ID: " + dto.getVaccinationEventId()));
-            sv.setVaccinationEvent(event);
+            HealthEvent event = healthEventRepository.findById(dto.getVaccinationEventId())
+                .orElseThrow(() -> new ResourceNotFoundException("HealthEvent not found with ID: " + dto.getVaccinationEventId()));
+            sv.setHealthEvent(event);
         } else {
-            sv.setVaccinationEvent(null);
+            sv.setHealthEvent(null);
         }
 
         return sv;
@@ -135,9 +135,9 @@ public class StudentVaccinationService {
         }
         
         if (requestDTO.getVaccinationEventId() != null) {
-            VaccinationEvent event = vaccinationEventRepository.findById(requestDTO.getVaccinationEventId())
-                .orElseThrow(() -> new ResourceNotFoundException("VaccinationEvent not found with ID: " + requestDTO.getVaccinationEventId()));
-            sv.setVaccinationEvent(event);
+            HealthEvent event = healthEventRepository.findById(requestDTO.getVaccinationEventId())
+                .orElseThrow(() -> new ResourceNotFoundException("HealthEvent not found with ID: " + requestDTO.getVaccinationEventId()));
+            sv.setHealthEvent(event);
         }
 
         StudentVaccination savedSv = studentVaccinationRepository.save(sv);
@@ -235,11 +235,11 @@ public class StudentVaccinationService {
         sv.setNextDueDate(requestDTO.getNextDueDate());
 
         if (requestDTO.getVaccinationEventId() != null) {
-            VaccinationEvent event = vaccinationEventRepository.findById(requestDTO.getVaccinationEventId())
-                .orElseThrow(() -> new ResourceNotFoundException("VaccinationEvent not found with ID: " + requestDTO.getVaccinationEventId()));
-            sv.setVaccinationEvent(event);
+            HealthEvent event = healthEventRepository.findById(requestDTO.getVaccinationEventId())
+                .orElseThrow(() -> new ResourceNotFoundException("HealthEvent not found with ID: " + requestDTO.getVaccinationEventId()));
+            sv.setHealthEvent(event);
         } else {
-            sv.setVaccinationEvent(null); // Allow unsetting the event
+            sv.setHealthEvent(null); // Allow unsetting the event
         }
 
         // Handle consent status update - only if provided in DTO
@@ -429,7 +429,7 @@ public class StudentVaccinationService {
         if (!securityService.hasAnyRole(authentication, ERole.ROLE_SCHOOLNURSE, ERole.ROLE_ADMIN)) {
             throw new AccessDeniedException("User not authorized to view vaccinations for this event.");
         }
-        return studentVaccinationRepository.findByVaccinationEventId(eventId).stream() // Corrected method name
+        return studentVaccinationRepository.findByHealthEvent_EventId(eventId).stream() // Updated method name
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }

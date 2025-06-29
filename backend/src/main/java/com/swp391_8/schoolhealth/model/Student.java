@@ -4,7 +4,10 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.Nationalized;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,6 +17,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"gradeLevel"})
 public class Student {
     @Id
     @Nationalized
@@ -38,19 +42,12 @@ public class Student {
     // Many-to-one relationship with GradeLevel
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "grade_level_id", nullable = false)
+    @JsonIgnore
     private GradeLevel gradeLevel;
 
     @Nationalized
     @Column(name = "class_name", length = 20)
     private String className; // Keep for specific class within grade level (e.g., "10A", "10B")
-
-    @Nationalized
-    @Column(name = "grade", length = 10)
-    private String grade;
-
-    @Nationalized
-    @Column(name = "clazz", length = 20)
-    private String clazz;
 
     @Nationalized
     @Column(name = "school_year", length = 20)
@@ -173,22 +170,6 @@ public class Student {
     }
 
     // Getters and setters for additional fields
-    public String getGrade() {
-        return grade;
-    }
-
-    public void setGrade(String grade) {
-        this.grade = grade;
-    }
-
-    public String getClazz() {
-        return clazz;
-    }
-
-    public void setClazz(String clazz) {
-        this.clazz = clazz;
-    }
-
     public String getSchoolYear() {
         return schoolYear;
     }

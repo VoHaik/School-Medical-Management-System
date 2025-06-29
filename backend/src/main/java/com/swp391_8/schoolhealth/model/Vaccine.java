@@ -47,6 +47,5 @@ public class Vaccine {
     @OneToMany(mappedBy = "vaccine")
     private Set<DeclaredVaccinationRecord> declaredVaccinationRecords;
 
-    @OneToMany(mappedBy = "vaccine")
-    private Set<VaccinationEvent> vaccinationEvents;
+    // Note: VaccinationEvent is now replaced by HealthEvent with EventType.VACCINATION
 }
