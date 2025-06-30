@@ -18,6 +18,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -38,7 +40,7 @@ public class VaccinationManagementController {
      * Get all students scheduled for vaccination for a specific event
      */
     @GetMapping("/event/{eventId}/students")
-    @PreAuthorize("hasAuthority('Nurse') or hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<List<StudentVaccinationRecord>> getStudentsForVaccinationEvent(@PathVariable Integer eventId) {
         List<StudentVaccinationRecord> records = vaccinationRecordRepository.findByEventId(eventId);
         return ResponseEntity.ok(records);
@@ -48,7 +50,7 @@ public class VaccinationManagementController {
      * Get vaccination records by status for an event
      */
     @GetMapping("/event/{eventId}/status/{status}")
-    @PreAuthorize("hasAuthority('Nurse') or hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<List<StudentVaccinationRecord>> getVaccinationRecordsByStatus(
             @PathVariable Integer eventId, 
             @PathVariable String status) {
@@ -71,7 +73,7 @@ public class VaccinationManagementController {
      * Update vaccination record (mark as completed, add notes, etc.)
      */
     @PutMapping("/record/{recordId}")
-    @PreAuthorize("hasAuthority('Nurse') or hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<MessageResponse> updateVaccinationRecord(
             @PathVariable Integer recordId,
             @RequestBody Map<String, Object> updateData) {
@@ -123,7 +125,23 @@ public class VaccinationManagementController {
             record.setNotes(updateData.get("notes").toString());
         }
         if (updateData.containsKey("vaccinationDate") && updateData.get("vaccinationDate") != null) {
-            record.setVaccinationDate(LocalDate.parse(updateData.get("vaccinationDate").toString()));
+            try {
+                String dateString = updateData.get("vaccinationDate").toString();
+                LocalDate vaccinationDate;
+                
+                // Try to parse as ISO date-time string first (e.g., "2025-06-17T17:00:00.000Z")
+                if (dateString.contains("T")) {
+                    vaccinationDate = OffsetDateTime.parse(dateString).toLocalDate();
+                } else {
+                    // Parse as simple date string (e.g., "2025-06-17")
+                    vaccinationDate = LocalDate.parse(dateString);
+                }
+                
+                record.setVaccinationDate(vaccinationDate);
+            } catch (DateTimeParseException e) {
+                return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Invalid date format: " + updateData.get("vaccinationDate"), false));
+            }
         }
 
         vaccinationRecordRepository.save(record);
@@ -135,7 +153,7 @@ public class VaccinationManagementController {
      * Get scheduled vaccinations for a specific date
      */
     @GetMapping("/scheduled/{date}")
-    @PreAuthorize("hasAuthority('Nurse') or hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<List<StudentVaccinationRecord>> getScheduledVaccinations(@PathVariable String date) {
         try {
             LocalDate scheduledDate = LocalDate.parse(date);
@@ -150,7 +168,7 @@ public class VaccinationManagementController {
      * Get consent statistics for an event
      */
     @GetMapping("/event/{eventId}/consent-statistics")
-    @PreAuthorize("hasAuthority('Nurse') or hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<VaccinationConsentService.ConsentStatistics> getConsentStatistics(@PathVariable Integer eventId) {
         VaccinationConsentService.ConsentStatistics stats = consentService.getConsentStatistics(eventId);
         return ResponseEntity.ok(stats);
@@ -160,7 +178,7 @@ public class VaccinationManagementController {
      * Get consent requests for an event
      */
     @GetMapping("/event/{eventId}/consents")
-    @PreAuthorize("hasAuthority('Nurse') or hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<List<VaccinationConsent>> getConsentRequestsForEvent(@PathVariable Integer eventId) {
         List<VaccinationConsent> consents = consentRepository.findPendingConsentsByEventId(eventId);
         return ResponseEntity.ok(consents);
@@ -170,7 +188,7 @@ public class VaccinationManagementController {
      * Get vaccination history for a student
      */
     @GetMapping("/student/{studentCode}/history")
-    @PreAuthorize("hasAuthority('Nurse') or hasAuthority('Admin') or hasAuthority('Parent')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or hasAuthority('Parent')")
     public ResponseEntity<List<StudentVaccinationRecord>> getStudentVaccinationHistory(@PathVariable String studentCode) {
         List<StudentVaccinationRecord> history = vaccinationRecordRepository.findVaccinationHistoryByStudentCode(studentCode);
         return ResponseEntity.ok(history);
@@ -180,7 +198,7 @@ public class VaccinationManagementController {
      * Get overdue vaccinations
      */
     @GetMapping("/overdue")
-    @PreAuthorize("hasAuthority('Nurse') or hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<List<StudentVaccinationRecord>> getOverdueVaccinations() {
         List<StudentVaccinationRecord> overdueRecords = vaccinationRecordRepository.findOverdueVaccinations(LocalDate.now());
         return ResponseEntity.ok(overdueRecords);
@@ -190,7 +208,7 @@ public class VaccinationManagementController {
      * Debug endpoint to check vaccination data
      */
     @GetMapping("/debug/vaccination-data")
-    @PreAuthorize("hasAuthority('Nurse') or hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<Map<String, Object>> debugVaccinationData() {
         Map<String, Object> debugInfo = new HashMap<>();
         
@@ -239,7 +257,7 @@ public class VaccinationManagementController {
      * Debug endpoint to manually trigger vaccination consent creation for an event
      */
     @PostMapping("/debug/trigger-consent/{eventId}")
-    @PreAuthorize("hasAuthority('Nurse') or hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<Map<String, Object>> triggerVaccinationConsent(@PathVariable Integer eventId) {
         try {
             HealthEvent event = healthEventRepository.findByIdWithGradeLevels(eventId)
@@ -268,7 +286,7 @@ public class VaccinationManagementController {
      * Debug endpoint to manually trigger vaccination consent creation for existing events
      */
     @PostMapping("/debug/trigger-consents/{eventId}")
-    @PreAuthorize("hasAuthority('Nurse') or hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<Map<String, Object>> triggerVaccinationConsents(@PathVariable Integer eventId) {
         Map<String, Object> result = new HashMap<>();
         
@@ -367,21 +385,87 @@ public class VaccinationManagementController {
      * Get all vaccination records for vaccination management
      */
     @GetMapping("/records")
-    @PreAuthorize("hasAuthority('Nurse') or hasAuthority('Admin')")
-    public ResponseEntity<List<StudentVaccinationRecord>> getAllVaccinationRecords() {
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
+    public ResponseEntity<List<Map<String, Object>>> getAllVaccinationRecords() {
         List<StudentVaccinationRecord> records = vaccinationRecordRepository.findAllWithDetails();
-        return ResponseEntity.ok(records);
+        
+        // Transform records to include consent status
+        List<Map<String, Object>> recordsWithConsent = records.stream()
+            .map(record -> {
+                Map<String, Object> recordMap = new HashMap<>();
+                
+                // Basic record information
+                recordMap.put("vaccinationRecordId", record.getVaccinationRecordId());
+                recordMap.put("vaccinationStatus", record.getVaccinationStatus().toString());
+                recordMap.put("scheduledDate", record.getScheduledDate());
+                recordMap.put("vaccinationDate", record.getVaccinationDate());
+                recordMap.put("vaccineName", record.getVaccineName());
+                recordMap.put("vaccineBatch", record.getVaccineBatch());
+                recordMap.put("vaccineManufacturer", record.getVaccineManufacturer());
+                recordMap.put("administeredBy", record.getAdministeredBy());
+                recordMap.put("administrationSite", record.getAdministrationSite());
+                recordMap.put("adverseReactions", record.getAdverseReactions());
+                recordMap.put("notes", record.getNotes());
+                recordMap.put("consentReceivedDate", record.getConsentReceivedDate());
+                
+                // Student information
+                if (record.getStudent() != null) {
+                    Map<String, Object> studentMap = new HashMap<>();
+                    studentMap.put("studentCode", record.getStudent().getStudentCode());
+                    studentMap.put("fullName", record.getStudent().getFullName());
+                    
+                    if (record.getStudent().getGradeLevel() != null) {
+                        Map<String, Object> gradeLevelMap = new HashMap<>();
+                        gradeLevelMap.put("gradeName", record.getStudent().getGradeLevel().getGradeName());
+                        studentMap.put("gradeLevel", gradeLevelMap);
+                    }
+                    recordMap.put("student", studentMap);
+                }
+                
+                // Health event information
+                if (record.getHealthEvent() != null) {
+                    Map<String, Object> eventMap = new HashMap<>();
+                    eventMap.put("eventId", record.getHealthEvent().getEventId());
+                    eventMap.put("eventName", record.getHealthEvent().getEventName());
+                    eventMap.put("eventType", record.getHealthEvent().getEventType().toString());
+                    eventMap.put("description", record.getHealthEvent().getDescription());
+                    recordMap.put("healthEvent", eventMap);
+                    
+                    // Get consent status for this student and event
+                    if (record.getStudent() != null) {
+                        VaccinationConsent consent = consentRepository
+                            .findByHealthEventAndStudent(record.getHealthEvent(), record.getStudent())
+                            .orElse(null);
+                        
+                        if (consent != null) {
+                            recordMap.put("consentStatus", consent.getConsentStatus().toString());
+                            recordMap.put("consentDate", consent.getConsentDate());
+                        } else {
+                            recordMap.put("consentStatus", "PENDING");
+                            recordMap.put("consentDate", null);
+                        }
+                    }
+                } else {
+                    recordMap.put("consentStatus", "PENDING");
+                    recordMap.put("consentDate", null);
+                }
+                
+                return recordMap;
+            })
+            .toList();
+        
+        return ResponseEntity.ok(recordsWithConsent);
     }
 
     /**
      * Get vaccination statistics for dashboard
      */
     @GetMapping("/statistics")
-    @PreAuthorize("hasAuthority('Nurse') or hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<Map<String, Object>> getVaccinationStatistics() {
         Map<String, Object> stats = new HashMap<>();
         
-        // Count total records
+        // Count total vaccination records
         long totalRecords = vaccinationRecordRepository.count();
         stats.put("totalVaccinations", totalRecords);
         
@@ -390,14 +474,14 @@ public class VaccinationManagementController {
             StudentVaccinationRecord.VaccinationStatus.SCHEDULED);
         long completedCount = vaccinationRecordRepository.countByVaccinationStatus(
             StudentVaccinationRecord.VaccinationStatus.COMPLETED);
-        long consentDeclinedCount = vaccinationRecordRepository.countByVaccinationStatus(
-            StudentVaccinationRecord.VaccinationStatus.CONSENT_DECLINED);
+        long missedCount = vaccinationRecordRepository.countByVaccinationStatus(
+            StudentVaccinationRecord.VaccinationStatus.MISSED);
         
         stats.put("scheduledCount", scheduledCount);
         stats.put("completedCount", completedCount);
-        stats.put("consentDeclinedCount", consentDeclinedCount);
+        stats.put("missedCount", missedCount);
         
-        // Calculate vaccination rate
+        // Calculate vaccination completion rate (completed / total records)
         double vaccinationRate = totalRecords > 0 ? 
             (double) completedCount / totalRecords * 100 : 0;
         stats.put("vaccinationRate", Math.round(vaccinationRate));
@@ -406,6 +490,19 @@ public class VaccinationManagementController {
         long activeEvents = healthEventRepository.countByEventTypeAndStatus(
             HealthEvent.EventType.VACCINATION, HealthEvent.Status.SCHEDULED);
         stats.put("activeCampaigns", activeEvents);
+        
+        // Count total students in system
+        long totalStudents = studentRepository.count();
+        stats.put("totalStudents", totalStudents);
+        
+        // Count students with vaccination records
+        long studentsWithVaccinations = vaccinationRecordRepository.countDistinctStudents();
+        stats.put("studentsWithVaccinations", studentsWithVaccinations);
+        
+        // Calculate student vaccination coverage (students with records / total students)
+        double studentCoverage = totalStudents > 0 ? 
+            (double) studentsWithVaccinations / totalStudents * 100 : 0;
+        stats.put("studentCoverage", Math.round(studentCoverage));
         
         return ResponseEntity.ok(stats);
     }

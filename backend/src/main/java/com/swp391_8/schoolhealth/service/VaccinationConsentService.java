@@ -207,7 +207,8 @@ public class VaccinationConsentService {
             if (consentStatus == VaccinationConsent.ConsentStatus.APPROVED) {
                 record.setVaccinationStatus(StudentVaccinationRecord.VaccinationStatus.SCHEDULED);
             } else if (consentStatus == VaccinationConsent.ConsentStatus.REJECTED) {
-                record.setVaccinationStatus(StudentVaccinationRecord.VaccinationStatus.CONSENT_DECLINED);
+                // Use MISSED since CONSENT_DECLINED is not allowed by database constraint
+                record.setVaccinationStatus(StudentVaccinationRecord.VaccinationStatus.MISSED);
             }
             
             // Copy parent notes to vaccination record

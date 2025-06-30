@@ -23,7 +23,7 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
     startDate: '',
     endDate: '',
     location: '',
-    typesOfCheckups: [],
+    typesOfCheckups: [], // Ensure this is always an array
     targetGradeNames: [] // Changed to use names for backend compatibility
   });
   
@@ -76,7 +76,7 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
         startDate: startDate,
         endDate: endDate,
         location: initialData.location || '',
-        typesOfCheckups: initialData.typesOfCheckups || [],
+        typesOfCheckups: Array.isArray(initialData.typesOfCheckups) ? initialData.typesOfCheckups : [], // Ensure it's always an array
         targetGradeNames: targetGradeNames
       });
       
@@ -159,11 +159,14 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
       // Tạo giá trị duy nhất cho loại tùy chỉnh bằng cách chuyển đổi thành UPPERCASE và thay thế khoảng trắng bằng dấu gạch dưới
       const customValue = 'CUSTOM_' + customCheckupType.trim().toUpperCase().replace(/\s+/g, '_');
       
+      // Ensure typesOfCheckups is an array before checking includes
+      const typesOfCheckups = Array.isArray(formData.typesOfCheckups) ? formData.typesOfCheckups : [];
+      
       // Kiểm tra xem đã tồn tại trong danh sách chưa
-      if (!formData.typesOfCheckups.includes(customValue)) {
+      if (!typesOfCheckups.includes(customValue)) {
         setFormData(prev => ({
           ...prev,
-          typesOfCheckups: [...prev.typesOfCheckups, customValue]
+          typesOfCheckups: [...typesOfCheckups, customValue]
         }));
         
         // Display success message
@@ -206,7 +209,9 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
     ];
     
     // Add custom types to the list for health checkup
-    const customTypes = formData.typesOfCheckups
+    // Ensure typesOfCheckups is an array before filtering
+    const typesOfCheckups = Array.isArray(formData.typesOfCheckups) ? formData.typesOfCheckups : [];
+    const customTypes = typesOfCheckups
       .filter(type => type.startsWith('CUSTOM_'))
       .map(type => ({
         value: type,
@@ -320,17 +325,21 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
                   <Select
                     labelId="checkup-types-label"
                     multiple
-                    value={formData.typesOfCheckups || []}
-                    onChange={(e) => setFormData({...formData, typesOfCheckups: e.target.value})}
+                    value={Array.isArray(formData.typesOfCheckups) ? formData.typesOfCheckups : []}
+                    onChange={(e) => setFormData({...formData, typesOfCheckups: Array.isArray(e.target.value) ? e.target.value : []})}
                     input={<OutlinedInput label="Checkup Types" />}
-                    renderValue={(selected) => (
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {selected.map((value) => {
-                          const type = getHealthCheckupTypes().find(t => t.value === value);
-                          return <Chip key={value} label={type ? type.label : value} />;
-                        })}
-                      </Box>
-                    )}
+                    renderValue={(selected) => {
+                      // Ensure selected is an array before mapping
+                      const selectedArray = Array.isArray(selected) ? selected : [];
+                      return (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selectedArray.map((value) => {
+                            const type = getHealthCheckupTypes().find(t => t.value === value);
+                            return <Chip key={value} label={type ? type.label : value} />;
+                          })}
+                        </Box>
+                      );
+                    }}
                   >
                     {getHealthCheckupTypes().map((type) => (
                       <MenuItem key={type.value} value={type.value}>

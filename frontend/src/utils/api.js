@@ -517,7 +517,7 @@ export const createVaccinationRecord = async (recordData) => {
 
 export const updateVaccinationRecord = async (recordId, recordData) => {
   try {
-    const response = await apiClient.put(`/vaccination-management/records/${recordId}`, recordData);
+    const response = await apiClient.put(`/vaccination-management/record/${recordId}`, recordData);
     return response.data;
   } catch (error) {
     handleApiError(error, 'update vaccination record');

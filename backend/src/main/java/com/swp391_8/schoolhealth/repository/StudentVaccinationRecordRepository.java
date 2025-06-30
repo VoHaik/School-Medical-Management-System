@@ -49,10 +49,14 @@ public interface StudentVaccinationRecordRepository extends JpaRepository<Studen
     @Query("SELECT svr FROM StudentVaccinationRecord svr " +
            "LEFT JOIN FETCH svr.student s " +
            "LEFT JOIN FETCH s.gradeLevel " +
-           "LEFT JOIN FETCH svr.healthEvent " +
+           "LEFT JOIN FETCH svr.healthEvent he " +
            "ORDER BY svr.scheduledDate DESC, svr.vaccinationDate DESC")
     List<StudentVaccinationRecord> findAllWithDetails();
     
     // Count vaccination records by status
     Long countByVaccinationStatus(StudentVaccinationRecord.VaccinationStatus status);
+    
+    // Count distinct students with vaccination records
+    @Query("SELECT COUNT(DISTINCT svr.student) FROM StudentVaccinationRecord svr")
+    Long countDistinctStudents();
 }

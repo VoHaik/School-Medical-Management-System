@@ -462,4 +462,47 @@ public class StudentHealthCheckupServiceImpl implements StudentHealthCheckupServ
         }
         return convertToDTO(checkup);
     }
+
+    @Override
+    public List<StudentHealthCheckupDTO> getAllHealthCheckups(String status, String grade, LocalDate startDate, LocalDate endDate) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!securityService.isNurse(authentication) && !securityService.isAdmin(authentication)) {
+            throw new AccessDeniedException("User not authorized to view all health checkups.");
+        }
+
+        List<StudentHealthCheckup> checkups;
+        
+        if (startDate != null && endDate != null) {
+            checkups = studentHealthCheckupRepository.findByCheckupDateBetween(startDate, endDate);
+        } else {
+            checkups = studentHealthCheckupRepository.findAll();
+        }
+
+        // Apply additional filtering if needed
+        return checkups.stream()
+            .filter(checkup -> {
+                if (grade != null && !grade.isEmpty()) {
+                    String studentGrade = checkup.getStudent().getGradeLevel() != null ? 
+                        checkup.getStudent().getGradeLevel().getGradeName() : "";
+                    return studentGrade.equals(grade);
+                }
+                return true;
+            })
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void deleteStudentHealthCheckup(Integer checkupId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!securityService.isNurse(authentication) && !securityService.isAdmin(authentication)) {
+            throw new AccessDeniedException("User not authorized to delete health checkups.");
+        }
+
+        StudentHealthCheckup checkup = studentHealthCheckupRepository.findById(checkupId)
+            .orElseThrow(() -> new ResourceNotFoundException("StudentHealthCheckup record not found with id: " + checkupId));
+        
+        studentHealthCheckupRepository.delete(checkup);
+    }
 }

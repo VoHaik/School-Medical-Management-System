@@ -66,6 +66,16 @@ import {
 } from '../../utils/api';
 import PageHeader from '../../components/PageHeader';
 
+const vaccinationUpdateSchema = yup.object().shape({
+  administeredDate: yup.date().required('Administration date is required'),
+  administeredBy: yup.string().required('Administered by is required'),
+  site: yup.string().required('Administration site is required'),
+  dose: yup.string(),
+  reactions: yup.array().of(yup.string()),
+  notes: yup.string(),
+  vaccinationStatus: yup.string().required('Status is required')
+});
+
 const vaccinationRecordSchema = yup.object().shape({
   studentId: yup.string().required('Student is required'),
   vaccineType: yup.string().required('Vaccine type is required'),
@@ -94,11 +104,26 @@ const vaccinationCampaignSchema = yup.object().shape({
 });
 
 function VaccinationManagement() {
+  // Administration site options
+  const administrationSiteOptions = [
+    'Left Arm',
+    'Right Arm',
+    'Left Thigh',
+    'Right Thigh',
+    'Left Buttock',
+    'Right Buttock',
+    'Oral',
+    'Nasal',
+    'Other'
+  ];
+
   const [activeTab, setActiveTab] = useState(0);
   const [recordDialogOpen, setRecordDialogOpen] = useState(false);
   const [campaignDialogOpen, setCampaignDialogOpen] = useState(false);
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const [selectedUpdateRecord, setSelectedUpdateRecord] = useState(null);
   const [vaccinationRecords, setVaccinationRecords] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [students, setStudents] = useState([]);
@@ -109,9 +134,14 @@ function VaccinationManagement() {
   const [filterGrade, setFilterGrade] = useState('all');
   const [statistics, setStatistics] = useState({
     totalVaccinations: 0,
+    completedCount: 0,
+    scheduledCount: 0,
+    missedCount: 0,
     activeCampaigns: 0,
     totalStudents: 0,
-    vaccinationRate: 0
+    studentsWithVaccinations: 0,
+    vaccinationRate: 0,
+    studentCoverage: 0
   });
 
   const recordForm = useForm({
@@ -129,8 +159,21 @@ function VaccinationManagement() {
     }
   });
 
+  const updateForm = useForm({
+    resolver: yupResolver(vaccinationUpdateSchema),
+    defaultValues: {
+      reactions: [],
+      vaccinationStatus: 'COMPLETED'
+    }
+  });
+
   const { fields: reactionFields, append: appendReaction, remove: removeReaction } = useFieldArray({
     control: recordForm.control,
+    name: 'reactions'
+  });
+
+  const { fields: updateReactionFields, append: appendUpdateReaction, remove: removeUpdateReaction } = useFieldArray({
+    control: updateForm.control,
     name: 'reactions'
   });
 
@@ -152,25 +195,25 @@ function VaccinationManagement() {
       if (records && Array.isArray(records)) {
         // Transform API data to match UI format
         const transformedRecords = records.map(record => ({
-          id: record.recordId,
-          studentId: record.student?.studentCode || record.studentCode,
+          id: record.vaccinationRecordId,
+          studentId: record.student?.studentCode || 'Unknown ID',
           studentName: record.student?.fullName || 'Unknown Student',
-          grade: record.student?.gradeLevel?.gradeName || record.student?.className || 'N/A',
+          grade: record.student?.gradeLevel?.gradeName || 'N/A',
           vaccineType: record.healthEvent?.eventType || 'VACCINATION',
-          vaccineName: record.healthEvent?.description || record.vaccineName || 'Unknown Vaccine',
+          vaccineName: record.vaccineName || record.healthEvent?.description || 'Unknown Vaccine',
           eventName: record.healthEvent?.eventName || 'Vaccination Event',
-          batchNumber: record.batchNumber || 'N/A',
-          manufacturer: record.manufacturer || 'N/A',
-          administeredDate: record.administeredDate || record.scheduledDate,
+          batchNumber: record.vaccineBatch || 'N/A',
+          manufacturer: record.vaccineManufacturer || 'N/A',
+          administeredDate: record.vaccinationDate || record.scheduledDate,
           administeredBy: record.administeredBy || 'TBD',
-          site: record.site || 'TBD',
-          dose: record.dose || 'Standard',
+          site: record.administrationSite || 'TBD',
+          dose: 'Standard', // Not stored in backend model
           nextDueDate: record.nextDueDate,
-          reactions: record.reactions ? record.reactions.split(',').filter(r => r.trim()) : [],
+          reactions: record.adverseReactions ? record.adverseReactions.split(',').filter(r => r.trim()) : [],
           notes: record.notes || '',
           status: record.vaccinationStatus?.toLowerCase() || 'scheduled',
           consentStatus: record.consentStatus || 'PENDING',
-          consentDate: record.consentDate,
+          consentDate: record.consentDate || record.consentReceivedDate,
           scheduledDate: record.scheduledDate
         }));
         
@@ -334,20 +377,33 @@ function VaccinationManagement() {
       if (stats) {
         setStatistics({
           totalVaccinations: stats.totalVaccinations || 0,
+          completedCount: stats.completedCount || 0,
+          scheduledCount: stats.scheduledCount || 0,
+          missedCount: stats.missedCount || 0,
           activeCampaigns: stats.activeCampaigns || 0,
-          totalStudents: students.length || 2, // Use current students count as fallback
-          vaccinationRate: stats.vaccinationRate || 0
+          totalStudents: stats.totalStudents || 0,
+          studentsWithVaccinations: stats.studentsWithVaccinations || 0,
+          vaccinationRate: stats.vaccinationRate || 0,
+          studentCoverage: stats.studentCoverage || 0
         });
       }
     } catch (error) {
       console.error('Error fetching statistics:', error);
       // Keep default values if API fails
+      const completedRecords = vaccinationRecords.filter(r => r.status === 'completed').length;
+      const scheduledRecords = vaccinationRecords.filter(r => r.status === 'scheduled').length;
+      const totalRecords = vaccinationRecords.length;
+      
       setStatistics({
-        totalVaccinations: vaccinationRecords.length,
+        totalVaccinations: totalRecords,
+        completedCount: completedRecords,
+        scheduledCount: scheduledRecords,
+        missedCount: 0,
         activeCampaigns: campaigns.filter(c => c.status === 'active').length,
-        totalStudents: students.length || 2,
-        vaccinationRate: vaccinationRecords.length > 0 ? 
-          Math.round((vaccinationRecords.filter(r => r.status === 'completed').length / vaccinationRecords.length) * 100) : 100
+        totalStudents: students.length || 0,
+        studentsWithVaccinations: new Set(vaccinationRecords.map(r => r.studentId)).size,
+        vaccinationRate: totalRecords > 0 ? Math.round((completedRecords / totalRecords) * 100) : 0,
+        studentCoverage: students.length > 0 ? Math.round((new Set(vaccinationRecords.map(r => r.studentId)).size / students.length) * 100) : 0
       });
     }
   };
@@ -376,6 +432,20 @@ function VaccinationManagement() {
     setCampaignDialogOpen(true);
   };
 
+  const handleUpdateVaccination = (record) => {
+    setSelectedUpdateRecord(record);
+    updateForm.reset({
+      administeredDate: new Date(),
+      administeredBy: '',
+      site: 'Left Arm',
+      dose: record.dose || 'Standard',
+      reactions: [],
+      notes: record.notes || '',
+      vaccinationStatus: 'COMPLETED'
+    });
+    setUpdateDialogOpen(true);
+  };
+
   const onRecordSubmit = async (data) => {
     try {
       if (selectedRecord) {
@@ -387,6 +457,30 @@ function VaccinationManagement() {
       fetchVaccinationRecords();
     } catch (error) {
       console.error('Error saving vaccination record:', error);
+    }
+  };
+
+  const onUpdateSubmit = async (data) => {
+    try {
+      console.log('Updating vaccination record:', selectedUpdateRecord.id, data);
+      
+      // Transform data to match backend API format
+      const updateData = {
+        vaccinationStatus: data.vaccinationStatus,
+        vaccinationDate: data.administeredDate,
+        administeredBy: data.administeredBy,
+        administrationSite: data.site,
+        adverseReactions: data.reactions.join(', '),
+        notes: data.notes
+      };
+
+      await updateVaccinationRecord(selectedUpdateRecord.id, updateData);
+      
+      setUpdateDialogOpen(false);
+      await fetchVaccinationRecords(); // Refresh the list
+      console.log('Vaccination record updated successfully');
+    } catch (error) {
+      console.error('Error updating vaccination record:', error);
     }
   };
 
@@ -454,8 +548,11 @@ function VaccinationManagement() {
           <Card>
             <CardContent className="text-center">
               <VaccinesIcon className="text-4xl text-blue-500 mb-2" />
-              <Typography variant="h4">{statistics.totalVaccinations}</Typography>
-              <Typography color="textSecondary">Total Vaccinations</Typography>
+              <Typography variant="h4">{statistics.completedCount || 0}</Typography>
+              <Typography color="textSecondary">Completed Vaccinations</Typography>
+              <Typography variant="caption" color="textSecondary">
+                {statistics.totalVaccinations || 0} total records
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -463,8 +560,11 @@ function VaccinationManagement() {
           <Card>
             <CardContent className="text-center">
               <ScheduleIcon className="text-4xl text-green-500 mb-2" />
-              <Typography variant="h4">{statistics.activeCampaigns}</Typography>
-              <Typography color="textSecondary">Active Campaigns</Typography>
+              <Typography variant="h4">{statistics.scheduledCount || 0}</Typography>
+              <Typography color="textSecondary">Scheduled Vaccinations</Typography>
+              <Typography variant="caption" color="textSecondary">
+                {statistics.activeCampaigns || 0} active campaigns
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -472,8 +572,11 @@ function VaccinationManagement() {
           <Card>
             <CardContent className="text-center">
               <GroupIcon className="text-4xl text-purple-500 mb-2" />
-              <Typography variant="h4">{statistics.totalStudents}</Typography>
-              <Typography color="textSecondary">Total Students</Typography>
+              <Typography variant="h4">{statistics.studentsWithVaccinations || 0}</Typography>
+              <Typography color="textSecondary">Students with Records</Typography>
+              <Typography variant="caption" color="textSecondary">
+                {statistics.totalStudents || 0} total students
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -481,8 +584,11 @@ function VaccinationManagement() {
           <Card>
             <CardContent className="text-center">
               <CheckCircleIcon className="text-4xl text-orange-500 mb-2" />
-              <Typography variant="h4">{statistics.vaccinationRate}%</Typography>
-              <Typography color="textSecondary">Vaccination Rate</Typography>
+              <Typography variant="h4">{statistics.vaccinationRate || 0}%</Typography>
+              <Typography color="textSecondary">Completion Rate</Typography>
+              <Typography variant="caption" color="textSecondary">
+                {statistics.studentCoverage || 0}% student coverage
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -592,8 +698,16 @@ function VaccinationManagement() {
                       <TableCell>{record.site}</TableCell>
                       <TableCell>
                         <Chip
-                          label={record.consentStatus === 'REJECTED' ? 'DECLINED' : (record.consentStatus || 'PENDING')}
-                          color={getConsentStatusColor(record.consentStatus)}
+                          label={
+                            record.consentStatus === 'REJECTED' ? 'DECLINED' : 
+                            record.consentStatus === 'APPROVED' ? 'APPROVED' :
+                            record.status === 'missed' && record.consentStatus !== 'APPROVED' ? 'DECLINED' :
+                            (record.consentStatus || 'PENDING')
+                          }
+                          color={
+                            record.consentStatus === 'REJECTED' || (record.status === 'missed' && record.consentStatus !== 'APPROVED') ? 'error' :
+                            record.consentStatus === 'APPROVED' ? 'success' : 'warning'
+                          }
                           size="small"
                         />
                         {record.consentDate && (
@@ -622,6 +736,15 @@ function VaccinationManagement() {
                         />
                       </TableCell>
                       <TableCell>
+                        <Tooltip title="Update Vaccination">
+                          <IconButton 
+                            color="primary"
+                            onClick={() => handleUpdateVaccination(record)}
+                            disabled={record.consentStatus !== 'APPROVED'}
+                          >
+                            <CheckCircleIcon />
+                          </IconButton>
+                        </Tooltip>
                         <Tooltip title="Edit">
                           <IconButton onClick={() => handleEditRecord(record)}>
                             <EditIcon />
@@ -889,6 +1012,104 @@ function VaccinationManagement() {
             <Button onClick={() => setCampaignDialogOpen(false)}>Cancel</Button>
             <Button type="submit" variant="contained">
               {selectedCampaign ? 'Update' : 'Create'} Campaign
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      {/* Vaccination Update Dialog */}
+      <Dialog open={updateDialogOpen} onClose={() => setUpdateDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          Update Vaccination Record
+          {selectedUpdateRecord && (
+            <Typography variant="subtitle2" color="textSecondary">
+              {selectedUpdateRecord.studentName} - {selectedUpdateRecord.vaccineName}
+            </Typography>
+          )}
+        </DialogTitle>
+        <form onSubmit={updateForm.handleSubmit(onUpdateSubmit)}>
+          <DialogContent>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Administration Date"
+                  type="date"
+                  {...updateForm.register('administeredDate')}
+                  error={!!updateForm.formState.errors.administeredDate}
+                  helperText={updateForm.formState.errors.administeredDate?.message}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Administered By"
+                  {...updateForm.register('administeredBy')}
+                  error={!!updateForm.formState.errors.administeredBy}
+                  helperText={updateForm.formState.errors.administeredBy?.message}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Administration Site</InputLabel>
+                  <Select
+                    {...updateForm.register('site')}
+                    error={!!updateForm.formState.errors.site}
+                    label="Administration Site"
+                  >
+                    {administrationSiteOptions.map((site) => (
+                      <MenuItem key={site} value={site}>
+                        {site}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Vaccination Status</InputLabel>
+                  <Select
+                    {...updateForm.register('vaccinationStatus')}
+                    error={!!updateForm.formState.errors.vaccinationStatus}
+                  >
+                    <MenuItem value="COMPLETED">Completed</MenuItem>
+                    <MenuItem value="SCHEDULED">Scheduled</MenuItem>
+                    <MenuItem value="MISSED">Missed</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Adverse Reactions"
+                  multiline
+                  rows={3}
+                  placeholder="Enter any adverse reactions or symptoms separated by commas"
+                  onChange={(e) => {
+                    const reactions = e.target.value.split(',').map(r => r.trim()).filter(r => r);
+                    updateForm.setValue('reactions', reactions);
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Notes"
+                  multiline
+                  rows={3}
+                  {...updateForm.register('notes')}
+                  placeholder="Additional notes about the vaccination"
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setUpdateDialogOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="contained" color="primary">
+              Update Vaccination
             </Button>
           </DialogActions>
         </form>
