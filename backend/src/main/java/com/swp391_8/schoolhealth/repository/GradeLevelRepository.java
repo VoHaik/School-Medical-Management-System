@@ -41,7 +41,7 @@ public interface GradeLevelRepository extends JpaRepository<GradeLevel, Integer>
     @Query(value = "SELECT gl.* FROM grade_levels gl " +
                    "INNER JOIN health_event_grade_levels hegl ON gl.grade_id = hegl.grade_id " +
                    "WHERE hegl.event_id = :eventId", 
-           nativeQuery = true)
+           nativeQuery = true)  
     List<GradeLevel> findGradeLevelsByEventId(@Param("eventId") Integer eventId);
     
     // Find by list of grade names
