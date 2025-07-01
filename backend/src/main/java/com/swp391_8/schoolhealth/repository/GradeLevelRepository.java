@@ -38,7 +38,10 @@ public interface GradeLevelRepository extends JpaRepository<GradeLevel, Integer>
     boolean existsByGradeNumber(Integer gradeNumber);
     
     // Find grade levels associated with a health event
-    @Query("SELECT g FROM GradeLevel g JOIN g.healthEvents e WHERE e.id = :eventId")
+    @Query(value = "SELECT gl.* FROM grade_levels gl " +
+                   "INNER JOIN health_event_grade_levels hegl ON gl.grade_id = hegl.grade_id " +
+                   "WHERE hegl.event_id = :eventId", 
+           nativeQuery = true)  
     List<GradeLevel> findGradeLevelsByEventId(@Param("eventId") Integer eventId);
     
     // Find by list of grade names

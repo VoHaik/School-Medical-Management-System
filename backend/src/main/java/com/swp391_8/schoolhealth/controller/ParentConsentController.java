@@ -1,6 +1,7 @@
 package com.swp391_8.schoolhealth.controller;
 
 import com.swp391_8.schoolhealth.dto.MessageResponse;
+import com.swp391_8.schoolhealth.dto.VaccinationConsentDetailDTO;
 import com.swp391_8.schoolhealth.model.VaccinationConsent;
 import com.swp391_8.schoolhealth.repository.VaccinationConsentRepository;
 import com.swp391_8.schoolhealth.service.VaccinationConsentService;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/parent/vaccination-consent")
@@ -35,13 +37,17 @@ public class ParentConsentController {
      */
     @GetMapping("/student/{studentCode}/pending")
     @PreAuthorize("hasAuthority('Parent')")
-    public ResponseEntity<List<VaccinationConsent>> getPendingConsents(@PathVariable String studentCode) {
-        List<VaccinationConsent> consents = consentRepository.findByStudentCode(studentCode)
+    public ResponseEntity<List<VaccinationConsentDetailDTO>> getPendingConsents(@PathVariable String studentCode) {
+        List<VaccinationConsent> consents = consentRepository.findByStudentCodeWithDetails(studentCode)
             .stream()
             .filter(consent -> consent.getConsentStatus() == VaccinationConsent.ConsentStatus.PENDING)
             .toList();
         
-        return ResponseEntity.ok(consents);
+        List<VaccinationConsentDetailDTO> detailDTOs = consents.stream()
+            .map(VaccinationConsentDetailDTO::new)
+            .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(detailDTOs);
     }
 
     /**
@@ -59,13 +65,17 @@ public class ParentConsentController {
      */
     @GetMapping("/student/{studentCode}/submitted")
     @PreAuthorize("hasAuthority('Parent')")
-    public ResponseEntity<List<VaccinationConsent>> getSubmittedConsents(@PathVariable String studentCode) {
-        List<VaccinationConsent> consents = consentRepository.findByStudentCode(studentCode)
+    public ResponseEntity<List<VaccinationConsentDetailDTO>> getSubmittedConsents(@PathVariable String studentCode) {
+        List<VaccinationConsent> consents = consentRepository.findByStudentCodeWithDetails(studentCode)
             .stream()
             .filter(consent -> consent.getConsentStatus() != VaccinationConsent.ConsentStatus.PENDING)
             .toList();
         
-        return ResponseEntity.ok(consents);
+        List<VaccinationConsentDetailDTO> detailDTOs = consents.stream()
+            .map(VaccinationConsentDetailDTO::new)
+            .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(detailDTOs);
     }
 
     /**

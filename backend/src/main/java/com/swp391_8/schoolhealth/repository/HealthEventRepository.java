@@ -35,4 +35,7 @@ public interface HealthEventRepository extends JpaRepository<HealthEvent, Intege
     
     // Find events by event type
     List<HealthEvent> findByEventType(HealthEvent.EventType eventType);
+
+    // Count events by type and status
+    Long countByEventTypeAndStatus(HealthEvent.EventType eventType, HealthEvent.Status status);
 }

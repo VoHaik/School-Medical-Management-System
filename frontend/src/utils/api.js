@@ -449,7 +449,10 @@ export const getSubmittedVaccinationConsents = async (studentCode) => {
 
 export const submitVaccinationConsent = async (consentId, consentData) => {
   try {
-    const response = await apiClient.post(`/parent/vaccination-consent/${consentId}/submit`, consentData);
+    const response = await apiClient.post(`/parent/vaccination-consent/${consentId}/respond`, {
+      status: consentData.consentStatus,
+      notes: consentData.parentNotes || ''
+    });
     return response.data;
   } catch (error) {
     handleApiError(error, 'submit vaccination consent');
@@ -514,10 +517,40 @@ export const createVaccinationRecord = async (recordData) => {
 
 export const updateVaccinationRecord = async (recordId, recordData) => {
   try {
-    const response = await apiClient.put(`/vaccination-management/records/${recordId}`, recordData);
+    const response = await apiClient.put(`/vaccination-management/record/${recordId}`, recordData);
     return response.data;
   } catch (error) {
     handleApiError(error, 'update vaccination record');
+  }
+};
+
+// Get all vaccination records for vaccination management
+export const getAllVaccinationRecords = async () => {
+  try {
+    const response = await apiClient.get('/vaccination-management/records');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch all vaccination records');
+  }
+};
+
+// Get vaccination statistics/summary
+export const getVaccinationStatistics = async () => {
+  try {
+    const response = await apiClient.get('/vaccination-management/statistics');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch vaccination statistics');
+  }
+};
+
+// Get vaccination records by status
+export const getVaccinationRecordsByStatus = async (status) => {
+  try {
+    const response = await apiClient.get(`/vaccination-management/records?status=${status}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch vaccination records by status');
   }
 };
 

@@ -23,7 +23,7 @@ public class StudentHealthCheckupController {
     private final StudentHealthCheckupService checkupService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('NURSE', 'ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<StudentHealthCheckupDTO> createStudentHealthCheckup( // Renamed method
             @Valid @RequestBody StudentHealthCheckupRequestDTO requestDTO,
             Authentication authentication) {
@@ -33,7 +33,7 @@ public class StudentHealthCheckupController {
     }
 
     @GetMapping("/{checkupResultId}")
-    @PreAuthorize("hasAnyRole('NURSE', 'ADMIN', 'PARENT', 'STUDENT')") // Parent/Student access might need further checks
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or hasAuthority('Parent') or hasAuthority('Student')") // Parent/Student access might need further checks
     public ResponseEntity<StudentHealthCheckupDTO> getStudentHealthCheckupById(@PathVariable Integer checkupResultId) {
         // Add logic here to ensure parent/student can only access their own/their child's records
         StudentHealthCheckupDTO checkupDTO = checkupService.getStudentHealthCheckupById(checkupResultId);
@@ -41,7 +41,7 @@ public class StudentHealthCheckupController {
     }
 
     @GetMapping("/student/{studentCode}")
-    @PreAuthorize("hasAnyRole('NURSE', 'ADMIN', 'PARENT', 'STUDENT')") // Parent/Student access might need further checks
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or hasAuthority('Parent') or hasAuthority('Student')") // Parent/Student access might need further checks
     public ResponseEntity<List<StudentHealthCheckupDTO>> getCheckupsByStudentCode(@PathVariable String studentCode) {
         // Add logic here to ensure parent/student can only access their own/their child's records
         List<StudentHealthCheckupDTO> checkups = checkupService.getCheckupsByStudentCode(studentCode);
@@ -49,14 +49,14 @@ public class StudentHealthCheckupController {
     }
 
     @GetMapping("/event/{eventId}")
-    @PreAuthorize("hasAnyRole('NURSE', 'ADMIN')") // Typically for nurse/admin to see all results for an event
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')") // Typically for nurse/admin to see all results for an event
     public ResponseEntity<List<StudentHealthCheckupDTO>> getCheckupsByEventId(@PathVariable Integer eventId) {
         List<StudentHealthCheckupDTO> checkups = checkupService.getCheckupsByEventId(eventId);
         return ResponseEntity.ok(checkups);
     }
     
     @PatchMapping("/{checkupResultId}/consent")
-    @PreAuthorize("hasAnyRole('NURSE', 'ADMIN', 'PARENT')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or hasAuthority('Parent')")
     public ResponseEntity<StudentHealthCheckupDTO> recordParentConsent( // Renamed method and adjusted parameters
             @PathVariable Integer checkupResultId,
             @RequestBody Map<String, Object> consentUpdate, // Changed to Map<String, Object> for flexibility
@@ -74,30 +74,22 @@ public class StudentHealthCheckupController {
         return ResponseEntity.ok(updatedCheckup);
     }
     
-    // This endpoint seems redundant if /api/student-health-checkups/{checkupResultId}/consent is used by parents.
-    // If it's specifically for a nurse/admin to link consent to an event and student directly,
-    // the service method needs to support this distinct flow.
-    // For now, commenting out to avoid conflict with recordParentConsent which is more aligned with current service implementation.
-    /*
-    @PostMapping("/event/{eventId}/student/{studentCode}/consent") 
-    @PreAuthorize("hasAnyRole('PARENT', 'NURSE', 'ADMIN')")
-    public ResponseEntity<StudentHealthCheckupDTO> recordEventStudentConsent( // Renamed to avoid conflict
-            @PathVariable Integer eventId,
-            @PathVariable String studentCode, 
-            @RequestBody Map<String, Boolean> consentPayload,
-            Authentication authentication) {        
-        Boolean consent = consentPayload.get("consent");
-        if (consent == null) {
-            return ResponseEntity.badRequest().build();
-        }
-        // This would require a different service method like:
-        // StudentHealthCheckupDTO updatedCheckup = checkupService.recordConsentForEventByStudent(eventId, studentCode, consent, authentication);
-        // For now, let's assume the primary way to record consent is via the checkupResultId path.
-        // StudentHealthCheckupDTO updatedCheckup = checkupService.recordConsent(studentCode, eventId, consent); // This call was problematic
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(null); // Placeholder
+    @PutMapping("/{checkupResultId}")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
+    public ResponseEntity<StudentHealthCheckupDTO> updateStudentHealthCheckup(
+            @PathVariable Integer checkupResultId,
+            @Valid @RequestBody StudentHealthCheckupRequestDTO requestDTO,
+            Authentication authentication) {
+        StudentHealthCheckupDTO updatedCheckup = checkupService.updateStudentHealthCheckup(checkupResultId, requestDTO, authentication);
+        return ResponseEntity.ok(updatedCheckup);
     }
-    */
-
-    // Add PUT for full update if needed, though POST can handle create/update based on existence.
-    // Add DELETE if individual checkup results can be deleted (consider implications).
+    
+    @DeleteMapping("/{checkupResultId}")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
+    public ResponseEntity<Void> deleteStudentHealthCheckup(
+            @PathVariable Integer checkupResultId,
+            Authentication authentication) {
+        checkupService.deleteStudentHealthCheckup(checkupResultId, authentication);
+        return ResponseEntity.noContent().build();
+    }
 }

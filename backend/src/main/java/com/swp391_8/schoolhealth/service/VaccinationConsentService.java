@@ -6,9 +6,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,62 +24,146 @@ public class VaccinationConsentService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final HealthEventRepository healthEventRepository;
+    private final GradeLevelRepository gradeLevelRepository;
+    private final EntityManager entityManager;
 
     /**
      * Send vaccination consent requests to all students in target grade levels for a vaccination event
      */
     @Transactional
     public void sendVaccinationConsentRequests(HealthEvent healthEvent) {
-        log.info("Processing vaccination consent requests for event: {} (Type: {})", 
+        log.info("🚀 STARTING vaccination consent requests for event: {} (Type: {})", 
                  healthEvent.getEventName(), healthEvent.getEventType());
+        
+        log.info("🔥 NEW DEBUG VERSION - UPDATED CODE IS RUNNING! Event ID: {}", healthEvent.getEventId());
         
         // Only send for vaccination events
         if (healthEvent.getEventType() != HealthEvent.EventType.VACCINATION) {
-            log.info("Event is not a vaccination event, skipping consent requests");
+            log.info("❌ Event is not a vaccination event, skipping consent requests");
             return;
         }
 
-        // Fetch the event with grade levels to ensure they are loaded
-        HealthEvent eventWithGradeLevels = healthEventRepository.findByIdWithGradeLevels(healthEvent.getEventId())
-            .orElse(healthEvent);
+        // DEBUG: Log the event ID we're querying for
+        log.info("🔍 Looking for grade levels for event ID: {}", healthEvent.getEventId());
         
-        log.info("Event has {} target grade levels", 
-                 eventWithGradeLevels.getTargetGradeLevels() != null ? eventWithGradeLevels.getTargetGradeLevels().size() : 0);
+        // DEBUG: Try direct native query first to see what's happening
+        try {
+            @SuppressWarnings("unchecked")
+            List<Object[]> directQueryResult = entityManager.createNativeQuery(
+                "SELECT gl.* FROM grade_levels gl " +
+                "INNER JOIN health_event_grade_levels hegl ON gl.grade_id = hegl.grade_id " +
+                "WHERE hegl.event_id = ?")
+                .setParameter(1, healthEvent.getEventId())
+                .getResultList();
+            
+            log.info("🔍 Direct native query returned {} rows for event ID {}", directQueryResult.size(), healthEvent.getEventId());
+            
+            for (Object[] row : directQueryResult) {
+                log.info("🔍 Found grade via direct query: grade_id={}, grade_name={}", row[0], row[1]);
+            }
+        } catch (Exception e) {
+            log.error("❌ Direct native query failed: {}", e.getMessage());
+        }
+        
+        // Get grade levels directly from repository instead of entity relationship
+        List<GradeLevel> targetGrades = gradeLevelRepository.findGradeLevelsByEventId(healthEvent.getEventId());
+        
+        log.info("📚 Repository method returned {} target grade levels", targetGrades.size());
+        try {
+            @SuppressWarnings("unchecked")
+            List<Object[]> rawResults = entityManager
+                .createNativeQuery("SELECT gl.grade_id, gl.grade_name FROM grade_levels gl " +
+                                 "INNER JOIN health_event_grade_levels hegl ON gl.grade_id = hegl.grade_id " +
+                                 "WHERE hegl.event_id = ?")
+                .setParameter(1, healthEvent.getEventId())
+                .getResultList();
+            log.info("🔬 Direct native query returned {} results for event {}", rawResults.size(), healthEvent.getEventId());
+            for (Object[] row : rawResults) {
+                log.info("🔬 Raw result: grade_id={}, grade_name={}", row[0], row[1]);
+            }
+        } catch (Exception e) {
+            log.error("❌ Direct native query failed: {}", e.getMessage());
+        }
+        
+        log.info("📚 Event has {} target grade levels", targetGrades.size());
+        
+        // DEBUG: Log the actual grade levels
+        for (GradeLevel gl : targetGrades) {
+            log.info("📝 Target Grade: ID={}, Name={}", gl.getGradeId(), gl.getGradeName());
+        }
+        
+        // DEBUG: If no grades found, try to check the database state
+        if (targetGrades.isEmpty()) {
+            log.error("❌ No grade levels found! This suggests a database transaction issue.");
+            log.error("💡 The grade levels might not be committed yet when this service is called.");
+            
+            // Try to get from the entity relationship as a fallback
+            try {
+                healthEvent = healthEventRepository.findById(healthEvent.getEventId()).orElse(healthEvent);
+                if (healthEvent.getTargetGradeLevels() != null && !healthEvent.getTargetGradeLevels().isEmpty()) {
+                    targetGrades = new ArrayList<>(healthEvent.getTargetGradeLevels());
+                    log.info("✅ Found {} grade levels from entity relationship as fallback", targetGrades.size());
+                }
+            } catch (Exception e) {
+                log.error("❌ Failed to get grade levels from entity relationship: {}", e.getMessage());
+            }
+        }
 
-        if (eventWithGradeLevels.getTargetGradeLevels() == null || eventWithGradeLevels.getTargetGradeLevels().isEmpty()) {
-            log.warn("No target grade levels found for vaccination event: {}", healthEvent.getEventName());
+        if (targetGrades.isEmpty()) {
+            log.warn("⚠️ No target grade levels found for vaccination event: {}", healthEvent.getEventName());
             return;
         }
 
         // Get all students in target grade levels
-        List<Integer> gradeLevelIds = eventWithGradeLevels.getTargetGradeLevels().stream()
+        List<Integer> gradeLevelIds = targetGrades.stream()
                 .map(GradeLevel::getGradeId)
                 .toList();
                 
-        log.info("Looking for students in grade level IDs: {}", gradeLevelIds);
+        log.info("🔍 Looking for students in grade level IDs: {}", gradeLevelIds);
         
         List<Student> students = studentRepository.findStudentsByGradeLevelIds(gradeLevelIds);
         
-        log.info("Found {} students in target grade levels for vaccination event", students.size());
-
+        log.info("👥 Found {} students in target grade levels for vaccination event", students.size());
+        
+        // DEBUG: Log each student found
         for (Student student : students) {
-            log.debug("Processing consent for student: {}", student.getStudentCode());
+            log.info("👤 Found student: {} - {} (Grade: {})", 
+                    student.getStudentCode(), 
+                    student.getFullName(),
+                    student.getGradeLevel() != null ? student.getGradeLevel().getGradeName() : "No Grade");
+        }
+
+        int consentCreated = 0;
+        for (Student student : students) {
+            log.debug("🔄 Processing consent for student: {}", student.getStudentCode());
             
             // Check if consent already exists
-            if (consentRepository.findByHealthEventAndStudent(healthEvent, student).isEmpty()) {
+            Optional<VaccinationConsent> existingConsent = consentRepository.findByHealthEventAndStudent(healthEvent, student);
+            if (existingConsent.isEmpty()) {
                 // Create new consent request
                 VaccinationConsent consent = new VaccinationConsent();
                 consent.setHealthEvent(healthEvent);
                 consent.setStudent(student);
                 consent.setConsentStatus(VaccinationConsent.ConsentStatus.PENDING);
                 
-                consentRepository.save(consent);
-                log.info("Created vaccination consent request for student: {}", student.getStudentCode());
+                try {
+                    VaccinationConsent savedConsent = consentRepository.save(consent);
+                    consentCreated++;
+                    log.info("✅ Created vaccination consent request (ID: {}) for student: {}", 
+                            savedConsent.getConsentId(), student.getStudentCode());
 
-                // Send notification to parent
-                sendConsentNotificationToParent(consent);
+                    // Send notification to parent
+                    sendConsentNotificationToParent(consent);
+                } catch (Exception e) {
+                    log.error("❌ Failed to create consent for student {}: {}", student.getStudentCode(), e.getMessage());
+                }
+            } else {
+                log.info("⏭️ Consent already exists for student: {} (Status: {})", 
+                        student.getStudentCode(), existingConsent.get().getConsentStatus());
             }
         }
+        
+        log.info("🎯 COMPLETED: Created {} new vaccination consents out of {} students", consentCreated, students.size());
     }
 
     /**
@@ -93,20 +180,19 @@ public class VaccinationConsentService {
         
         consentRepository.save(consent);
 
-        // If approved, create vaccination record
-        if (status == VaccinationConsent.ConsentStatus.APPROVED) {
-            createVaccinationRecord(consent);
-        }
+        // Create vaccination record for both approved and rejected consents
+        // This allows nurse to see all responses in vaccination management
+        createVaccinationRecord(consent, status);
 
         // Send confirmation notification to parent
         sendConsentConfirmationToParent(consent);
     }
 
     /**
-     * Create vaccination record when consent is approved
+     * Create vaccination record when consent is responded to (approved or rejected)
      */
     @Transactional
-    public void createVaccinationRecord(VaccinationConsent consent) {
+    public void createVaccinationRecord(VaccinationConsent consent, VaccinationConsent.ConsentStatus consentStatus) {
         // Check if vaccination record already exists
         if (vaccinationRecordRepository.findByHealthEventAndStudent(
                 consent.getHealthEvent(), consent.getStudent()).isEmpty()) {
@@ -114,11 +200,24 @@ public class VaccinationConsentService {
             StudentVaccinationRecord record = new StudentVaccinationRecord();
             record.setHealthEvent(consent.getHealthEvent());
             record.setStudent(consent.getStudent());
-            record.setVaccinationStatus(StudentVaccinationRecord.VaccinationStatus.SCHEDULED);
             record.setScheduledDate(consent.getHealthEvent().getScheduledDate());
             record.setConsentReceivedDate(consent.getConsentDate());
             
+            // Set vaccination status based on consent response
+            if (consentStatus == VaccinationConsent.ConsentStatus.APPROVED) {
+                record.setVaccinationStatus(StudentVaccinationRecord.VaccinationStatus.SCHEDULED);
+            } else if (consentStatus == VaccinationConsent.ConsentStatus.REJECTED) {
+                // Use MISSED since CONSENT_DECLINED is not allowed by database constraint
+                record.setVaccinationStatus(StudentVaccinationRecord.VaccinationStatus.MISSED);
+            }
+            
+            // Copy parent notes to vaccination record
+            record.setNotes(consent.getParentNotes());
+            
             vaccinationRecordRepository.save(record);
+            
+            log.info("Created vaccination record for student {} with status: {}", 
+                    consent.getStudent().getFullName(), record.getVaccinationStatus());
         }
     }
 

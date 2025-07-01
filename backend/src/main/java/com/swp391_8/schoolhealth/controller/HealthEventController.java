@@ -49,8 +49,10 @@ public class HealthEventController {
     @PutMapping("/{eventId}")
     public ResponseEntity<HealthEventDTO> updateHealthEvent(
             @PathVariable Integer eventId,
-            @Valid @RequestBody HealthEventRequestDTO requestDTO) {
-        HealthEventDTO updatedEvent = eventService.updateHealthEvent(eventId, requestDTO);
+            @Valid @RequestBody HealthEventRequestDTO requestDTO,
+            Authentication authentication) {
+        String username = authentication.getName();
+        HealthEventDTO updatedEvent = eventService.updateHealthEvent(eventId, requestDTO, username);
         return ResponseEntity.ok(updatedEvent);
     }
 

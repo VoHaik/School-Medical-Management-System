@@ -44,4 +44,19 @@ public interface StudentVaccinationRecordRepository extends JpaRepository<Studen
     // Find students who received consent for an event
     @Query("SELECT svr FROM StudentVaccinationRecord svr WHERE svr.healthEvent.eventId = :eventId AND svr.consentReceivedDate IS NOT NULL")
     List<StudentVaccinationRecord> findStudentsWithConsentForEvent(@Param("eventId") Integer eventId);
+    
+    // Find all vaccination records with details for management dashboard
+    @Query("SELECT svr FROM StudentVaccinationRecord svr " +
+           "LEFT JOIN FETCH svr.student s " +
+           "LEFT JOIN FETCH s.gradeLevel " +
+           "LEFT JOIN FETCH svr.healthEvent he " +
+           "ORDER BY svr.scheduledDate DESC, svr.vaccinationDate DESC")
+    List<StudentVaccinationRecord> findAllWithDetails();
+    
+    // Count vaccination records by status
+    Long countByVaccinationStatus(StudentVaccinationRecord.VaccinationStatus status);
+    
+    // Count distinct students with vaccination records
+    @Query("SELECT COUNT(DISTINCT svr.student) FROM StudentVaccinationRecord svr")
+    Long countDistinctStudents();
 }

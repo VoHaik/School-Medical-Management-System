@@ -5,6 +5,7 @@ import com.swp391_8.schoolhealth.dto.StudentHealthCheckupRequestDTO;
 import com.swp391_8.schoolhealth.model.StudentHealthCheckup;
 import org.springframework.security.core.Authentication;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface StudentHealthCheckupService {
@@ -81,6 +82,24 @@ public interface StudentHealthCheckupService {
      * @return A DTO representing the student health checkup record.
      */
     StudentHealthCheckupDTO getStudentHealthCheckupById(Integer checkupResultId);
+
+    /**
+     * Retrieves all health checkup records with optional filtering.
+     *
+     * @param status Optional status filter
+     * @param grade Optional grade filter
+     * @param startDate Optional start date filter
+     * @param endDate Optional end date filter
+     * @return A list of DTOs representing filtered health checkup records.
+     */
+    List<StudentHealthCheckupDTO> getAllHealthCheckups(String status, String grade, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * Deletes a student health checkup record by its ID.
+     *
+     * @param checkupId The ID of the health checkup record to delete.
+     */
+    void deleteStudentHealthCheckup(Integer checkupId);
 
     // Removed recordConsent(String studentCode, Integer eventId, boolean consent) as it is redundant
     // Removed updateConsentStatus(Integer checkupId, String studentCode, StudentHealthCheckup.ConsentStatus consentStatus, String notes) due to signature mismatch

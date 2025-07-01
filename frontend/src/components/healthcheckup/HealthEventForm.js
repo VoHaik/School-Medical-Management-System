@@ -23,7 +23,7 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
     startDate: '',
     endDate: '',
     location: '',
-    typesOfCheckups: [],
+    typesOfCheckups: [], // Ensure this is always an array
     targetGradeNames: [] // Changed to use names for backend compatibility
   });
   
@@ -76,7 +76,7 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
         startDate: startDate,
         endDate: endDate,
         location: initialData.location || '',
-        typesOfCheckups: initialData.typesOfCheckups || [],
+        typesOfCheckups: Array.isArray(initialData.typesOfCheckups) ? initialData.typesOfCheckups : [], // Ensure it's always an array
         targetGradeNames: targetGradeNames
       });
       
@@ -159,11 +159,14 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
       // Tạo giá trị duy nhất cho loại tùy chỉnh bằng cách chuyển đổi thành UPPERCASE và thay thế khoảng trắng bằng dấu gạch dưới
       const customValue = 'CUSTOM_' + customCheckupType.trim().toUpperCase().replace(/\s+/g, '_');
       
+      // Ensure typesOfCheckups is an array before checking includes
+      const typesOfCheckups = Array.isArray(formData.typesOfCheckups) ? formData.typesOfCheckups : [];
+      
       // Kiểm tra xem đã tồn tại trong danh sách chưa
-      if (!formData.typesOfCheckups.includes(customValue)) {
+      if (!typesOfCheckups.includes(customValue)) {
         setFormData(prev => ({
           ...prev,
-          typesOfCheckups: [...prev.typesOfCheckups, customValue]
+          typesOfCheckups: [...typesOfCheckups, customValue]
         }));
         
         // Display success message
@@ -195,29 +198,20 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
     setSnackbarOpen(false);
   };
   
-  // Types of checkups that can be chosen based on event type
-  const getCheckupTypes = () => {
-    // Default list
-    const defaultTypes = formData.eventType === 'HEALTH_CHECKUP' 
-      ? [
-          { value: 'VISION', label: 'Vision Check' },
-          { value: 'HEARING', label: 'Hearing Test' },
-          { value: 'DENTAL', label: 'Dental Examination' },
-          { value: 'HEIGHT_WEIGHT', label: 'Height/Weight Measurement' },
-          { value: 'GENERAL', label: 'General Checkup' }
-        ]
-      : [
-          { value: 'BCG', label: 'BCG Vaccine (Tuberculosis)' },
-          { value: 'DPT', label: 'DPT Vaccine (Diphtheria, Pertussis, Tetanus)' },
-          { value: 'POLIO', label: 'Polio Vaccine' },
-          { value: 'MEASLES', label: 'Measles Vaccine' },
-          { value: 'MMR', label: 'MMR Vaccine (Measles, Mumps, Rubella)' },
-          { value: 'HEP_B', label: 'Hepatitis B Vaccine' },
-          { value: 'OTHER', label: 'Other Vaccine Types' }
-        ];
+  // Types of checkups that can be chosen for health checkup events only
+  const getHealthCheckupTypes = () => {
+    const healthCheckupTypes = [
+      { value: 'VISION', label: 'Vision Check' },
+      { value: 'HEARING', label: 'Hearing Test' },
+      { value: 'DENTAL', label: 'Dental Examination' },
+      { value: 'HEIGHT_WEIGHT', label: 'Height/Weight Measurement' },
+      { value: 'GENERAL', label: 'General Checkup' }
+    ];
     
-    // Add custom types to the list
-    const customTypes = formData.typesOfCheckups
+    // Add custom types to the list for health checkup
+    // Ensure typesOfCheckups is an array before filtering
+    const typesOfCheckups = Array.isArray(formData.typesOfCheckups) ? formData.typesOfCheckups : [];
+    const customTypes = typesOfCheckups
       .filter(type => type.startsWith('CUSTOM_'))
       .map(type => ({
         value: type,
@@ -227,7 +221,7 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
           .join(' ')
       }));
     
-    return [...defaultTypes, ...customTypes];
+    return [...healthCheckupTypes, ...customTypes];
   };
 
   return (
@@ -277,67 +271,111 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
           
           <Grid item xs={12}>
             <TextField
-              label="Description"
+              label={formData.eventType === 'VACCINATION' ? 'Vaccine Name/Description' : 'Description'}
               name="description"
               value={formData.description}
               onChange={handleChange}
               multiline
               rows={3}
               fullWidth
+              placeholder={formData.eventType === 'VACCINATION' 
+                ? 'Enter vaccine name (e.g., BCG Vaccine (Tuberculosis), DPT Vaccine (Diphtheria, Pertussis, Tetanus), MMR Vaccine (Measles, Mumps, Rubella), etc.)'
+                : 'Enter event description'
+              }
+              helperText={formData.eventType === 'VACCINATION' 
+                ? 'Common vaccines: BCG, DPT, Polio, Measles, MMR, Hepatitis B, etc.'
+                : 'Provide details about the health event'
+              }
             />
-          </Grid>
-          
-          <Grid item xs={12}>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel id="checkup-types-label">Checkup/Vaccination Types</InputLabel>
-              <Select
-                labelId="checkup-types-label"
-                multiple
-                value={formData.typesOfCheckups || []}
-                onChange={(e) => setFormData({...formData, typesOfCheckups: e.target.value})}
-                input={<OutlinedInput label="Checkup/Vaccination Types" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => {
-                      const type = getCheckupTypes().find(t => t.value === value);
-                      return <Chip key={value} label={type ? type.label : value} />;
-                    })}
-                  </Box>
-                )}
-              >
-                {getCheckupTypes().map((type) => (
-                  <MenuItem key={type.value} value={type.value}>
-                    {type.label}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>Select one or more types</FormHelperText>
-            </FormControl>
             
-            {/* Custom checkup/vaccination type input */}
-            <Grid container spacing={1} alignItems="center">
-              <Grid item xs={9}>
-                <TextField
-                  fullWidth
-                  label="Add Custom Checkup/Vaccination Type"
-                  value={customCheckupType}
-                  onChange={(e) => setCustomCheckupType(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Enter new checkup/vaccination type"
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleAddCustomCheckupType}
-                  fullWidth
-                  disabled={!customCheckupType.trim()}
-                >
-                  Add
-                </Button>
-              </Grid>
-            </Grid>
+            {/* Show vaccine suggestions for VACCINATION events */}
+            {formData.eventType === 'VACCINATION' && (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Quick suggestions (click to use):
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {[
+                    'BCG Vaccine (Tuberculosis)',
+                    'DPT Vaccine (Diphtheria, Pertussis, Tetanus)',
+                    'Polio Vaccine',
+                    'Measles Vaccine',
+                    'MMR Vaccine (Measles, Mumps, Rubella)',
+                    'Hepatitis B Vaccine',
+                    'Other Vaccine Types'
+                  ].map((vaccine) => (
+                    <Chip
+                      key={vaccine}
+                      label={vaccine}
+                      onClick={() => setFormData(prev => ({ ...prev, description: vaccine }))}
+                      variant="outlined"
+                      size="small"
+                      sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'primary.light', color: 'white' } }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
+
+            {/* Show checkup types for HEALTH_CHECKUP events */}
+            {formData.eventType === 'HEALTH_CHECKUP' && (
+              <>
+                <FormControl fullWidth sx={{ mt: 2 }}>
+                  <InputLabel id="checkup-types-label">Checkup Types</InputLabel>
+                  <Select
+                    labelId="checkup-types-label"
+                    multiple
+                    value={Array.isArray(formData.typesOfCheckups) ? formData.typesOfCheckups : []}
+                    onChange={(e) => setFormData({...formData, typesOfCheckups: Array.isArray(e.target.value) ? e.target.value : []})}
+                    input={<OutlinedInput label="Checkup Types" />}
+                    renderValue={(selected) => {
+                      // Ensure selected is an array before mapping
+                      const selectedArray = Array.isArray(selected) ? selected : [];
+                      return (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selectedArray.map((value) => {
+                            const type = getHealthCheckupTypes().find(t => t.value === value);
+                            return <Chip key={value} label={type ? type.label : value} />;
+                          })}
+                        </Box>
+                      );
+                    }}
+                  >
+                    {getHealthCheckupTypes().map((type) => (
+                      <MenuItem key={type.value} value={type.value}>
+                        {type.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <FormHelperText>Select one or more checkup types</FormHelperText>
+                </FormControl>
+                
+                {/* Custom checkup type input for health checkup only */}
+                <Grid container spacing={1} alignItems="center" sx={{ mt: 1 }}>
+                  <Grid item xs={9}>
+                    <TextField
+                      fullWidth
+                      label="Add Custom Checkup Type"
+                      value={customCheckupType}
+                      onChange={(e) => setCustomCheckupType(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Enter new checkup type"
+                    />
+                  </Grid>
+                  <Grid item xs={3}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleAddCustomCheckupType}
+                      fullWidth
+                      disabled={!customCheckupType.trim()}
+                    >
+                      Add
+                    </Button>
+                  </Grid>
+                </Grid>
+              </>
+            )}
           </Grid>
           
           <Grid item xs={12} sm={6}>

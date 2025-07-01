@@ -38,7 +38,7 @@ public class StudentVaccinationRecord {
     private VaccinationStatus vaccinationStatus = VaccinationStatus.SCHEDULED;
 
     public enum VaccinationStatus {
-        SCHEDULED, COMPLETED, MISSED, CONTRAINDICATED, POSTPONED
+        SCHEDULED, COMPLETED, MISSED, CONTRAINDICATED, POSTPONED, CONSENT_DECLINED
     }
 
     @Column(name = "scheduled_date")
