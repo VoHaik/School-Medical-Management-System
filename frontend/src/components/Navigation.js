@@ -20,11 +20,6 @@ const Navigation = () => {
 
     console.log('[Navigation.js] currentUser.roles:', currentUser.roles);
 
-    const commonItems = [
-      { path: '/dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
-      { path: '/profile', label: 'Profile', icon: 'fas fa-user' },
-    ];
-
     // Determine the primary role for navigation.
     let primaryRole = null;    if (currentUser.roles.includes('Admin') || currentUser.roles.includes('ROLE_ADMIN')) {
       primaryRole = 'ROLE_ADMIN';
@@ -47,7 +42,6 @@ const Navigation = () => {
       case 'ROLE_PARENT':
         console.log('[Navigation.js] Matched ROLE_PARENT');
         return [
-          // Remove commonItems spread: // ...commonItems,
           { path: '/parent/dashboard', label: 'Parent Dashboard', icon: 'fas fa-tachometer-alt' },
           { path: '/parent/health-declaration', label: 'Health Declaration', icon: 'fas fa-file-medical-alt' },
           { path: '/parent/medication-submission', label: 'Submit Medication', icon: 'fas fa-pills' },
@@ -56,7 +50,6 @@ const Navigation = () => {
           { path: '/parent/notifications', label: 'Notifications', icon: 'fas fa-bell' },
           { path: '/parent/emergency-contacts', label: 'Emergency Contacts', icon: 'fas fa-phone' },
           { path: '/student-blog', label: 'Blog/News', icon: 'fas fa-blog' },
-          { path: '/profile', label: 'Profile', icon: 'fas fa-user' }, // Keep profile accessible
         ];
       case 'ROLE_SCHOOLNURSE':
         console.log('[Navigation.js] Matched ROLE_SCHOOLNURSE');
@@ -83,10 +76,8 @@ const Navigation = () => {
       case 'ROLE_ADMIN':
         console.log('[Navigation.js] Matched ROLE_ADMIN');
         return [
-          // Remove commonItems spread: // ...commonItems,
-          { path: '/admin/dashboard', label: 'Admin Dashboard', icon: 'fas fa-user-shield' }, // Added a specific dashboard path
+          { path: '/admin/dashboard', label: 'Admin Dashboard', icon: 'fas fa-user-shield' },
           { path: '/admin/user-management', label: 'User Management', icon: 'fas fa-users-cog' },
-          { path: '/admin/system-configuration', label: 'System Configuration', icon: 'fas fa-cogs' },
           { path: '/admin/analytics-reports', label: 'Reports & Analytics', icon: 'fas fa-chart-line' },
           { path: '/admin/health-programs', label: 'Health Programs', icon: 'fas fa-heartbeat' },
           { path: '/admin/data-export', label: 'Data Export', icon: 'fas fa-file-export' },
@@ -108,7 +99,6 @@ const Navigation = () => {
             // If user is authenticated but doesn't match a specific role dashboard, provide a generic one
             return [
                 { path: '/dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
-                { path: '/profile', label: 'Profile', icon: 'fas fa-user' },
               ];
         }
         // For truly unauthenticated or users with no roles array

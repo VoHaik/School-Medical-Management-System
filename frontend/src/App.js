@@ -50,10 +50,10 @@ import ManagerHealthPrograms from './pages/manager/HealthPrograms';
 import ContentManagement from './pages/manager/ContentManagement';
 
 // Admin Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
-import SystemConfiguration from './pages/admin/SystemConfiguration';
 import AnalyticsReports from './pages/admin/AnalyticsReports';
-import HealthPrograms from './pages/admin/HealthPrograms';
+import HealthPrograms from './pages/admin/EventManagement';
 import DataExport from './pages/admin/DataExport';
 
 // Student Pages
@@ -162,8 +162,8 @@ function App() {
                 <Route path="/manager/content-management" element={<ProtectedRoute roles={['ROLE_MANAGER']}><ContentManagement /></ProtectedRoute>} />
 
                 {/* Admin Routes */}
+                <Route path="/admin/dashboard" element={<ProtectedRoute roles={['ROLE_ADMIN']}><AdminDashboard /></ProtectedRoute>} />
                 <Route path="/admin/user-management" element={<ProtectedRoute roles={['ROLE_ADMIN']}><UserManagement /></ProtectedRoute>} />
-                <Route path="/admin/system-configuration" element={<ProtectedRoute roles={['ROLE_ADMIN']}><SystemConfiguration /></ProtectedRoute>} />
                 <Route path="/admin/analytics-reports" element={<ProtectedRoute roles={['ROLE_ADMIN']}><AnalyticsReports /></ProtectedRoute>} />
                 <Route path="/admin/health-programs" element={<ProtectedRoute roles={['ROLE_ADMIN']}><HealthPrograms /></ProtectedRoute>} />
                 <Route path="/admin/data-export" element={<ProtectedRoute roles={['ROLE_ADMIN']}><DataExport /></ProtectedRoute>} />

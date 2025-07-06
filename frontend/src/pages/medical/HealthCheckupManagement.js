@@ -58,6 +58,7 @@ const healthCheckupSchema = yup.object().shape({
   checkupDate: yup.date().required('Checkup date is required'),
   conductedBy: yup.string().required('Conducted by is required'),
   eventId: yup.string().required('Health event is required'),
+  status: yup.string().required('Status is required'),
   height: yup.number()
     .positive('Height must be positive')
     .max(300, 'Height cannot exceed 300 cm')
@@ -118,6 +119,7 @@ function HealthCheckupManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedCheckup, setSelectedCheckup] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(null); // Add state for selected student
   const [viewCheckup, setViewCheckup] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -164,6 +166,7 @@ function HealthCheckupManagement() {
       conductedBy: getConductorName(),
       checkupDate: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD format
       generalHealthStatus: 'Normal',
+      status: 'Completed',
       requiresFollowUp: false,
       visionLeft: '',
       visionRight: '',
@@ -267,7 +270,7 @@ function HealthCheckupManagement() {
         const mappedEvents = data.map(event => ({
           id: event.eventId,
           name: event.eventName || event.title || `Event ${event.eventId}`,
-          date: event.eventDate,
+          date: event.eventDate || event.scheduledDate,
           type: event.eventType
         }));
         setHealthEvents(mappedEvents);
@@ -305,10 +308,12 @@ function HealthCheckupManagement() {
 
   const handleAddCheckup = () => {
     setSelectedCheckup(null);
+    setSelectedStudent(null); // Reset selected student
     form.reset({
       conductedBy: getConductorName(),
       checkupDate: new Date().toISOString().split('T')[0], // Current date
       generalHealthStatus: 'Normal',
+      status: 'Completed',
       requiresFollowUp: false,
       visionLeft: '',
       visionRight: '',
@@ -320,6 +325,9 @@ function HealthCheckupManagement() {
 
   const handleEditCheckup = (checkup) => {
     setSelectedCheckup(checkup);
+    // Find and set the selected student for the Autocomplete
+    const student = students.find(s => s.id === checkup.studentId);
+    setSelectedStudent(student || null);
     form.reset(checkup);
     setDialogOpen(true);
   };
@@ -381,10 +389,12 @@ function HealthCheckupManagement() {
         await createHealthCheckupRecord(data);
       }
       setDialogOpen(false);
+      setSelectedStudent(null); // Reset selected student
       form.reset({
         conductedBy: getConductorName(),
         checkupDate: new Date().toISOString().split('T')[0], // Current date
         generalHealthStatus: 'Normal',
+        status: 'Completed',
         requiresFollowUp: false,
         visionLeft: '',
         visionRight: '',
@@ -440,9 +450,11 @@ function HealthCheckupManagement() {
             onChange={(e) => setFilterStatus(e.target.value)}
           >
             <MenuItem value="all">All</MenuItem>
-            <MenuItem value="Completed">Completed</MenuItem>
             <MenuItem value="Pending">Pending</MenuItem>
+            <MenuItem value="In Progress">In Progress</MenuItem>
+            <MenuItem value="Completed">Completed</MenuItem>
             <MenuItem value="Cancelled">Cancelled</MenuItem>
+            <MenuItem value="Rescheduled">Rescheduled</MenuItem>
           </Select>
         </FormControl>
         <Button
@@ -468,7 +480,8 @@ function HealthCheckupManagement() {
                   <TableCell>Height (cm)</TableCell>
                   <TableCell>Weight (kg)</TableCell>
                   {hasBMIData() && <TableCell>BMI</TableCell>}
-                  <TableCell>Status</TableCell>
+                  <TableCell>Health Status</TableCell>
+                  <TableCell>Checkup Status</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -506,8 +519,21 @@ function HealthCheckupManagement() {
                       {hasBMIData() && <TableCell>{checkup.bmi || 'N/A'}</TableCell>}
                       <TableCell>
                         <Chip
-                          label={checkup.generalHealthStatus || checkup.status}
+                          label={checkup.generalHealthStatus || 'Normal'}
                           color={checkup.generalHealthStatus === 'Normal' ? 'success' : 'warning'}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={checkup.status || 'Completed'}
+                          color={
+                            checkup.status === 'Completed' ? 'success' :
+                            checkup.status === 'In Progress' ? 'info' :
+                            checkup.status === 'Pending' ? 'warning' :
+                            checkup.status === 'Cancelled' ? 'error' :
+                            'default'
+                          }
                           size="small"
                         />
                       </TableCell>
@@ -535,7 +561,7 @@ function HealthCheckupManagement() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} align="center">
+                    <TableCell colSpan={10} align="center">
                       <Box py={4}>
                         <Typography variant="h6" color="textSecondary" gutterBottom>
                           No health checkups found
@@ -554,7 +580,7 @@ function HealthCheckupManagement() {
       </Card>
 
       {/* Add/Edit Dialog */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog open={dialogOpen} onClose={() => { setDialogOpen(false); setSelectedStudent(null); }} maxWidth="md" fullWidth>
         <DialogTitle>
           {selectedCheckup ? 'Edit Health Checkup' : 'Add New Health Checkup'}
         </DialogTitle>
@@ -570,6 +596,7 @@ function HealthCheckupManagement() {
               <Grid item xs={12} md={6}>
                 <Autocomplete
                   options={students}
+                  value={selectedStudent} // Use selectedStudent state
                   getOptionLabel={(option) => `${option.name} - ${option.grade}`}
                   renderInput={(params) => (
                     <TextField
@@ -581,8 +608,10 @@ function HealthCheckupManagement() {
                     />
                   )}
                   onChange={(event, value) => {
+                    setSelectedStudent(value); // Update selectedStudent state
                     form.setValue('studentId', value?.id || '');
                   }}
+                  disabled={!!selectedCheckup} // Disable when editing to prevent changing student
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -608,7 +637,23 @@ function HealthCheckupManagement() {
               <Grid item xs={12} md={6}>
                 <Autocomplete
                   options={healthEvents}
-                  getOptionLabel={(option) => option.name || ''}
+                  getOptionLabel={(option) => {
+                    let label = option.name || '';
+                    if (option.date) {
+                      label += ` (${new Date(option.date).toLocaleDateString()})`;
+                    }
+                    return label;
+                  }}
+                  renderOption={(props, option) => (
+                    <Box component="li" {...props}>
+                      <Box>
+                        <Typography variant="subtitle2">{option.name}</Typography>
+                        <Typography variant="caption" color="textSecondary">
+                          {option.date && `Date: ${new Date(option.date).toLocaleDateString()}`}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
                   value={healthEvents.find(event => event.id === form.watch('eventId')) || null}
                   renderInput={(params) => (
                     <TextField
@@ -634,6 +679,21 @@ function HealthCheckupManagement() {
                     <MenuItem value="Normal">Normal</MenuItem>
                     <MenuItem value="Attention Required">Attention Required</MenuItem>
                     <MenuItem value="Medical Follow-up">Medical Follow-up</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Checkup Status</InputLabel>
+                  <Select
+                    {...form.register('status')}
+                    error={!!form.formState.errors.status}
+                  >
+                    <MenuItem value="Pending">Pending</MenuItem>
+                    <MenuItem value="In Progress">In Progress</MenuItem>
+                    <MenuItem value="Completed">Completed</MenuItem>
+                    <MenuItem value="Cancelled">Cancelled</MenuItem>
+                    <MenuItem value="Rescheduled">Rescheduled</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -801,7 +861,7 @@ function HealthCheckupManagement() {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => { setDialogOpen(false); setSelectedStudent(null); }}>Cancel</Button>
             <Button type="submit" variant="contained">
               {selectedCheckup ? 'Update' : 'Save'} Checkup
             </Button>
@@ -868,6 +928,20 @@ function HealthCheckupManagement() {
                     viewCheckup.generalHealthStatus === 'Normal' ? 'success' :
                     viewCheckup.generalHealthStatus === 'Attention Required' ? 'warning' :
                     viewCheckup.generalHealthStatus === 'Medical Follow-up' ? 'error' : 'default'
+                  }
+                  sx={{ fontWeight: 'bold' }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="body2" color="textSecondary">Checkup Status</Typography>
+                <Chip 
+                  label={viewCheckup.status || 'Completed'} 
+                  color={
+                    viewCheckup.status === 'Completed' ? 'success' :
+                    viewCheckup.status === 'In Progress' ? 'info' :
+                    viewCheckup.status === 'Pending' ? 'warning' :
+                    viewCheckup.status === 'Cancelled' ? 'error' :
+                    viewCheckup.status === 'Rescheduled' ? 'secondary' : 'default'
                   }
                   sx={{ fontWeight: 'bold' }}
                 />

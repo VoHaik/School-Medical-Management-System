@@ -109,9 +109,28 @@ const ParentDashboard = () => {
       );
     };
 
+    const filterEventsWithStatus = (events) => {
+      if (!Array.isArray(events)) return [];
+      
+      // First filter by child selection
+      let filteredByChild = events;
+      if (selectedChildId) {
+        filteredByChild = events.filter(event =>
+          event.studentCode === selectedChildId || event.studentName === childName || !event.studentCode
+        );
+      }
+      
+      // Then filter by status - only show non-completed events
+      const validStatuses = ['SCHEDULED', 'IN_PROGRESS', 'POSTPONED'];
+      return filteredByChild.filter(event => {
+        const eventStatus = event.status?.toUpperCase();
+        return !eventStatus || validStatuses.includes(eventStatus);
+      });
+    };
+
     const filteredNotifications = filterItems(dashboardData.allRecentNotifications);
     const filteredMedicationRequests = filterItems(dashboardData.allMedicationRequests);
-    const filteredEvents = filterItems(dashboardData.allUpcomingEvents);
+    const filteredEvents = filterEventsWithStatus(dashboardData.allUpcomingEvents);
 
     setDisplayData({
       recentNotifications: filteredNotifications,

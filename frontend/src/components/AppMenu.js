@@ -81,7 +81,6 @@ const AppMenu = ({ isOpen, closeMenu }) => {
         items = [
           { path: '/admin/dashboard', label: 'Admin Dashboard', icon: 'fas fa-user-shield' },
           { path: '/admin/user-management', label: 'User Management', icon: 'fas fa-users-cog' },
-          { path: '/admin/system-configuration', label: 'System Configuration', icon: 'fas fa-cogs' },
           { path: '/admin/analytics-reports', label: 'Reports & Analytics', icon: 'fas fa-chart-line' },
           { path: '/admin/health-programs', label: 'Health Programs', icon: 'fas fa-heartbeat' },
           { path: '/admin/data-export', label: 'Data Export', icon: 'fas fa-file-export' },

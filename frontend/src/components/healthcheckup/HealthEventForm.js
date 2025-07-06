@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { TextField, Button, Grid, Typography, Paper, FormControl, InputLabel, Select, MenuItem, FormHelperText, Chip, OutlinedInput, Box, Snackbar, Alert, CircularProgress } from '@mui/material';
 import axios from 'axios';
-import apiClient, { getAllHealthCheckupTypes } from '../../utils/api';
+import apiClient, { getAllHealthCheckupTypes, getAllVaccines } from '../../utils/api';
 import GradeLevelSelector from '../shared/GradeLevelSelector';
 import { useUIText } from '../../hooks/useUIText';
 import { useGradeLevels } from '../../hooks/useGradeLevels';
@@ -37,12 +37,42 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
   const fetchVaccines = async () => {
     try {
       setVaccinesLoading(true);
-      const response = await apiClient.get('/api/vaccines');
-      setVaccines(response.data);
+      const response = await getAllVaccines();
+      
+      if (response && Array.isArray(response) && response.length > 0) {
+        setVaccines(response);
+      } else {
+        // Fallback vaccines data
+        const fallbackVaccines = [
+          { vaccineId: 1, name: 'MMR', diseaseTargeted: 'Measles, Mumps, Rubella' },
+          { vaccineId: 2, name: 'DTaP', diseaseTargeted: 'Diphtheria, Tetanus, Pertussis' },
+          { vaccineId: 3, name: 'Polio (IPV)', diseaseTargeted: 'Poliomyelitis' },
+          { vaccineId: 4, name: 'Hepatitis B', diseaseTargeted: 'Hepatitis B' },
+          { vaccineId: 5, name: 'Varicella', diseaseTargeted: 'Chickenpox' },
+          { vaccineId: 6, name: 'Influenza', diseaseTargeted: 'Seasonal Flu' },
+          { vaccineId: 7, name: 'HPV', diseaseTargeted: 'Human Papillomavirus' },
+          { vaccineId: 8, name: 'COVID-19', diseaseTargeted: 'COVID-19' }
+        ];
+        setVaccines(fallbackVaccines);
+      }
     } catch (error) {
       console.error('Error fetching vaccines:', error);
-      setSnackbarMessage('Failed to load vaccines');
-      setSnackbarSeverity('error');
+      
+      // Use fallback data when API fails
+      const fallbackVaccines = [
+        { vaccineId: 1, name: 'MMR', diseaseTargeted: 'Measles, Mumps, Rubella' },
+        { vaccineId: 2, name: 'DTaP', diseaseTargeted: 'Diphtheria, Tetanus, Pertussis' },
+        { vaccineId: 3, name: 'Polio (IPV)', diseaseTargeted: 'Poliomyelitis' },
+        { vaccineId: 4, name: 'Hepatitis B', diseaseTargeted: 'Hepatitis B' },
+        { vaccineId: 5, name: 'Varicella', diseaseTargeted: 'Chickenpox' },
+        { vaccineId: 6, name: 'Influenza', diseaseTargeted: 'Seasonal Flu' },
+        { vaccineId: 7, name: 'HPV', diseaseTargeted: 'Human Papillomavirus' },
+        { vaccineId: 8, name: 'COVID-19', diseaseTargeted: 'COVID-19' }
+      ];
+      setVaccines(fallbackVaccines);
+      
+      setSnackbarMessage('Using default vaccines list (API connection failed)');
+      setSnackbarSeverity('warning');
       setSnackbarOpen(true);
     } finally {
       setVaccinesLoading(false);

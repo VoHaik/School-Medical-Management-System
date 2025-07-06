@@ -170,6 +170,16 @@ public class HealthEventService {
         
         event.setLocation(requestDTO.getLocation());
         
+        // Update status if provided
+        if (requestDTO.getStatus() != null) {
+            try {
+                event.setStatus(HealthEvent.Status.valueOf(requestDTO.getStatus().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid status: " + requestDTO.getStatus() + ". Valid values are: " + 
+                    java.util.Arrays.toString(HealthEvent.Status.values()));
+            }
+        }
+        
         try {
             event.setEventType(HealthEvent.EventType.valueOf(requestDTO.getEventType()));
         } catch (IllegalArgumentException e) {
@@ -182,7 +192,6 @@ public class HealthEventService {
         // Update target grade levels
         if (requestDTO.getTargetGradeNames() != null) {
             updateTargetGradeLevels(event, requestDTO.getTargetGradeNames());
-            entityManager.refresh(event); // Refresh entity after updating relationships
         }
 
         // Update vaccines for VACCINATION events
@@ -192,7 +201,6 @@ public class HealthEventService {
                 throw new IllegalArgumentException("At least one vaccine must be selected for vaccination events");
             }
             updateHealthEventVaccines(event, requestDTO.getSelectedVaccines());
-            entityManager.refresh(event); // Refresh entity after updating vaccines
         }
         
         // Update checkup types for HEALTH_CHECKUP events
@@ -202,7 +210,6 @@ public class HealthEventService {
                 throw new IllegalArgumentException("At least one checkup type must be specified for health checkup events");
             }
             updateHealthEventCheckupTypes(event, requestDTO.getTypesOfCheckups());
-            entityManager.refresh(event); // Refresh entity after updating checkup types
         }
 
         HealthEvent updatedEvent = eventRepository.save(event);
@@ -235,6 +242,11 @@ public class HealthEventService {
 
             // Delete associated student health checkups (if using eventId field)
             entityManager.createNativeQuery("DELETE FROM student_health_checkups WHERE event_id = ?")
+                    .setParameter(1, eventId)
+                    .executeUpdate();
+
+            // Delete associated student vaccination records
+            entityManager.createNativeQuery("DELETE FROM student_vaccination_records WHERE event_id = ?")
                     .setParameter(1, eventId)
                     .executeUpdate();
 
@@ -328,6 +340,8 @@ public class HealthEventService {
         dto.setEventType(event.getEventType().name());
         dto.setDescription(event.getDescription());
         dto.setScheduledDate(event.getScheduledDate());
+        dto.setStartTime(event.getStartTime());
+        dto.setEndTime(event.getEndTime());
         dto.setLocation(event.getLocation());
         dto.setStatus(event.getStatus().name());
         dto.setCreatedAt(event.getCreatedAt());
@@ -346,7 +360,12 @@ public class HealthEventService {
                 .map(row -> (String) row[1])
                 .collect(Collectors.toList());
 
+        List<Integer> targetGradeIds = gradeData.stream()
+                .map(row -> (Integer) row[0])
+                .collect(Collectors.toList());
+
         dto.setTargetGradeNames(targetGradeNames);
+        dto.setTargetGradeIds(targetGradeIds);
 
         // Get checkup types for health checkup events
         if ("HEALTH_CHECKUP".equals(event.getEventType().name())) {
@@ -437,6 +456,9 @@ public class HealthEventService {
             .setParameter(1, event.getEventId())
             .executeUpdate();
         
+        // Flush to ensure the delete is committed before inserting new records
+        entityManager.flush();
+        
         // Then, create new vaccine associations
         createHealthEventVaccines(event, vaccineIds);
     }
@@ -516,5 +538,10 @@ public class HealthEventService {
         return upcomingEvents.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+    
+    // Admin support methods
+    public long getTotalCount() {
+        return eventRepository.count();
     }
 }

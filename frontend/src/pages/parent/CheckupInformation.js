@@ -47,7 +47,6 @@ import {
   getParentStudents, 
   getUpcomingHealthEventsForStudent,
   getStudentHealthCheckupsByStudentId,
-  getAllNurses,
   getAllHealthEvents
 } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
@@ -84,24 +83,19 @@ const CheckupInformation = () => {
   });
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState('');
-  const [nurses, setNurses] = useState([]);
   const [healthEvents, setHealthEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedCheckupDetail, setSelectedCheckupDetail] = useState(null);
+  const [lastEventCount, setLastEventCount] = useState(0);
 
   // Helper function to format conducted by name for display
   const formatConductedByName = (conductedBy) => {
     if (!conductedBy) return 'N/A';
     
-    // First, try to find the nurse by nurse_code (which should match username)
-    const nurse = nurses.find(n => n.nurseCode === conductedBy || n.nurse_code === conductedBy);
-    if (nurse) {
-      return nurse.fullName || nurse.full_name || nurse.name;
-    }
-    
-    // Fallback: If it looks like a username (contains dots, no spaces), try to format it
+    // Since parents don't have access to nurses data, format the username nicely
+    // If it looks like a username (contains dots, no spaces), try to format it
     if (conductedBy.includes('.') && !conductedBy.includes(' ')) {
       // Convert "nurse.johnson" to "Nurse Johnson"
       return conductedBy
@@ -140,24 +134,63 @@ const CheckupInformation = () => {
     try {
       setLoading(true);
       
-      // Get both upcoming events and checkup history for this student
+      // Get checkup history for this student and filter health events for their grade
       // Handle each API call separately to prevent one failure from affecting the other
-      const [upcomingEvents, checkupHistory] = await Promise.all([
-        getUpcomingHealthEventsForStudent(studentCode).catch(error => {
-          console.warn('Failed to load upcoming health events:', error);
-          return []; // Return empty array if this fails
-        }),
+      const [checkupHistory] = await Promise.all([
         getStudentHealthCheckupsByStudentId(studentCode).catch(error => {
           console.warn('Failed to load student health checkups:', error);
           return []; // Return empty array if this fails
         })
       ]);
       
+      // Get student info to determine their grade
+      const studentInfo = students.find(s => s.studentCode === studentCode);
+      const studentGrade = studentInfo?.gradeLevel || studentInfo?.grade || studentInfo?.gradeName;
+      
+      // Filter health events for this student's grade and future dates
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Set to start of day for comparison
+      
+      const upcomingEvents = healthEvents.filter(event => {
+        // Check if event is not completed or cancelled
+        const validStatuses = ['SCHEDULED', 'IN_PROGRESS', 'POSTPONED'];
+        const eventStatus = event.status?.toUpperCase();
+        if (eventStatus && !validStatuses.includes(eventStatus)) {
+          return false;
+        }
+        
+        // Check if event date is in the future
+        const eventDate = new Date(event.scheduledDate || event.startDate);
+        if (eventDate < today) return false;
+        
+        // If no student grade available, show all future events
+        if (!studentGrade) return true;
+        
+        // Check if event is for this student's grade
+        if (event.targetGradeNames && Array.isArray(event.targetGradeNames)) {
+          const isForThisGrade = event.targetGradeNames.some(gradeName => {
+            // Extract numbers from both grade names for comparison
+            const eventGradeNumber = gradeName.replace(/[^\d]/g, '');
+            const studentGradeNumber = String(studentGrade).replace(/[^\d]/g, '');
+            
+            // Also check if grade names match exactly (case insensitive)
+            const exactMatch = gradeName.toLowerCase() === String(studentGrade).toLowerCase();
+            const numberMatch = eventGradeNumber && studentGradeNumber && eventGradeNumber === studentGradeNumber;
+            
+            return exactMatch || numberMatch;
+          });
+          
+          return isForThisGrade;
+        }
+        
+        return false; // If no target grades specified, don't show
+      });
+
       // Transform the health events to match the expected format
       const transformedUpcomingCheckups = upcomingEvents.map(event => {
         return {
-        id: event.eventId,
-        date: event.scheduledDate,
+        id: event.eventId || event.id,
+        date: event.scheduledDate || event.startDate,
         type: event.eventName || 'General Health Event',
         eventType: event.eventType || 'HEALTH_CHECKUP', // Add event type
         checkupTypes: event.typesOfCheckups || [], // For health checkup events
@@ -182,6 +215,7 @@ const CheckupInformation = () => {
           notes: checkup.healthNotes || checkup.recommendations || '',
           followUpRequired: checkup.requiresFollowUp || false,
           followUpDate: checkup.followUpDate || null,
+          followUpNotes: checkup.followUpNotes || null,
           // Include all the detailed checkup data for the detail view
           ...checkup
         };
@@ -239,7 +273,6 @@ const CheckupInformation = () => {
       
       // Load students first (most critical)
       const studentsData = await getParentStudents();
-      console.log('Students data received:', studentsData);
       
       if (studentsData && studentsData.length > 0) {
         setStudents(studentsData);
@@ -248,33 +281,19 @@ const CheckupInformation = () => {
         const firstStudent = studentsData[0];
         setSelectedStudent(firstStudent.studentCode);
         
-        // Load additional data (nurses and health events) in the background
-        // These are not critical for basic functionality
-        Promise.all([
-          getAllNurses().catch(error => {
-            console.warn('Failed to load nurses data:', error);
-            return [];
-          }),
-          getAllHealthEvents().catch(error => {
-            console.warn('Failed to load health events data:', error);
-            return [];
-          })
-        ]).then(([nursesData, eventsData]) => {
-          // Set nurses data
-          if (Array.isArray(nursesData)) {
-            setNurses(nursesData);
-          } else {
-            console.warn('No valid nurses data received:', nursesData);
-            setNurses([]);
-          }
-          
+        // Load health events in the background (parents don't need nurses data)
+        getAllHealthEvents().then(eventsData => {
           // Set health events data
           if (Array.isArray(eventsData)) {
             setHealthEvents(eventsData);
+            setLastEventCount(eventsData.length); // Initialize count
           } else {
             console.warn('No valid health events data received:', eventsData);
             setHealthEvents([]);
           }
+        }).catch(error => {
+          console.warn('Failed to load health events data:', error);
+          setHealthEvents([]);
         });
         
         // Load checkup data for the first student
@@ -312,6 +331,34 @@ const CheckupInformation = () => {
   useEffect(() => {
     loadStudents();
   }, []);
+
+  // Reload checkup data when health events are loaded
+  useEffect(() => {
+    if (healthEvents.length > 0 && selectedStudent) {
+      loadCheckupData(selectedStudent);
+    }
+  }, [healthEvents]); // Depend on healthEvents changes
+
+  // Auto-refresh health events every 30 seconds to catch new events from admin
+  useEffect(() => {
+    const interval = setInterval(() => {
+      getAllHealthEvents().then(eventsData => {
+        if (Array.isArray(eventsData)) {
+          // Check if new events were added
+          if (lastEventCount > 0 && eventsData.length > lastEventCount) {
+            // Show notification for new events
+            console.log('New health events detected!', eventsData.length - lastEventCount, 'new events');
+          }
+          setHealthEvents(eventsData);
+          setLastEventCount(eventsData.length);
+        }
+      }).catch(error => {
+        console.warn('Failed to auto-refresh health events:', error);
+      });
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [lastEventCount]); // Depend on lastEventCount
 
   const getSelectedStudentInfo = () => {
     return students.find(student => student.studentCode === selectedStudent);
