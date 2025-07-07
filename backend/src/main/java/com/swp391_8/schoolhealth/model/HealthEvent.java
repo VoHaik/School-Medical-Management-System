@@ -20,7 +20,7 @@ import java.util.HashSet;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"targetGradeLevels", "studentHealthCheckups"})
+@ToString(exclude = {"targetGradeLevels"})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class HealthEvent {
     @Id
@@ -88,10 +88,10 @@ public class HealthEvent {
     @Column(name = "updated_by_user_id")
     private Integer updatedByUserId;
 
-    // One-to-many relationship with StudentHealthCheckup
+    // Many-to-Many relationship with vaccines through junction table
     @OneToMany(mappedBy = "healthEvent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
-    private List<StudentHealthCheckup> studentHealthCheckups;
+    private List<HealthEventVaccine> healthEventVaccines;
 
     @PrePersist
     protected void onCreate() {

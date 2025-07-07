@@ -5,10 +5,9 @@ import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
-import Register from './pages/Register';
+import ParentRegistration from './pages/ParentRegistration';
 
 import StudentBlog from './pages/StudentBlog';
-import AuthDebug from './pages/AuthDebug';
 import DashboardNew from './pages/DashboardNew';
 
 // Parent Pages
@@ -18,7 +17,7 @@ import HealthDeclarationDetailPage from './pages/parent/HealthDeclarationDetailP
 import StudentHealthProfilePage from './pages/parent/StudentHealthProfilePage'; // Import for Student Health Profile page
 // import VaccinationConsent from './pages/parent/VaccinationConsent';
 import VaccinationConsent from './pages/parent/VaccinationConsentSimple';
-import CheckupHistory from './pages/parent/CheckupHistory';
+import CheckupInformation from './pages/parent/CheckupInformation';
 // import Notifications from './pages/parent/Notifications'; // To be replaced by common notifications page
 import EmergencyContacts from './pages/parent/EmergencyContacts';
 import ParentDashboard from './pages/parent/ParentDashboard';
@@ -35,16 +34,13 @@ import ViewMedicationRequestsPage from './pages/parent/ViewMedicationRequestsPag
 // Medical Staff Pages
 import MedicationManagement from './pages/medical/MedicationManagement';
 import VaccinationManagement from './pages/medical/VaccinationManagement';
-import HealthCheckups from './pages/medical/HealthCheckups';
+import HealthCheckupManagement from './pages/medical/HealthCheckupManagement';
 import StudentManagement from './pages/medical/StudentManagement';
 import MedicalReports from './pages/medical/Reports';
 import MedicalEvents from './pages/medical/MedicalEvents';
 import HealthEventManagement from './pages/nurse/HealthEventManagement'; // Updated for nurse/admin - renamed from HealthCheckupEventManagement
 import HealthEventStudentManagement from './pages/nurse/HealthEventStudentManagement'; // Updated for nurse/admin - renamed from HealthCheckupEventStudentManagement
 import HealthDeclarationApproval from './pages/nurse/HealthDeclarationApproval'; // Added for nurse approval of health declarations
-
-// Debug Pages
-import VaccinationDebug from './pages/VaccinationDebug';
 
 // Manager Pages
 import ManagerDashboard from './pages/manager/ManagerDashboard';
@@ -54,11 +50,12 @@ import ManagerHealthPrograms from './pages/manager/HealthPrograms';
 import ContentManagement from './pages/manager/ContentManagement';
 
 // Admin Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
-import SystemConfiguration from './pages/admin/SystemConfiguration';
 import AnalyticsReports from './pages/admin/AnalyticsReports';
-import HealthPrograms from './pages/admin/HealthPrograms';
+import HealthPrograms from './pages/admin/EventManagement';
 import DataExport from './pages/admin/DataExport';
+import ParentRegistrationManagement from './pages/admin/ParentRegistrationManagement';
 
 // Student Pages
 import HealthProfile from './pages/student/HealthProfile';
@@ -105,8 +102,8 @@ function App() {
                 {/* Public Routes */}
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/auth-debug" element={<AuthDebug />} />
+                <Route path="/register" element={<Navigate to="/parent-registration" replace />} />
+                <Route path="/parent-registration" element={<ParentRegistration />} />
 
                 {/* Dashboard */}
                 <Route path="/dashboard" element={
@@ -138,7 +135,7 @@ function App() {
                 <Route path="/parent/health-declaration-detail/:declarationId" element={<ProtectedRoute roles={['ROLE_PARENT']}><HealthDeclarationDetailPage /></ProtectedRoute>} />
                 <Route path="/parent/student-health-profile" element={<ProtectedRoute roles={['ROLE_PARENT']}><StudentHealthProfilePage /></ProtectedRoute>} />
                 <Route path="/parent/vaccination-consent" element={<ProtectedRoute roles={['ROLE_PARENT']}><VaccinationConsent /></ProtectedRoute>} />
-                <Route path="/parent/checkup-history" element={<ProtectedRoute roles={['ROLE_PARENT']}><CheckupHistory /></ProtectedRoute>} />
+                <Route path="/parent/checkup-information" element={<ProtectedRoute roles={['ROLE_PARENT']}><CheckupInformation /></ProtectedRoute>} />
                 {/* <Route path="/parent/notifications" element={<ProtectedRoute roles={['ROLE_PARENT']}><Notifications /></ProtectedRoute>} /> */}
                 <Route path="/parent/emergency-contacts" element={<ProtectedRoute roles={['ROLE_PARENT']}><EmergencyContacts /></ProtectedRoute>} />
                 <Route path="/parent/child-information" element={<ProtectedRoute roles={['ROLE_PARENT']}><ChildInformationForm /></ProtectedRoute>} />
@@ -152,7 +149,7 @@ function App() {
                 {/* Medical Staff (Nurse/Doctor) Routes */}
                 <Route path="/medical/medication-management" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_DOCTOR']}><MedicationManagement /></ProtectedRoute>} />
                 <Route path="/medical/vaccination-management" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_DOCTOR']}><VaccinationManagement /></ProtectedRoute>} />
-                <Route path="/medical/health-checkups" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_DOCTOR']}><HealthCheckups /></ProtectedRoute>} />
+                <Route path="/medical/health-checkups" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_DOCTOR']}><HealthCheckupManagement /></ProtectedRoute>} />
                 <Route path="/medical/student-management" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_DOCTOR']}><StudentManagement /></ProtectedRoute>} />
                 <Route path="/medical/reports" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_DOCTOR']}><MedicalReports /></ProtectedRoute>} />                <Route path="/medical/events" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_DOCTOR']}><MedicalEvents /></ProtectedRoute>} />
                 <Route path="/nurse/health-checkup-events" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_ADMIN']}><HealthEventManagement /></ProtectedRoute>} />
@@ -167,13 +164,12 @@ function App() {
                 <Route path="/manager/content-management" element={<ProtectedRoute roles={['ROLE_MANAGER']}><ContentManagement /></ProtectedRoute>} />
 
                 {/* Admin Routes */}
+                <Route path="/admin/dashboard" element={<ProtectedRoute roles={['ROLE_ADMIN']}><AdminDashboard /></ProtectedRoute>} />
                 <Route path="/admin/user-management" element={<ProtectedRoute roles={['ROLE_ADMIN']}><UserManagement /></ProtectedRoute>} />
-                <Route path="/admin/system-configuration" element={<ProtectedRoute roles={['ROLE_ADMIN']}><SystemConfiguration /></ProtectedRoute>} />
+                <Route path="/admin/parent-registration-management" element={<ProtectedRoute roles={['ROLE_ADMIN']}><ParentRegistrationManagement /></ProtectedRoute>} />
                 <Route path="/admin/analytics-reports" element={<ProtectedRoute roles={['ROLE_ADMIN']}><AnalyticsReports /></ProtectedRoute>} />
                 <Route path="/admin/health-programs" element={<ProtectedRoute roles={['ROLE_ADMIN']}><HealthPrograms /></ProtectedRoute>} />
                 <Route path="/admin/data-export" element={<ProtectedRoute roles={['ROLE_ADMIN']}><DataExport /></ProtectedRoute>} />
-                <Route path="/debug/vaccination" element={<ProtectedRoute roles={['ROLE_ADMIN', 'ROLE_NURSE']}><VaccinationDebug /></ProtectedRoute>} />
-
                 {/* Fallback for unmatched routes - consider a 404 page */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

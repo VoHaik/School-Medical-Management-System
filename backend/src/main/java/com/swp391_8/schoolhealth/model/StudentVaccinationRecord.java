@@ -47,25 +47,16 @@ public class StudentVaccinationRecord {
     @Column(name = "vaccination_date")
     private LocalDate vaccinationDate;
 
+    @Column(name = "next_due_date")
+    private LocalDate nextDueDate;
+
     @Nationalized
     @Column(name = "vaccine_name", length = 100)
     private String vaccineName;
 
     @Nationalized
-    @Column(name = "vaccine_batch", length = 50)
-    private String vaccineBatch;
-
-    @Nationalized
-    @Column(name = "vaccine_manufacturer", length = 100)
-    private String vaccineManufacturer;
-
-    @Nationalized
     @Column(name = "administered_by", length = 100)
     private String administeredBy; // Nurse or doctor name
-
-    @Nationalized
-    @Column(name = "administration_site", length = 50)
-    private String administrationSite; // Left arm, right arm, etc.
 
     @Nationalized
     @Column(name = "adverse_reactions", columnDefinition = "NVARCHAR(MAX)")

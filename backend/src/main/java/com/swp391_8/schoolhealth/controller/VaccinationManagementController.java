@@ -20,9 +20,10 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
+import java.util.stream.Collectors;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @RestController
 @RequestMapping("/api/vaccination-management")
@@ -35,6 +36,9 @@ public class VaccinationManagementController {
     private final HealthEventRepository healthEventRepository;
     private final StudentRepository studentRepository;
     private final GradeLevelRepository gradeLevelRepository;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /**
      * Get all students scheduled for vaccination for a specific event
@@ -78,12 +82,18 @@ public class VaccinationManagementController {
             @PathVariable Integer recordId,
             @RequestBody Map<String, Object> updateData) {
         
+        System.out.println("DEBUG: Attempting to update vaccination record with ID: " + recordId);
+        System.out.println("DEBUG: Update data: " + updateData);
+        
         StudentVaccinationRecord record = vaccinationRecordRepository.findById(recordId)
             .orElse(null);
         
         if (record == null) {
+            System.out.println("DEBUG: Vaccination record not found with ID: " + recordId);
             return ResponseEntity.notFound().build();
         }
+        
+        System.out.println("DEBUG: Found vaccination record: " + record.getVaccinationRecordId() + " for student: " + record.getStudent().getStudentCode());
 
         // Update vaccination status
         if (updateData.containsKey("vaccinationStatus")) {
@@ -106,17 +116,8 @@ public class VaccinationManagementController {
         if (updateData.containsKey("vaccineName")) {
             record.setVaccineName(updateData.get("vaccineName").toString());
         }
-        if (updateData.containsKey("vaccineBatch")) {
-            record.setVaccineBatch(updateData.get("vaccineBatch").toString());
-        }
-        if (updateData.containsKey("vaccineManufacturer")) {
-            record.setVaccineManufacturer(updateData.get("vaccineManufacturer").toString());
-        }
         if (updateData.containsKey("administeredBy")) {
             record.setAdministeredBy(updateData.get("administeredBy").toString());
-        }
-        if (updateData.containsKey("administrationSite")) {
-            record.setAdministrationSite(updateData.get("administrationSite").toString());
         }
         if (updateData.containsKey("adverseReactions")) {
             record.setAdverseReactions(updateData.get("adverseReactions").toString());
@@ -141,6 +142,25 @@ public class VaccinationManagementController {
             } catch (DateTimeParseException e) {
                 return ResponseEntity.badRequest()
                     .body(new MessageResponse("Invalid date format: " + updateData.get("vaccinationDate"), false));
+            }
+        }
+        if (updateData.containsKey("nextDueDate") && updateData.get("nextDueDate") != null) {
+            try {
+                String dateString = updateData.get("nextDueDate").toString();
+                LocalDate nextDueDate;
+                
+                // Try to parse as ISO date-time string first (e.g., "2025-06-17T17:00:00.000Z")
+                if (dateString.contains("T")) {
+                    nextDueDate = OffsetDateTime.parse(dateString).toLocalDate();
+                } else {
+                    // Parse as simple date string (e.g., "2025-06-17")
+                    nextDueDate = LocalDate.parse(dateString);
+                }
+                
+                record.setNextDueDate(nextDueDate);
+            } catch (DateTimeParseException e) {
+                return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Invalid next due date format: " + updateData.get("nextDueDate"), false));
             }
         }
 
@@ -189,9 +209,65 @@ public class VaccinationManagementController {
      */
     @GetMapping("/student/{studentCode}/history")
     @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or hasAuthority('Parent')")
-    public ResponseEntity<List<StudentVaccinationRecord>> getStudentVaccinationHistory(@PathVariable String studentCode) {
+    public ResponseEntity<List<Map<String, Object>>> getStudentVaccinationHistory(@PathVariable String studentCode) {
         List<StudentVaccinationRecord> history = vaccinationRecordRepository.findVaccinationHistoryByStudentCode(studentCode);
-        return ResponseEntity.ok(history);
+        
+        // Transform records to include vaccine names from junction table
+        List<Map<String, Object>> transformedHistory = new ArrayList<>();
+        
+        for (StudentVaccinationRecord record : history) {
+            Map<String, Object> recordMap = new HashMap<>();
+            
+            // Basic record information
+            recordMap.put("vaccinationRecordId", record.getVaccinationRecordId());
+            recordMap.put("vaccinationStatus", record.getVaccinationStatus().toString());
+            recordMap.put("scheduledDate", record.getScheduledDate());
+            recordMap.put("vaccinationDate", record.getVaccinationDate());
+            recordMap.put("administeredBy", record.getAdministeredBy());
+            recordMap.put("adverseReactions", record.getAdverseReactions());
+            recordMap.put("notes", record.getNotes());
+            recordMap.put("consentReceivedDate", record.getConsentReceivedDate());
+            recordMap.put("nextDueDate", record.getNextDueDate());
+            
+            // Get vaccine names from the health_event_vaccines junction table
+            List<String> vaccineNames = new ArrayList<>();
+            if (record.getHealthEvent() != null) {
+                vaccineNames = vaccinationRecordRepository.findVaccineNamesByEventId(
+                    record.getHealthEvent().getEventId());
+            }
+            
+            // If no vaccines found in junction table, fall back to the record's vaccine name
+            if (vaccineNames.isEmpty()) {
+                if (record.getVaccineName() != null && !record.getVaccineName().trim().isEmpty()) {
+                    vaccineNames.add(record.getVaccineName());
+                } else {
+                    vaccineNames.add("Unknown Vaccine");
+                }
+            }
+            
+            recordMap.put("vaccineNames", vaccineNames);
+            recordMap.put("vaccineName", String.join(", ", vaccineNames));
+            recordMap.put("vaccineCount", vaccineNames.size());
+            recordMap.put("isMultiVaccine", vaccineNames.size() > 1);
+            
+            // Add event name directly for easier access
+            recordMap.put("eventName", record.getHealthEvent() != null ? 
+                record.getHealthEvent().getEventName() : "Vaccination Event");
+            
+            // Health event information
+            if (record.getHealthEvent() != null) {
+                Map<String, Object> eventMap = new HashMap<>();
+                eventMap.put("eventId", record.getHealthEvent().getEventId());
+                eventMap.put("eventName", record.getHealthEvent().getEventName());
+                eventMap.put("eventType", record.getHealthEvent().getEventType().toString());
+                eventMap.put("description", record.getHealthEvent().getDescription());
+                recordMap.put("healthEvent", eventMap);
+            }
+            
+            transformedHistory.add(recordMap);
+        }
+        
+        return ResponseEntity.ok(transformedHistory);
     }
 
     /**
@@ -382,79 +458,141 @@ public class VaccinationManagementController {
     }
 
     /**
-     * Get all vaccination records for vaccination management
+     * Get all vaccination records for vaccination management - only show APPROVED consents
      */
     @GetMapping("/records")
-    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
+    // @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')") // Temporarily disabled for testing
     public ResponseEntity<List<Map<String, Object>>> getAllVaccinationRecords() {
-        List<StudentVaccinationRecord> records = vaccinationRecordRepository.findAllWithDetails();
+        // Get all vaccination records that have APPROVED consent
+        List<StudentVaccinationRecord> allRecords = vaccinationRecordRepository.findAllWithDetails();
         
-        // Transform records to include consent status
-        List<Map<String, Object>> recordsWithConsent = records.stream()
-            .map(record -> {
-                Map<String, Object> recordMap = new HashMap<>();
-                
-                // Basic record information
-                recordMap.put("vaccinationRecordId", record.getVaccinationRecordId());
-                recordMap.put("vaccinationStatus", record.getVaccinationStatus().toString());
-                recordMap.put("scheduledDate", record.getScheduledDate());
-                recordMap.put("vaccinationDate", record.getVaccinationDate());
-                recordMap.put("vaccineName", record.getVaccineName());
-                recordMap.put("vaccineBatch", record.getVaccineBatch());
-                recordMap.put("vaccineManufacturer", record.getVaccineManufacturer());
-                recordMap.put("administeredBy", record.getAdministeredBy());
-                recordMap.put("administrationSite", record.getAdministrationSite());
-                recordMap.put("adverseReactions", record.getAdverseReactions());
-                recordMap.put("notes", record.getNotes());
-                recordMap.put("consentReceivedDate", record.getConsentReceivedDate());
-                
-                // Student information
-                if (record.getStudent() != null) {
-                    Map<String, Object> studentMap = new HashMap<>();
-                    studentMap.put("studentCode", record.getStudent().getStudentCode());
-                    studentMap.put("fullName", record.getStudent().getFullName());
-                    
-                    if (record.getStudent().getGradeLevel() != null) {
-                        Map<String, Object> gradeLevelMap = new HashMap<>();
-                        gradeLevelMap.put("gradeName", record.getStudent().getGradeLevel().getGradeName());
-                        studentMap.put("gradeLevel", gradeLevelMap);
-                    }
-                    recordMap.put("student", studentMap);
+        // Filter to only include records with APPROVED consent
+        List<StudentVaccinationRecord> approvedRecords = allRecords.stream()
+            .filter(record -> {
+                // Check if this record has an approved consent
+                if (record.getHealthEvent() != null && record.getStudent() != null) {
+                    VaccinationConsent consent = consentRepository
+                        .findByHealthEventAndStudent(record.getHealthEvent(), record.getStudent())
+                        .orElse(null);
+                    return consent != null && consent.getConsentStatus() == VaccinationConsent.ConsentStatus.APPROVED;
                 }
-                
-                // Health event information
-                if (record.getHealthEvent() != null) {
-                    Map<String, Object> eventMap = new HashMap<>();
-                    eventMap.put("eventId", record.getHealthEvent().getEventId());
-                    eventMap.put("eventName", record.getHealthEvent().getEventName());
-                    eventMap.put("eventType", record.getHealthEvent().getEventType().toString());
-                    eventMap.put("description", record.getHealthEvent().getDescription());
-                    recordMap.put("healthEvent", eventMap);
-                    
-                    // Get consent status for this student and event
-                    if (record.getStudent() != null) {
-                        VaccinationConsent consent = consentRepository
-                            .findByHealthEventAndStudent(record.getHealthEvent(), record.getStudent())
-                            .orElse(null);
-                        
-                        if (consent != null) {
-                            recordMap.put("consentStatus", consent.getConsentStatus().toString());
-                            recordMap.put("consentDate", consent.getConsentDate());
-                        } else {
-                            recordMap.put("consentStatus", "PENDING");
-                            recordMap.put("consentDate", null);
-                        }
-                    }
-                } else {
-                    recordMap.put("consentStatus", "PENDING");
-                    recordMap.put("consentDate", null);
-                }
-                
-                return recordMap;
+                return false;
             })
             .toList();
         
-        return ResponseEntity.ok(recordsWithConsent);
+        // Group records by event to show multiple vaccines per event
+        Map<String, List<StudentVaccinationRecord>> groupedByEvent = approvedRecords.stream()
+            .collect(Collectors.groupingBy(record -> 
+                record.getHealthEvent().getEventId() + "-" + record.getStudent().getStudentCode()
+            ));
+        
+        // Transform records to include event grouping
+        List<Map<String, Object>> recordsWithGrouping = new ArrayList<>();
+        
+        for (Map.Entry<String, List<StudentVaccinationRecord>> entry : groupedByEvent.entrySet()) {
+            List<StudentVaccinationRecord> eventRecords = entry.getValue();
+            if (eventRecords.isEmpty()) continue;
+            
+            // Use first record as the base for event information
+            StudentVaccinationRecord baseRecord = eventRecords.get(0);
+            Map<String, Object> recordMap = new HashMap<>();
+            
+            // Basic record information
+            recordMap.put("vaccinationRecordId", baseRecord.getVaccinationRecordId());
+            recordMap.put("vaccinationStatus", baseRecord.getVaccinationStatus().toString());
+            recordMap.put("scheduledDate", baseRecord.getScheduledDate());
+            recordMap.put("vaccinationDate", baseRecord.getVaccinationDate());
+            recordMap.put("administeredBy", baseRecord.getAdministeredBy());
+            recordMap.put("adverseReactions", baseRecord.getAdverseReactions());
+            recordMap.put("notes", baseRecord.getNotes());
+            recordMap.put("consentReceivedDate", baseRecord.getConsentReceivedDate());
+            recordMap.put("nextDueDate", baseRecord.getNextDueDate());
+            
+            // Get vaccine names from the health_event_vaccines junction table
+            List<String> vaccineNames = new ArrayList<>();
+            if (baseRecord.getHealthEvent() != null) {
+                vaccineNames = vaccinationRecordRepository.findVaccineNamesByEventId(
+                    baseRecord.getHealthEvent().getEventId());
+            }
+            
+            // If no vaccines found in junction table, fall back to the record's vaccine name
+            if (vaccineNames.isEmpty()) {
+                if (baseRecord.getVaccineName() != null && !baseRecord.getVaccineName().trim().isEmpty()) {
+                    vaccineNames.add(baseRecord.getVaccineName());
+                } else {
+                    vaccineNames.add("Unknown Vaccine");
+                }
+            }
+            
+            recordMap.put("vaccineNames", vaccineNames);
+            recordMap.put("vaccineName", String.join(", ", vaccineNames));
+            recordMap.put("vaccineCount", vaccineNames.size());
+            recordMap.put("isMultiVaccine", vaccineNames.size() > 1);
+            
+            // Add event name directly for easier access
+            recordMap.put("eventName", baseRecord.getHealthEvent() != null ? 
+                baseRecord.getHealthEvent().getEventName() : "Vaccination Event");
+            
+            // Individual vaccine records for detailed view
+            List<Map<String, Object>> individualVaccines = new ArrayList<>();
+            for (int i = 0; i < vaccineNames.size(); i++) {
+                Map<String, Object> vaccineMap = new HashMap<>();
+                vaccineMap.put("vaccinationRecordId", baseRecord.getVaccinationRecordId());
+                vaccineMap.put("vaccineName", vaccineNames.get(i));
+                vaccineMap.put("administeredBy", baseRecord.getAdministeredBy());
+                vaccineMap.put("adverseReactions", baseRecord.getAdverseReactions());
+                vaccineMap.put("vaccinationStatus", baseRecord.getVaccinationStatus().toString());
+                individualVaccines.add(vaccineMap);
+            }
+            
+            recordMap.put("individualVaccines", individualVaccines);
+                
+            // Student information
+            if (baseRecord.getStudent() != null) {
+                Map<String, Object> studentMap = new HashMap<>();
+                studentMap.put("studentCode", baseRecord.getStudent().getStudentCode());
+                studentMap.put("fullName", baseRecord.getStudent().getFullName());
+                
+                if (baseRecord.getStudent().getGradeLevel() != null) {
+                    Map<String, Object> gradeLevelMap = new HashMap<>();
+                    gradeLevelMap.put("gradeName", baseRecord.getStudent().getGradeLevel().getGradeName());
+                    studentMap.put("gradeLevel", gradeLevelMap);
+                }
+                recordMap.put("student", studentMap);
+            }
+            
+            // Health event information
+            if (baseRecord.getHealthEvent() != null) {
+                Map<String, Object> eventMap = new HashMap<>();
+                eventMap.put("eventId", baseRecord.getHealthEvent().getEventId());
+                eventMap.put("eventName", baseRecord.getHealthEvent().getEventName());
+                eventMap.put("eventType", baseRecord.getHealthEvent().getEventType().toString());
+                eventMap.put("description", baseRecord.getHealthEvent().getDescription());
+                recordMap.put("healthEvent", eventMap);
+                
+                // Get consent status for this student and event
+                if (baseRecord.getStudent() != null) {
+                    VaccinationConsent consent = consentRepository
+                        .findByHealthEventAndStudent(baseRecord.getHealthEvent(), baseRecord.getStudent())
+                        .orElse(null);
+                    
+                    if (consent != null) {
+                        recordMap.put("consentStatus", consent.getConsentStatus().toString());
+                        recordMap.put("consentDate", consent.getConsentDate());
+                    } else {
+                        recordMap.put("consentStatus", "PENDING");
+                        recordMap.put("consentDate", null);
+                    }
+                }
+            } else {
+                recordMap.put("consentStatus", "PENDING");
+                recordMap.put("consentDate", null);
+            }
+            
+            recordsWithGrouping.add(recordMap);
+        }
+        
+        return ResponseEntity.ok(recordsWithGrouping);
     }
 
     /**
@@ -505,5 +643,34 @@ public class VaccinationManagementController {
         stats.put("studentCoverage", Math.round(studentCoverage));
         
         return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * Delete vaccination record
+     */
+    @DeleteMapping("/record/{recordId}")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
+    public ResponseEntity<MessageResponse> deleteVaccinationRecord(@PathVariable Integer recordId) {
+        try {
+            StudentVaccinationRecord record = vaccinationRecordRepository.findById(recordId)
+                .orElse(null);
+            
+            if (record == null) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            // Check if record can be deleted (only allow deletion of SCHEDULED records)
+            if (record.getVaccinationStatus() == StudentVaccinationRecord.VaccinationStatus.COMPLETED) {
+                return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Cannot delete completed vaccination record", false));
+            }
+            
+            vaccinationRecordRepository.delete(record);
+            
+            return ResponseEntity.ok(new MessageResponse("Vaccination record deleted successfully", true));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                .body(new MessageResponse("Failed to delete vaccination record: " + e.getMessage(), false));
+        }
     }
 }

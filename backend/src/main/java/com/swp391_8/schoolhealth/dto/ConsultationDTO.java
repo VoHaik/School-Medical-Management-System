@@ -5,10 +5,10 @@ import java.time.LocalDateTime;
 
 @Data
 public class ConsultationDTO {
-    private Integer id;
+    private Long id;
     private String studentCode; // Changed from Integer studentId
     private String studentName; // For display purposes
-    private Integer checkupId;
+    private Long checkupId;
     private LocalDateTime consultationDate;
     private String location;
     private String description;

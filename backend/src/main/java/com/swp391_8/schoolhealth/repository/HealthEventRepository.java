@@ -25,6 +25,10 @@ public interface HealthEventRepository extends JpaRepository<HealthEvent, Intege
     @Query("SELECT he FROM HealthEvent he LEFT JOIN FETCH he.targetGradeLevels WHERE he.eventId = :eventId")
     Optional<HealthEvent> findByIdWithGradeLevels(@Param("eventId") Integer eventId);
     
+    // Single event with grade levels AND vaccines
+    @Query("SELECT DISTINCT he FROM HealthEvent he LEFT JOIN FETCH he.targetGradeLevels LEFT JOIN FETCH he.healthEventVaccines hev LEFT JOIN FETCH hev.vaccine WHERE he.eventId = :eventId")
+    Optional<HealthEvent> findByIdWithGradeLevelsAndVaccines(@Param("eventId") Integer eventId);
+    
     // Use JOIN to find events targeting specific grade level
     @Query("SELECT he FROM HealthEvent he JOIN he.targetGradeLevels tgl WHERE tgl.gradeId = :gradeId")
     List<HealthEvent> findByTargetGradeLevel(@Param("gradeId") Integer gradeId);
@@ -38,4 +42,17 @@ public interface HealthEventRepository extends JpaRepository<HealthEvent, Intege
 
     // Count events by type and status
     Long countByEventTypeAndStatus(HealthEvent.EventType eventType, HealthEvent.Status status);
+
+    // Find vaccination events with vaccines loaded
+    @Query("SELECT DISTINCT he FROM HealthEvent he LEFT JOIN FETCH he.healthEventVaccines hev LEFT JOIN FETCH hev.vaccine WHERE he.eventType = :eventType")
+    List<HealthEvent> findByEventTypeWithVaccines(@Param("eventType") String eventType);
+    
+    // Find upcoming health checkup events for a specific grade level
+    @Query("SELECT he FROM HealthEvent he JOIN he.targetGradeLevels tgl " +
+           "WHERE tgl.gradeId = :gradeId " +
+           "AND he.eventType = 'HEALTH_CHECKUP' " +
+           "AND he.scheduledDate >= :currentDate " +
+           "AND he.status = 'SCHEDULED' " +
+           "ORDER BY he.scheduledDate ASC")
+    List<HealthEvent> findUpcomingHealthCheckupEventsByGradeId(@Param("gradeId") Integer gradeId, @Param("currentDate") LocalDate currentDate);
 }

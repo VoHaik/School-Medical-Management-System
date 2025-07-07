@@ -59,4 +59,10 @@ public interface StudentVaccinationRecordRepository extends JpaRepository<Studen
     // Count distinct students with vaccination records
     @Query("SELECT COUNT(DISTINCT svr.student) FROM StudentVaccinationRecord svr")
     Long countDistinctStudents();
+    
+    // Get vaccine names for a specific event from health_event_vaccines table
+    @Query(value = "SELECT v.vaccine_name FROM health_event_vaccines hev " +
+                   "JOIN vaccines v ON hev.vaccine_id = v.vaccine_id " + 
+                   "WHERE hev.event_id = :eventId", nativeQuery = true)
+    List<String> findVaccineNamesByEventId(@Param("eventId") Integer eventId);
 }

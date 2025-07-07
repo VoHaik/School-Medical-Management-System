@@ -210,6 +210,13 @@ const Login = () => {
                 Register here
               </Link>
             </p>
+            
+            <p className="text-center mt-3 text-gray-600">
+              Are you a parent? 
+              <Link to="/parent-registration" className="text-green-600 font-medium hover:text-green-800 transition-all ml-1">
+                Register as Parent
+              </Link>
+            </p>
           </form>
         </div>
       </div>

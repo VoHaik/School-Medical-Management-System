@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import axios from 'axios';
-import axiosWithAuth from '../../utils/axiosWithAuth';
+import apiClient from '../../utils/api';
 import {
   Box,
   Typography,
@@ -64,7 +64,7 @@ function NurseDashboard() {
       }
       
       // Get an authenticated axios instance using our consistent utility
-      const authAxios = axiosWithAuth();
+      const authAxios = apiClient;
       
       // Debug auth token
       const token = localStorage.getItem('token');
@@ -91,8 +91,8 @@ function NurseDashboard() {
       authAxios.defaults.headers.common['X-Debug'] = 'NurseDashboard';
       
       try {
-        // Use our new axiosWithAuth utility instead of getAuthAxios from context
-        const authAxios = axiosWithAuth();
+        // Use our new apiClient utility instead of getAuthAxios from context
+        const authAxios = apiClient;
         
         // Add debug headers
         authAxios.defaults.headers.common['X-Debug'] = 'NurseDashboard';
@@ -227,11 +227,11 @@ function NurseDashboard() {
       }
       
       try {
-        // Use our new axiosWithAuth utility for consistent auth handling
-        console.log('Testing endpoint with axiosWithAuth:', '/api/medication-requests/pending/count');
+        // Use our new apiClient utility for consistent auth handling
+        console.log('Testing endpoint with apiClient:', '/api/medication-requests/pending/count');
         console.log('Current origin:', window.location.origin);
         
-        const authAxios = axiosWithAuth();
+        const authAxios = apiClient;
         authAxios.defaults.headers.common['X-Debug-Request'] = 'TestApiConnectivity';
         
         console.log('Headers being sent:', authAxios.defaults.headers);
@@ -324,7 +324,7 @@ function NurseDashboard() {
 
       try {
         // Try to get user info with our consistent auth handling
-        const authAxios = axiosWithAuth();
+        const authAxios = apiClient;
         const userResponse = await authAxios.get('/api/auth/me');
         
         console.log('User info request succeeded:', userResponse.data);

@@ -2,6 +2,7 @@ package com.swp391_8.schoolhealth.controller;
 
 import com.swp391_8.schoolhealth.dto.HealthEventDTO;
 import com.swp391_8.schoolhealth.dto.HealthEventRequestDTO;
+import com.swp391_8.schoolhealth.dto.VaccinationConsentDetailDTO;
 import com.swp391_8.schoolhealth.service.HealthEventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,20 @@ public class HealthEventController {
     public ResponseEntity<List<HealthEventDTO>> getAllHealthEvents() {
         List<HealthEventDTO> events = eventService.getAllHealthEvents();
         return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/vaccination-events")
+    @PreAuthorize("hasAnyRole('PARENT', 'SCHOOLNURSE', 'ADMIN') or hasAnyAuthority('ROLE_PARENT', 'Parent', 'SchoolNurse', 'Admin')")
+    public ResponseEntity<List<VaccinationConsentDetailDTO>> getVaccinationEvents() {
+        List<VaccinationConsentDetailDTO> events = eventService.getVaccinationEventsWithVaccines();
+        return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/upcoming/student/{studentCode}")
+    @PreAuthorize("hasAnyRole('SCHOOLNURSE', 'ADMIN', 'PARENT') or hasAnyAuthority('ROLE_SCHOOLNURSE', 'ROLE_ADMIN', 'ROLE_PARENT', 'SchoolNurse', 'Admin', 'Parent')")
+    public ResponseEntity<List<HealthEventDTO>> getUpcomingHealthEventsForStudent(@PathVariable String studentCode) {
+        List<HealthEventDTO> upcomingEvents = eventService.getUpcomingHealthEventsForStudent(studentCode);
+        return ResponseEntity.ok(upcomingEvents);
     }
 
     @PutMapping("/{eventId}")

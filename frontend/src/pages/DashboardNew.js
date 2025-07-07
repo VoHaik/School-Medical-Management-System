@@ -98,24 +98,24 @@ const Dashboard = () => {
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <DashboardCard
-              title="User Management"
-              description="Manage system users and permissions"
-              icon="fas fa-users-cog"
-              link="/user-management"
+              title="Admin Dashboard"
+              description="System overview and user management"
+              icon="fas fa-tachometer-alt"
+              link="/admin/dashboard"
               color="blue"
             />
             <DashboardCard
-              title="System Configuration"
-              description="Configure system settings"
-              icon="fas fa-cogs"
-              link="/system-config"
-              color="gray"
+              title="User Management"
+              description="Manage system users and permissions"
+              icon="fas fa-users-cog"
+              link="/admin/user-management"
+              color="blue"
             />
             <DashboardCard
               title="Analytics & Reports"
               description="View comprehensive system analytics"
-              icon="fas fa-analytics"
-              link="/reports"
+              icon="fas fa-chart-line"
+              link="/admin/analytics-reports"
               color="green"
             />
             <DashboardCard
@@ -126,18 +126,18 @@ const Dashboard = () => {
               color="red"
             />
             <DashboardCard
-              title="Health Programs"
-              description="Manage vaccination and checkup programs"
+              title="Event Management"
+              description="Manage health checkup and vaccination events"
               icon="fas fa-calendar-check"
-              link="/health-programs"
+              link="/admin/health-programs"
               color="purple"
             />
             <DashboardCard
-              title="Data Export"
-              description="Export health data and reports"
-              icon="fas fa-download"
-              link="/data-export"
-              color="indigo"
+              title="System Configuration"
+              description="Configure system settings"
+              icon="fas fa-cogs"
+              link="/admin/system-config"
+              color="gray"
             />
           </div>
         );

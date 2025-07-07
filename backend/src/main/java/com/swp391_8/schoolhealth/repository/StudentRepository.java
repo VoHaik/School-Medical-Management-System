@@ -39,4 +39,8 @@ public interface StudentRepository extends JpaRepository<Student, String> { // C
     // Find students by grade level IDs for vaccination consent
     @Query("SELECT s FROM Student s LEFT JOIN FETCH s.gradeLevel WHERE s.gradeLevel.gradeId IN :gradeLevelIds")
     List<Student> findStudentsByGradeLevelIds(@Param("gradeLevelIds") List<Integer> gradeLevelIds);
+    
+    // Find students by grade level ID
+    @Query("SELECT s FROM Student s WHERE s.gradeLevel.gradeId = :gradeLevelId")
+    List<Student> findByGradeLevelGradeId(@Param("gradeLevelId") Integer gradeLevelId);
 }

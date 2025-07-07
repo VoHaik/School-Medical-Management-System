@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 public class Consultation {    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "consultation_id")
-    private Integer id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "student_id", nullable = false)
@@ -24,7 +24,7 @@ public class Consultation {    @Id
 
     @ManyToOne
     @JoinColumn(name = "student_checkup_id") // Updated column name for clarity
-    private StudentHealthCheckup studentHealthCheckup; // Changed from HealthCheckup to StudentHealthCheckup
+    private HealthCheckup healthCheckup; // Changed from StudentHealthCheckup to HealthCheckup
 
     @Column(name = "consultation_date", nullable = false)
     private LocalDateTime consultationDate;

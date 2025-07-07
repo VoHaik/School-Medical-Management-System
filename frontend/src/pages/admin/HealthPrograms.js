@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
   CardContent,
   Typography,
-  Tabs,
-  Tab,
   Button,
   TextField,
   Grid,
@@ -25,179 +23,97 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Switch,
-  FormControlLabel,
   Chip,
-  LinearProgress,
   Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  Divider,
-  Tooltip
+  Tooltip,
+  CircularProgress,
+  Snackbar
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Visibility as ViewIcon,
-  Campaign as CampaignIcon,
   LocalHospital as HealthIcon,
+  Vaccines as VaccineIcon,
   Schedule as ScheduleIcon,
-  Group as GroupIcon,
-  ExpandMore as ExpandMoreIcon,
-  CheckCircle as CheckIcon,
-  Warning as WarningIcon,
-  Info as InfoIcon,
-  Assignment as AssignmentIcon,
-  Timeline as TimelineIcon,
-  BarChart as BarChartIcon
+  Search as SearchIcon
 } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { 
+  getAllHealthEvents, 
+  getHealthEventById, 
+  createHealthEvent, 
+  updateHealthEvent, 
+  deleteHealthEvent,
+  getAllGradeLevels,
+  getAllVaccines,
+  getAllCheckupTypes
+} from '../../utils/api';
 
-// Mock data
-const healthPrograms = [
-  {
-    id: 1,
-    name: 'Annual Health Screening',
-    type: 'screening',
-    status: 'active',
-    startDate: '2024-09-01',
-    endDate: '2024-12-31',
-    targetGrades: ['1', '2', '3', '4', '5', '6'],
-    totalStudents: 450,
-    completedStudents: 285,
-    description: 'Comprehensive annual health checkup for all students',
-    createdAt: '2024-08-15',
-    lastUpdated: '2024-11-20'
-  },
-  {
-    id: 2,
-    name: 'Flu Vaccination Campaign',
-    type: 'vaccination',
-    status: 'active',
-    startDate: '2024-10-01',
-    endDate: '2024-11-30',
-    targetGrades: ['1', '2', '3', '4', '5', '6'],
-    totalStudents: 450,
-    completedStudents: 380,
-    description: 'Annual flu vaccination for all students',
-    createdAt: '2024-09-15',
-    lastUpdated: '2024-11-18'
-  },
-  {
-    id: 3,
-    name: 'Vision Screening Program',
-    type: 'screening',
-    status: 'completed',
-    startDate: '2024-08-01',
-    endDate: '2024-08-31',
-    targetGrades: ['1', '3', '5'],
-    totalStudents: 270,
-    completedStudents: 270,
-    description: 'Vision screening for selected grades',
-    createdAt: '2024-07-15',
-    lastUpdated: '2024-09-01'
-  },
-  {
-    id: 4,
-    name: 'Mental Health Week',
-    type: 'awareness',
-    status: 'planned',
-    startDate: '2024-12-01',
-    endDate: '2024-12-05',
-    targetGrades: ['4', '5', '6'],
-    totalStudents: 270,
-    completedStudents: 0,
-    description: 'Mental health awareness and screening week',
-    createdAt: '2024-11-01',
-    lastUpdated: '2024-11-15'
-  }
-];
-
-const programTemplates = [
-  {
-    id: 1,
-    name: 'Vaccination Campaign',
-    type: 'vaccination',
-    duration: '30 days',
-    components: ['Consent Collection', 'Health Check', 'Vaccination', 'Monitoring']
-  },
-  {
-    id: 2,
-    name: 'Health Screening',
-    type: 'screening',
-    duration: '60 days',
-    components: ['Registration', 'Physical Exam', 'Vision Test', 'Hearing Test', 'BMI Check']
-  },
-  {
-    id: 3,
-    name: 'Awareness Campaign',
-    type: 'awareness',
-    duration: '7 days',
-    components: ['Educational Sessions', 'Materials Distribution', 'Interactive Activities']
-  }
-];
-
-const progressData = [
-  { name: 'Week 1', planned: 100, completed: 95 },
-  { name: 'Week 2', planned: 200, completed: 180 },
-  { name: 'Week 3', planned: 300, completed: 285 },
-  { name: 'Week 4', planned: 400, completed: 380 }
-];
-
-const gradeCompletionData = [
-  { grade: 'Grade 1', completed: 95, total: 75 },
-  { grade: 'Grade 2', completed: 88, total: 72 },
-  { grade: 'Grade 3', completed: 92, total: 80 },
-  { grade: 'Grade 4', completed: 85, total: 78 },
-  { grade: 'Grade 5', completed: 90, total: 75 },
-  { grade: 'Grade 6', completed: 87, total: 70 }
-];
-
-const programTypeData = [
-  { name: 'Vaccination', value: 40, color: '#8884d8' },
-  { name: 'Screening', value: 35, color: '#82ca9d' },
-  { name: 'Awareness', value: 25, color: '#ffc658' }
-];
-
-// Validation schema
-const programSchema = yup.object().shape({
-  name: yup.string().required('Program name is required'),
-  type: yup.string().required('Program type is required'),
+// Validation schema for health events
+const eventSchema = yup.object().shape({
+  eventName: yup.string().required('Event name is required'),
+  eventType: yup.string().required('Event type is required'),
   description: yup.string().required('Description is required'),
-  startDate: yup.date().required('Start date is required'),
-  endDate: yup.date().required('End date is required').min(yup.ref('startDate'), 'End date must be after start date'),
-  targetGrades: yup.array().min(1, 'At least one grade must be selected')
+  scheduledDate: yup.date().required('Scheduled date is required'),
+  location: yup.string().required('Location is required'),
+  targetGradeIds: yup.array().min(1, 'At least one grade must be selected'),
+  selectedVaccines: yup.array().when('eventType', {
+    is: 'VACCINATION',
+    then: (schema) => schema.min(1, 'At least one vaccine must be selected for vaccination events'),
+    otherwise: (schema) => schema
+  }),
+  typesOfCheckups: yup.array().when('eventType', {
+    is: 'HEALTH_CHECKUP',
+    then: (schema) => schema.min(1, 'At least one checkup type must be selected for health checkup events'),
+    otherwise: (schema) => schema
+  })
 });
 
-function TabPanel({ children, value, index, ...other }) {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
-
-const HealthPrograms = () => {
-  const [tabValue, setTabValue] = useState(0);
+const EventManagement = () => {
+  // State management
+  const [events, setEvents] = useState([]);
+  const [filteredEvents, setFilteredEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
-  const [editingProgram, setEditingProgram] = useState(null);
-  const [selectedProgram, setSelectedProgram] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [eventToDelete, setEventToDelete] = useState(null);
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  
+  // Form data
+  const [gradeLevels, setGradeLevels] = useState([]);
+  const [vaccines, setVaccines] = useState([]);
+  const [checkupTypes, setCheckupTypes] = useState([]);
+  
+  // Notification state
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  // Form setup
+  const { control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
+    resolver: yupResolver(eventSchema),
+    defaultValues: {
+      eventName: '',
+      eventType: 'HEALTH_CHECKUP',
+      description: '',
+      scheduledDate: '',
+      location: '',
+      targetGradeIds: [],
+      selectedVaccines: [],
+      typesOfCheckups: []
+    }
+  });
+
+  const watchEventType = watch('eventType');
 
   const { control, handleSubmit, formState: { errors }, reset, setValue } = useForm({
     resolver: yupResolver(programSchema),

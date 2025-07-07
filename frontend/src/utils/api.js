@@ -84,9 +84,7 @@ export const getHealthEventById = async (eventId) => {
 
 export const createHealthEvent = async (eventData) => {
   try {
-    console.log('Sending health event data to API:', eventData);
     const response = await apiClient.post('/health-events', eventData);
-    console.log('API response for creating health event:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error creating health event:', error.response || error);
@@ -109,6 +107,11 @@ export const deleteHealthEvent = async (eventId) => {
     const response = await apiClient.delete(`/health-events/${eventId}`);
     return response.data; // Or handle no content response
   } catch (error) {
+    console.error('Delete API error details:', {
+      message: error.message,
+      response: error.response,
+      request: error.request
+    });
     handleApiError(error, 'delete health event');
   }
 };
@@ -120,10 +123,40 @@ export const createHealthCheckupEvent = createHealthEvent;
 export const updateHealthCheckupEvent = updateHealthEvent;
 export const deleteHealthCheckupEvent = deleteHealthEvent;
 
+// Grade Level APIs
+export const getAllGradeLevels = async () => {
+  try {
+    const response = await apiClient.get('/grade-levels');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch grade levels');
+  }
+};
+
+// Vaccine APIs
+export const getAllVaccines = async () => {
+  try {
+    const response = await apiClient.get('/vaccines');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch vaccines');
+  }
+};
+
+// Checkup Type APIs
+export const getAllCheckupTypes = async () => {
+  try {
+    const response = await apiClient.get('/health-checkup-types');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch checkup types');
+  }
+};
+
 // Student Health Checkup APIs
 export const getStudentHealthCheckupsByEventId = async (eventId) => {
   try {
-    const response = await apiClient.get(`/student-health-checkups/event/${eventId}`);
+    const response = await apiClient.get(`/health-checkup-records/event/${eventId}`);
     return response.data;
   } catch (error) {
     handleApiError(error, 'fetch student health checkups by event ID');
@@ -132,7 +165,7 @@ export const getStudentHealthCheckupsByEventId = async (eventId) => {
 
 export const getStudentHealthCheckupsByStudentId = async (studentId) => {
   try {
-    const response = await apiClient.get(`/student-health-checkups/student/${studentId}`);
+    const response = await apiClient.get(`/health-checkup-records/student/${studentId}`);
     return response.data;
   } catch (error) {
     handleApiError(error, 'fetch student health checkups by student ID');
@@ -141,7 +174,7 @@ export const getStudentHealthCheckupsByStudentId = async (studentId) => {
 
 export const createStudentHealthCheckup = async (checkupData) => {
   try {
-    const response = await apiClient.post('/student-health-checkups', checkupData);
+    const response = await apiClient.post('/health-checkup-records', checkupData);
     return response.data;
   } catch (error) {
     handleApiError(error, 'create student health checkup');
@@ -150,25 +183,26 @@ export const createStudentHealthCheckup = async (checkupData) => {
 
 export const updateStudentHealthCheckup = async (checkupId, checkupData) => {
   try {
-    const response = await apiClient.put(`/student-health-checkups/${checkupId}`, checkupData);
+    const response = await apiClient.put(`/health-checkup-records/${checkupId}`, checkupData);
     return response.data;
   } catch (error) {
     handleApiError(error, 'update student health checkup');
   }
 };
 
-export const recordStudentHealthCheckupConsent = async (studentId, eventId, consent) => {
-  try {
-    const response = await apiClient.post(`/student-health-checkups/event/${eventId}/student/${studentId}/consent`, { consent });
-    return response.data;
-  } catch (error) {
-    handleApiError(error, 'record student health checkup consent');
-  }
-};
+// Note: This consent endpoint may not be needed for health checkups
+// export const recordStudentHealthCheckupConsent = async (studentId, eventId, consent) => {
+//   try {
+//     const response = await apiClient.post(`/health-checkup-records/event/${eventId}/student/${studentId}/consent`, { consent });
+//     return response.data;
+//   } catch (error) {
+//     handleApiError(error, 'record student health checkup consent');
+//   }
+// };
 
 export const getStudentHealthCheckupById = async (checkupRecordId) => {
   try {
-    const response = await apiClient.get(`/student-health-checkups/${checkupRecordId}`);
+    const response = await apiClient.get(`/health-checkup-records/${checkupRecordId}`);
     return response.data;
   } catch (error) {
     handleApiError(error, 'fetch student health checkup by ID');
@@ -188,12 +222,71 @@ export const getStudentHealthCheckupById = async (checkupRecordId) => {
 // User/Student APIs (assuming a general user/student endpoint)
 export const getAllStudents = async () => {
   try {
-    // Assuming your backend has an endpoint like /users?role=STUDENT or /students
-    // Adjust the endpoint as per your backend API design
-    const response = await apiClient.get('/users/role/STUDENT'); // Example endpoint
+    const response = await apiClient.get('/students');
     return response.data;
   } catch (error) {
     handleApiError(error, 'fetch all students');
+  }
+};
+
+// For admin/nurse access with full permissions
+export const getAllStudentsAdmin = async () => {
+  try {
+    const response = await apiClient.get('/students');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch all students (admin)');
+  }
+};
+
+// Get all students with their health data combined
+export const getAllStudentsWithHealthData = async () => {
+  try {
+    const [students, healthDeclarations] = await Promise.all([
+      getAllStudents(),
+      // Assuming there's an endpoint for health declarations
+      apiClient.get('/health-declarations').catch(() => ({ data: [] }))
+    ]);
+    
+    // Combine students with their health data
+    const studentsWithHealth = students.map(student => {
+      const healthData = healthDeclarations.data.find(
+        declaration => declaration.studentCode === student.studentCode || declaration.studentCode === student.username
+      );
+      
+      return {
+        ...student,
+        healthDeclaration: healthData || null,
+        hasHealthDeclaration: !!healthData
+      };
+    });
+    
+    return studentsWithHealth;
+  } catch (error) {
+    handleApiError(error, 'fetch students with health data');
+  }
+};
+
+// Get health declaration by student code
+export const getHealthDeclarationByStudentCode = async (studentCode) => {
+  try {
+    const response = await apiClient.get(`/health-declarations/student/${studentCode}`);
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 404) {
+      return null; // No health declaration found
+    }
+    handleApiError(error, 'fetch health declaration by student code');
+  }
+};
+
+// Nurse edit health declaration
+export const nurseEditHealthDeclaration = async (studentCode, healthData) => {
+  try {
+    const response = await apiClient.put(`/health-declarations/student/${studentCode}`, healthData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'update health declaration');
   }
 };
 
@@ -236,105 +329,6 @@ export const getUserProfile = async () => {
 };
 
 // Add other API functions here as needed for other features (Medication, Vaccination, etc.)
-
-// Example for Medication Request (assuming similar structure)
-export const getAllMedicationRequests = async () => {
-  try {
-    const response = await apiClient.get('/medication-requests');
-    return response.data;
-  } catch (error) {
-    handleApiError(error, 'fetch medication requests');
-  }
-};
-
-// ... other medication request functions (create, update, delete)
-
-// Example for Student Vaccination (assuming similar structure)
-export const getStudentVaccinationsByStudentId = async (studentId) => {
-  try {
-    const response = await apiClient.get(`/student-vaccinations/student/${studentId}`);
-    return response.data;
-  } catch (error) {
-    handleApiError(error, 'fetch student vaccinations');
-  }
-};
-
-// ... other vaccination related functions
-
-// Health Declaration APIs
-export const getHealthDeclarationByStudentCode = async (studentCode) => {
-  try {
-    const response = await apiClient.get(`/health-declaration?studentCode=${studentCode}`);
-    return response.data;
-  } catch (error) {
-    handleApiError(error, 'fetch health declaration');
-  }
-};
-
-export const getHealthDeclarationHistory = async (studentCode) => {
-  try {
-    const response = await apiClient.get(`/health-declaration/history?studentCode=${studentCode}`);
-    return response.data;
-  } catch (error) {
-    handleApiError(error, 'fetch health declaration history');
-  }
-};
-
-export const getPendingHealthDeclarations = async () => {
-  try {
-    const response = await apiClient.get('/health-declaration/pending');
-    return response.data;
-  } catch (error) {
-    handleApiError(error, 'fetch pending health declarations');
-  }
-};
-
-// Function to get all students with their health data
-export const getAllStudentsWithHealthData = async () => {
-  try {
-    // First get all students
-    const students = await apiClient.get('/students');
-    
-    // Then fetch health data for each student
-    const studentsWithHealthData = await Promise.all(
-      students.data.map(async (student) => {
-        try {
-          // Try to get health declaration for this student
-          const healthData = await getHealthDeclarationByStudentCode(student.studentCode);
-          return {
-            ...student,
-            healthData: healthData || null
-          };
-        } catch (error) {
-          console.warn(`Failed to fetch health data for student ${student.studentCode}:`, error);
-          return {
-            ...student,
-            healthData: null
-          };
-        }
-      })
-    );
-    
-    return studentsWithHealthData;
-  } catch (error) {
-    handleApiError(error, 'fetch students with health data');
-  }
-};
-
-// Function for nurse to edit student health profile
-export const nurseEditHealthDeclaration = async (studentCode, healthData) => {
-  try {
-    console.log(`Making PUT request to: /health-declaration/nurse-edit/${studentCode}`);
-    console.log('Request data:', healthData);
-    const response = await apiClient.put(`/health-declaration/nurse-edit/${studentCode}`, healthData);
-    console.log('Response received:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('API Error details:', error.response || error);
-    handleApiError(error, 'edit student health profile');
-    throw error; // Re-throw để frontend có thể handle
-  }
-};
 
 // Grade Level APIs
 export const getAllActiveGradeLevels = async () => {
@@ -524,12 +518,23 @@ export const updateVaccinationRecord = async (recordId, recordData) => {
   }
 };
 
+// Delete vaccination record
+export const deleteVaccinationRecord = async (recordId) => {
+  try {
+    const response = await apiClient.delete(`/vaccination-management/record/${recordId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'delete vaccination record');
+  }
+};
+
 // Get all vaccination records for vaccination management
 export const getAllVaccinationRecords = async () => {
   try {
     const response = await apiClient.get('/vaccination-management/records');
     return response.data;
   } catch (error) {
+    console.error('API call failed:', error);
     handleApiError(error, 'fetch all vaccination records');
   }
 };
@@ -554,4 +559,357 @@ export const getVaccinationRecordsByStatus = async (status) => {
   }
 };
 
+// Health Event APIs for parents
+export const getUpcomingHealthEventsForStudent = async (studentCode) => {
+  try {
+    const response = await apiClient.get(`/health-events/upcoming/student/${studentCode}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch upcoming health events for student');
+  }
+};
+
+// Get vaccination history for a student (for parents to view results)
+export const getStudentVaccinationHistory = async (studentCode) => {
+  try {
+    const response = await apiClient.get(`/vaccination-management/student/${studentCode}/history`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch student vaccination history');
+  }
+};
+
+// Health Checkup Record APIs
+export const getAllHealthCheckupRecords = async () => {
+  try {
+    const response = await apiClient.get('/health-checkup-records');
+    return response.data;
+  } catch (error) {
+    console.error('API: Error in getAllHealthCheckupRecords:', error);
+    handleApiError(error, 'fetch all health checkup records');
+  }
+};
+
+export const getHealthCheckupRecordById = async (checkupId) => {
+  try {
+    const response = await apiClient.get(`/health-checkup-records/${checkupId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch health checkup record by ID');
+  }
+};
+
+export const getHealthCheckupRecordsByStudent = async (studentId) => {
+  try {
+    const response = await apiClient.get(`/health-checkup-records/student/${studentId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch health checkup records by student');
+  }
+};
+
+export const getHealthCheckupRecordsByEvent = async (eventId) => {
+  try {
+    const response = await apiClient.get(`/health-checkup-records/event/${eventId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch health checkup records by event');
+  }
+};
+
+export const createHealthCheckupRecord = async (checkupData) => {
+  try {
+    const response = await apiClient.post('/health-checkup-records', checkupData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating health checkup record:', error);
+    handleApiError(error, 'create health checkup record');
+  }
+};
+
+export const updateHealthCheckupRecord = async (checkupId, checkupData) => {
+  try {
+    const response = await apiClient.put(`/health-checkup-records/${checkupId}`, checkupData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating health checkup record:', error);
+    handleApiError(error, 'update health checkup record');
+  }
+};
+
+export const deleteHealthCheckupRecord = async (checkupId) => {
+  try {
+    const response = await apiClient.delete(`/health-checkup-records/${checkupId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'delete health checkup record');
+  }
+};
+
+export const getHealthCheckupStatistics = async () => {
+  try {
+    const response = await apiClient.get('/health-checkup-records/statistics');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch health checkup statistics');
+  }
+};
+
+export const getHealthCheckupRecordsByStatus = async (status) => {
+  try {
+    const response = await apiClient.get(`/health-checkup-records?status=${status}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch health checkup records by status');
+  }
+};
+
+// Nurses Management APIs
+export const getAllNurses = async () => {
+  try {
+    const response = await apiClient.get('/nurses');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch nurses');
+  }
+};
+
+// Health Checkup Types APIs
+export const getAllHealthCheckupTypes = async () => {
+  try {
+    const response = await apiClient.get('/health-checkup-types');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch health checkup types');
+  }
+};
+
+export const getHealthCheckupTypeById = async (typeId) => {
+  try {
+    const response = await apiClient.get(`/health-checkup-types/${typeId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch health checkup type by ID');
+  }
+};
+
+export const searchHealthCheckupTypes = async (searchTerm) => {
+  try {
+    const response = await apiClient.get(`/health-checkup-types/search?term=${encodeURIComponent(searchTerm)}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'search health checkup types');
+  }
+};
+
+export const createHealthCheckupType = async (typeData) => {
+  try {
+    const response = await apiClient.post('/health-checkup-types', typeData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'create health checkup type');
+  }
+};
+
+export const updateHealthCheckupType = async (typeId, typeData) => {
+  try {
+    const response = await apiClient.put(`/health-checkup-types/${typeId}`, typeData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'update health checkup type');
+  }
+};
+
+export const deleteHealthCheckupType = async (typeId) => {
+  try {
+    const response = await apiClient.delete(`/health-checkup-types/${typeId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'delete health checkup type');
+  }
+};
+
+// ADMIN APIS - Simple admin functionality
+// ========================================
+
+// Admin User Management APIs - Using existing student/nurse data
+export const getAllUsers = async () => {
+  try {
+    // Get all users from existing endpoints
+    const [students, nurses] = await Promise.all([
+      getAllStudents(),
+      getAllNurses()
+    ]);
+    
+    // Generate phone numbers for demo purposes
+    const generatePhoneNumber = (index) => {
+      const baseNumber = 900000000;
+      return `+84 ${Math.floor((baseNumber + index) / 1000000)} ${Math.floor(((baseNumber + index) % 1000000) / 1000)} ${(baseNumber + index) % 1000}`;
+    };
+    
+    // Combine and format as user data
+    const users = [
+      ...(students || []).map((student, index) => ({
+        id: student.id || student.studentCode,
+        username: student.studentCode || student.username,
+        fullName: student.name || student.fullName,
+        email: student.email || `${student.studentCode || 'student'}@school.edu`,
+        phone: student.phoneNumber || student.phone || generatePhoneNumber(index + 100),
+        role: 'STUDENT',
+        status: student.status || 'active',
+        lastLogin: student.lastLogin || null,
+        createdAt: student.createdAt || new Date().toISOString(),
+        grade: student.grade || student.gradeLevel?.gradeName
+      })),
+      ...(nurses || []).map((nurse, index) => ({
+        id: nurse.id || nurse.nurseId,
+        username: nurse.nurseCode || nurse.username,
+        fullName: nurse.fullName || nurse.name,
+        email: nurse.email || `${nurse.nurseCode || 'nurse'}@school.edu`,
+        phone: nurse.phoneNumber || nurse.phone || generatePhoneNumber(index + 200),
+        role: 'NURSE',
+        status: nurse.status || 'active',
+        lastLogin: nurse.lastLogin || null,
+        createdAt: nurse.createdAt || new Date().toISOString(),
+        qualification: nurse.qualification,
+        specialization: nurse.specialization
+      }))
+    ];
+    
+    return users;
+  } catch (error) {
+    handleApiError(error, 'fetch all users for admin');
+  }
+};
+
+// Update user information
+export const updateUser = async (userId, userData) => {
+  try {
+    const response = await apiClient.put(`/admin/users/${userId}`, userData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'update user');
+  }
+};
+
+// Delete user
+export const deleteUser = async (userId) => {
+  try {
+    const response = await apiClient.delete(`/admin/users/${userId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'delete user');
+  }
+};
+
+// Activate user
+export const activateUser = async (userId) => {
+  try {
+    const response = await apiClient.put(`/admin/users/${userId}/activate`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'activate user');
+  }
+};
+
+// Deactivate user
+export const deactivateUser = async (userId) => {
+  try {
+    const response = await apiClient.put(`/admin/users/${userId}/deactivate`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'deactivate user');
+  }
+};
+
+// Admin Dashboard Statistics - Using real backend data
+export const getAdminDashboardStats = async () => {
+  try {
+    const response = await apiClient.get('/admin/dashboard/stats');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch admin dashboard statistics');
+  }
+};
+
+// Get system reports with real data
+export const getSystemReports = async (reportType = 'overview', startDate = null, endDate = null) => {
+  try {
+    const params = new URLSearchParams();
+    if (reportType) params.append('reportType', reportType);
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    
+    const response = await apiClient.get(`/admin/reports?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch system reports');
+  }
+};
+
+// Data Export Functions for Backup
+export const exportStudents = async () => {
+  try {
+    const response = await getAllStudentsAdmin();
+    return response || [];
+  } catch (error) {
+    console.error('Error exporting students:', error);
+    handleApiError(error, 'export students data');
+    return [];
+  }
+};
+
+export const exportHealthEvents = async () => {
+  try {
+    const response = await getAllHealthEvents();
+    return response || [];
+  } catch (error) {
+    console.error('Error exporting health events:', error);
+    handleApiError(error, 'export health events data');
+    return [];
+  }
+};
+
+export const exportUsers = async () => {
+  try {
+    const response = await getAllUsers();
+    return response || [];
+  } catch (error) {
+    console.error('Error exporting users:', error);
+    handleApiError(error, 'export users data');
+    return [];
+  }
+};
+
+export const exportHealthCheckups = async () => {
+  try {
+    // Use getAllStudentsWithHealthData to get checkup records
+    const response = await getAllStudentsWithHealthData();
+    
+    // Extract health checkup data from students
+    const healthCheckups = [];
+    if (Array.isArray(response)) {
+      response.forEach(student => {
+        if (student.healthCheckups && Array.isArray(student.healthCheckups)) {
+          student.healthCheckups.forEach(checkup => {
+            healthCheckups.push({
+              ...checkup,
+              studentName: student.fullName,
+              studentCode: student.studentCode,
+              gradeLevel: student.gradeLevel
+            });
+          });
+        }
+      });
+    }
+    
+    return healthCheckups || [];
+  } catch (error) {
+    console.error('Error exporting health checkups:', error);
+    handleApiError(error, 'export health checkups data');
+    return [];
+  }
+};
+
+export { apiClient };
 export default apiClient;

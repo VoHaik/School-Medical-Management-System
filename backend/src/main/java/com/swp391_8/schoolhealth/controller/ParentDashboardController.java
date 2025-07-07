@@ -1,10 +1,10 @@
 package com.swp391_8.schoolhealth.controller;
 
-import com.swp391_8.schoolhealth.dto.EventDTO;
+import com.swp391_8.schoolhealth.dto.HealthEventDTO;
 import com.swp391_8.schoolhealth.dto.MedicationRequestResponseDTO; // Use new DTO
 import com.swp391_8.schoolhealth.dto.NotificationDTO;
 import com.swp391_8.schoolhealth.dto.StudentDTO;
-import com.swp391_8.schoolhealth.service.EventService;
+import com.swp391_8.schoolhealth.service.HealthEventService;
 import com.swp391_8.schoolhealth.service.MedicationRequestService; // Use new service
 import com.swp391_8.schoolhealth.service.NotificationService;
 import com.swp391_8.schoolhealth.service.StudentService;
@@ -27,7 +27,7 @@ public class ParentDashboardController {
     private NotificationService notificationService;
 
     @Autowired
-    private EventService eventService;
+    private HealthEventService healthEventService;
 
     @Autowired
     private MedicationRequestService medicationRequestService; // Use new service
@@ -56,11 +56,20 @@ public class ParentDashboardController {
     // studentId can be used for filtering if events are targeted (e.g., by grade).
     @GetMapping("/events/parent/{parentCode}")
     @PreAuthorize("hasAuthority('Parent')")
-    public ResponseEntity<List<EventDTO>> getEventsForParent(@PathVariable String parentCode, @RequestParam(required = false) String studentCode) { // Changed parentId to parentCode, studentId to studentCode
-        // The EventService currently gets all upcoming events.
-        // Filtering by parentCode or studentCode would require more complex logic in EventService/Repository.
+    public ResponseEntity<List<HealthEventDTO>> getEventsForParent(@PathVariable String parentCode, @RequestParam(required = false) String studentCode) { // Changed parentId to parentCode, studentId to studentCode
+        // The HealthEventService gets upcoming events.
+        // For now, we'll get all upcoming events since student-specific filtering may need additional logic
         System.out.println("Fetching events for parentCode: " + parentCode + (studentCode != null ? ", studentCode: " + studentCode : ""));
-        List<EventDTO> events = eventService.getUpcomingEventsForParent(parentCode, studentCode); // MODIFIED HERE to call the new service method
+        
+        List<HealthEventDTO> events;
+        if (studentCode != null) {
+            // Get events for specific student
+            events = healthEventService.getUpcomingHealthEventsForStudent(studentCode);
+        } else {
+            // Get all upcoming events
+            events = healthEventService.getUpcomingHealthEvents();
+        }
+        
         if (events.isEmpty()) {
             return ResponseEntity.noContent().build();
         }

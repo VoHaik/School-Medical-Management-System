@@ -26,8 +26,8 @@ public class HealthEventRequestDTO {
 
     private String location;
 
-    // Status will likely be managed by the system, not directly set on creation by user in this DTO
-    // private String status; 
+    // Status for the health event
+    private String status;
 
     // Only required for HEALTH_CHECKUP events, optional for VACCINATION events
     private List<String> typesOfCheckups;
@@ -37,4 +37,7 @@ public class HealthEventRequestDTO {
     
     // Thêm trường để chỉ định danh sách các lớp cần thông báo
     private List<String> classesToNotify;
+    
+    // Danh sách vaccine IDs cho vaccination events (bắt buộc khi eventType = "VACCINATION")
+    private List<Integer> selectedVaccines;
 }

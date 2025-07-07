@@ -12,11 +12,15 @@ public class HealthEventDTO {
     private String eventType; // "HEALTH_CHECKUP" hoặc "VACCINATION"
     private String description;
     private LocalDate scheduledDate;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
     private String location;
     private String status; // String representation of EventStatus enum
     private List<String> typesOfCheckups;
     private List<Integer> targetGradeIds;
     private List<String> targetGradeNames;
+    private List<String> vaccineNames; // For vaccination events - display purposes
+    private List<Integer> selectedVaccines; // For vaccination events - editing purposes
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Integer createdByUserId;

@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, CircularProgress, Alert, Paper, Grid, Modal } from '@mui/material'; // Added Modal
-import { AddCircleOutline as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { AddCircleOutline as AddIcon } from '@mui/icons-material';
 import HealthEventForm from '../../components/healthcheckup/HealthEventForm'; // Corrected path
 import HealthEventListItem from '../../components/healthcheckup/HealthEventListItem'; // Corrected path
-import { getAllHealthEvents, createHealthEvent, updateHealthEvent, deleteHealthEvent, sendVaccinationConsents } from '../../utils/api'; // Added sendVaccinationConsents
+import { getAllHealthEvents, createHealthEvent, updateHealthEvent, deleteHealthEvent, sendVaccinationConsents } from '../../utils/api';
 import { useUIText } from '../../hooks/useUIText';
 
 // Modal style
@@ -25,7 +24,6 @@ const style = {
 
 const HealthEventManagement = () => {
     const { t } = useUIText();
-    const navigate = useNavigate();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -38,12 +36,6 @@ const HealthEventManagement = () => {
         setLoading(true);
         try {
             const data = await getAllHealthEvents();
-            console.log('Fetched events:', data);
-            // Debug log for first event to check structure
-            if (data && data.length > 0) {
-                console.log('First event structure:', data[0]);
-                console.log('First event targetGradeNames:', data[0].targetGradeNames);
-            }
             setEvents(data || []);
             setError(null);
         } catch (err) {
@@ -52,7 +44,7 @@ const HealthEventManagement = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [t]);
 
     useEffect(() => {
         fetchEvents();
@@ -65,7 +57,6 @@ const HealthEventManagement = () => {
     };
 
     const handleOpenEditModal = (event) => {
-        console.log('Opening edit modal with event:', event);
         setSelectedEvent(event);
         setIsEditMode(true);
         setOpenFormModal(true);
@@ -116,9 +107,6 @@ const HealthEventManagement = () => {
 
     // View event details
     const handleViewEvent = (event) => {
-        console.log(`View event details for event:`, event);
-        console.log('Event targetGradeNames:', event.targetGradeNames);
-        console.log('Event targetGradeIds:', event.targetGradeIds);
         setSelectedEvent(event);
         setOpenViewModal(true);
     };
@@ -205,11 +193,24 @@ const HealthEventManagement = () => {
                             <Typography variant="body2" color="textSecondary" gutterBottom>
                                 <strong>{t.gradeLevels}:</strong> {selectedEvent.targetGradeNames?.join(', ') || t.notSpecified}
                             </Typography>
-                            {selectedEvent.typesOfCheckups && selectedEvent.typesOfCheckups.length > 0 && (
+                            
+                            {/* Always show Types of Checkups for HEALTH_CHECKUP events */}
+                            {selectedEvent.eventType === 'HEALTH_CHECKUP' && (
                                 <Typography variant="body2" color="textSecondary" gutterBottom>
-                                    <strong>{t.typesOfCheckups}:</strong> {selectedEvent.typesOfCheckups.join(', ')}
+                                    <strong>{t.typesOfCheckups || 'Types of Checkups'}:</strong> {
+                                        selectedEvent.typesOfCheckups && selectedEvent.typesOfCheckups.length > 0 
+                                            ? selectedEvent.typesOfCheckups.join(', ')
+                                            : 'No specific checkup types specified (General health checkup)'
+                                    }
                                 </Typography>
                             )}
+                            
+                            {selectedEvent.eventType === 'VACCINATION' && (
+                                <Typography variant="body2" color="textSecondary" gutterBottom>
+                                    <strong>Vaccines:</strong> {selectedEvent.vaccineNames?.join(', ') || 'Not specified'}
+                                </Typography>
+                            )}
+                            
                             <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
                                 <Button onClick={() => setOpenViewModal(false)}>
                                     {t.close}

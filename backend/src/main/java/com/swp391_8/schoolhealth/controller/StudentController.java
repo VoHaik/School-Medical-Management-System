@@ -40,6 +40,13 @@ public class StudentController {
         List<StudentDTO> students = studentService.getAllStudents();
         return ResponseEntity.ok(students);
     }
+    
+    // Public endpoint for getting student list for dropdowns (basic info only)
+    @GetMapping("/list")
+    public ResponseEntity<List<StudentDTO>> getStudentsList() {
+        List<StudentDTO> students = studentService.getAllStudents();
+        return ResponseEntity.ok(students);
+    }
 
     @GetMapping("/{studentCode}")
     @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or @securityService.isParentOfStudentByCode(authentication, #studentCode)")

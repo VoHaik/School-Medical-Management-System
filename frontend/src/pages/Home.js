@@ -227,7 +227,7 @@ const Home = () => {
                     </Button>
                     <Button
                       component={Link}
-                      to="/register"
+                      to="/parent-registration"
                       variant="outlined"
                       size="large"
                       sx={{ 

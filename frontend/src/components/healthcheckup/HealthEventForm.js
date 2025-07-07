@@ -1,20 +1,16 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { TextField, Button, Grid, Typography, Paper, FormControl, InputLabel, Select, MenuItem, FormHelperText, Chip, OutlinedInput, Box, Snackbar, Alert, CircularProgress } from '@mui/material';
 import axios from 'axios';
-import axiosWithAuth from '../../utils/axiosWithAuth';
+import apiClient, { getAllHealthCheckupTypes, getAllVaccines } from '../../utils/api';
 import GradeLevelSelector from '../shared/GradeLevelSelector';
 import { useUIText } from '../../hooks/useUIText';
 import { useGradeLevels } from '../../hooks/useGradeLevels';
+import { useAuth } from '../../context/AuthContext';
 
 const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
   const { t } = useUIText();
   const { gradeLevels, loading: gradeLevelsLoading, formatGradeNumbersToString, parseGradeLevelsString } = useGradeLevels();
-  
-  // Debug logging
-  console.log('HealthEventForm - gradeLevels:', gradeLevels);
-  console.log('HealthEventForm - gradeLevelsLoading:', gradeLevelsLoading);
-  console.log('HealthEventForm - initialData:', initialData);
-  console.log('HealthEventForm - isEdit:', isEdit);
+  const { currentUser, loading: authLoading } = useAuth();
   
   const [formData, setFormData] = useState({
     eventName: '',
@@ -24,14 +20,123 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
     endDate: '',
     location: '',
     typesOfCheckups: [], // Ensure this is always an array
+    selectedVaccines: [], // Add vaccines array for vaccination events
     targetGradeNames: [] // Changed to use names for backend compatibility
   });
   
+  const [vaccines, setVaccines] = useState([]);
+  const [vaccinesLoading, setVaccinesLoading] = useState(false);
+  const [healthCheckupTypes, setHealthCheckupTypes] = useState([]);
+  const [checkupTypesLoading, setCheckupTypesLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
+  // Fetch vaccines from API
+  const fetchVaccines = async () => {
+    try {
+      setVaccinesLoading(true);
+      const response = await getAllVaccines();
+      
+      if (response && Array.isArray(response) && response.length > 0) {
+        setVaccines(response);
+      } else {
+        // Fallback vaccines data
+        const fallbackVaccines = [
+          { vaccineId: 1, name: 'MMR', diseaseTargeted: 'Measles, Mumps, Rubella' },
+          { vaccineId: 2, name: 'DTaP', diseaseTargeted: 'Diphtheria, Tetanus, Pertussis' },
+          { vaccineId: 3, name: 'Polio (IPV)', diseaseTargeted: 'Poliomyelitis' },
+          { vaccineId: 4, name: 'Hepatitis B', diseaseTargeted: 'Hepatitis B' },
+          { vaccineId: 5, name: 'Varicella', diseaseTargeted: 'Chickenpox' },
+          { vaccineId: 6, name: 'Influenza', diseaseTargeted: 'Seasonal Flu' },
+          { vaccineId: 7, name: 'HPV', diseaseTargeted: 'Human Papillomavirus' },
+          { vaccineId: 8, name: 'COVID-19', diseaseTargeted: 'COVID-19' }
+        ];
+        setVaccines(fallbackVaccines);
+      }
+    } catch (error) {
+      console.error('Error fetching vaccines:', error);
+      
+      // Use fallback data when API fails
+      const fallbackVaccines = [
+        { vaccineId: 1, name: 'MMR', diseaseTargeted: 'Measles, Mumps, Rubella' },
+        { vaccineId: 2, name: 'DTaP', diseaseTargeted: 'Diphtheria, Tetanus, Pertussis' },
+        { vaccineId: 3, name: 'Polio (IPV)', diseaseTargeted: 'Poliomyelitis' },
+        { vaccineId: 4, name: 'Hepatitis B', diseaseTargeted: 'Hepatitis B' },
+        { vaccineId: 5, name: 'Varicella', diseaseTargeted: 'Chickenpox' },
+        { vaccineId: 6, name: 'Influenza', diseaseTargeted: 'Seasonal Flu' },
+        { vaccineId: 7, name: 'HPV', diseaseTargeted: 'Human Papillomavirus' },
+        { vaccineId: 8, name: 'COVID-19', diseaseTargeted: 'COVID-19' }
+      ];
+      setVaccines(fallbackVaccines);
+      
+      setSnackbarMessage('Using default vaccines list (API connection failed)');
+      setSnackbarSeverity('warning');
+      setSnackbarOpen(true);
+    } finally {
+      setVaccinesLoading(false);
+    }
+  };
+
+  // Fetch health checkup types from API
+  const fetchHealthCheckupTypes = async () => {
+    try {
+      setCheckupTypesLoading(true);
+      
+      // Try to fetch from API first
+      try {
+        const response = await getAllHealthCheckupTypes();
+        const transformedTypes = response?.map(type => ({
+          value: type.checkupTypeId, // Use ID as value
+          label: type.typeName,
+          description: type.description
+        })) || [];
+        
+        if (transformedTypes.length > 0) {
+          setHealthCheckupTypes(transformedTypes);
+          return;
+        }
+      } catch (apiError) {
+        console.warn('API call failed, using fallback data:', apiError);
+      }
+      
+      // Fallback to hardcoded data if API fails
+      const fallbackTypes = [
+        { value: 1, label: 'General Physical Examination', description: 'Comprehensive physical health checkup' },
+        { value: 2, label: 'Vision Test', description: 'Eye sight and vision assessment' },
+        { value: 3, label: 'Hearing Test', description: 'Hearing ability assessment' },
+        { value: 4, label: 'Height and Weight Measurement', description: 'Growth and development tracking' },
+        { value: 5, label: 'Blood Pressure Check', description: 'Cardiovascular health monitoring' },
+        { value: 6, label: 'Dental Examination', description: 'Oral health and dental checkup' },
+        { value: 7, label: 'Basic Health Screening', description: 'Basic general health screening' },
+        { value: 8, label: 'Vaccination Check', description: 'Immunization status verification' },
+        { value: 9, label: 'Mental Health Assessment', description: 'Psychological wellbeing evaluation' },
+        { value: 10, label: 'Sports Physical', description: 'Sports participation health clearance' }
+      ];
+      
+      setHealthCheckupTypes(fallbackTypes);
+      
+    } catch (error) {
+      console.error('Error fetching health checkup types:', error);
+      setSnackbarMessage('Failed to load health checkup types');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      // Fallback to empty array if everything fails
+      setHealthCheckupTypes([]);
+    } finally {
+      setCheckupTypesLoading(false);
+    }
+  };
+
+  // Fetch vaccines and checkup types when component mounts and user is authenticated
+  useEffect(() => {
+    if (currentUser && !authLoading) {
+      fetchVaccines();
+      fetchHealthCheckupTypes();
+    }
+  }, [currentUser, authLoading]);
+  
   useEffect(() => {
     if (initialData && gradeLevels.length > 0) {
       // Handle targetGradeNames - convert from existing data
@@ -77,14 +182,8 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
         endDate: endDate,
         location: initialData.location || '',
         typesOfCheckups: Array.isArray(initialData.typesOfCheckups) ? initialData.typesOfCheckups : [], // Ensure it's always an array
+        selectedVaccines: Array.isArray(initialData.selectedVaccines) ? initialData.selectedVaccines : [], // Handle selected vaccines
         targetGradeNames: targetGradeNames
-      });
-      
-      console.log('Form populated with initial data:', {
-        ...initialData,
-        targetGradeNames,
-        startDate,
-        endDate
       });
     }
   }, [initialData, gradeLevels, parseGradeLevelsString]);
@@ -95,7 +194,6 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
   };
   
   const handleGradeLevelsChange = (selectedGrades) => {
-    console.log('Grade levels changed to:', selectedGrades);
     setFormData(prev => ({ ...prev, targetGradeNames: selectedGrades }));
   };
 
@@ -127,6 +225,16 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
         }
       }
       
+      // Validate selectedVaccines only for VACCINATION events
+      if (formData.eventType === 'VACCINATION') {
+        if (!formData.selectedVaccines || formData.selectedVaccines.length === 0) {
+          setSnackbarMessage('At least one vaccine type must be selected for vaccination events.');
+          setSnackbarSeverity('error');
+          setSnackbarOpen(true);
+          return;
+        }
+      }
+      
       // Prepare data for submission - targetGradeIds is already in correct format
       const finalData = {...formData};
       
@@ -135,11 +243,14 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
         delete finalData.typesOfCheckups;
       }
       
+      // Remove selectedVaccines if not needed (for HEALTH_CHECKUP events) 
+      if (formData.eventType !== 'VACCINATION') {
+        delete finalData.selectedVaccines;
+      }
+      
       // Rename fields to match backend DTO
       finalData.scheduledDate = finalData.startDate;  // Map startDate to scheduledDate
       
-      console.log('Submitting health checkup event data:', finalData);
-      console.log('Target grade names being sent:', finalData.targetGradeNames);
       onSubmit(finalData);
       
     } catch (error) {
@@ -149,79 +260,15 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
       setSnackbarOpen(true);
     }
   };
-
-  // State để lưu giá trị nhập thủ công của loại khám/tiêm chủng
-  const [customCheckupType, setCustomCheckupType] = useState('');
-  
-  // Xử lý thêm loại khám/tiêm chủng tùy chỉnh
-  const handleAddCustomCheckupType = () => {
-    if (customCheckupType && customCheckupType.trim() !== '') {
-      // Tạo giá trị duy nhất cho loại tùy chỉnh bằng cách chuyển đổi thành UPPERCASE và thay thế khoảng trắng bằng dấu gạch dưới
-      const customValue = 'CUSTOM_' + customCheckupType.trim().toUpperCase().replace(/\s+/g, '_');
-      
-      // Ensure typesOfCheckups is an array before checking includes
-      const typesOfCheckups = Array.isArray(formData.typesOfCheckups) ? formData.typesOfCheckups : [];
-      
-      // Kiểm tra xem đã tồn tại trong danh sách chưa
-      if (!typesOfCheckups.includes(customValue)) {
-        setFormData(prev => ({
-          ...prev,
-          typesOfCheckups: [...typesOfCheckups, customValue]
-        }));
-        
-        // Display success message
-        setSnackbarMessage(`Added "${customCheckupType.trim()}" to the list.`);
-        setSnackbarSeverity('success');
-        setSnackbarOpen(true);
-      } else {
-        // Display already exists message
-        setSnackbarMessage(`"${customCheckupType.trim()}" is already in the list.`);
-        setSnackbarSeverity('info');
-        setSnackbarOpen(true);
-      }
-      
-      // Clear input value after adding
-      setCustomCheckupType('');
-    }
-  };
-  
-  // Handle Enter key when inputting custom checkup/vaccine type
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && customCheckupType.trim() !== '') {
-      e.preventDefault(); // Prevent form submission
-      handleAddCustomCheckupType();
-    }
-  };
   
   // Close notification
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   };
   
-  // Types of checkups that can be chosen for health checkup events only
+  // Get health checkup types from state (loaded from API)
   const getHealthCheckupTypes = () => {
-    const healthCheckupTypes = [
-      { value: 'VISION', label: 'Vision Check' },
-      { value: 'HEARING', label: 'Hearing Test' },
-      { value: 'DENTAL', label: 'Dental Examination' },
-      { value: 'HEIGHT_WEIGHT', label: 'Height/Weight Measurement' },
-      { value: 'GENERAL', label: 'General Checkup' }
-    ];
-    
-    // Add custom types to the list for health checkup
-    // Ensure typesOfCheckups is an array before filtering
-    const typesOfCheckups = Array.isArray(formData.typesOfCheckups) ? formData.typesOfCheckups : [];
-    const customTypes = typesOfCheckups
-      .filter(type => type.startsWith('CUSTOM_'))
-      .map(type => ({
-        value: type,
-        label: type.replace('CUSTOM_', '').replace(/_/g, ' ').toLowerCase()
-          .split(' ')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ')
-      }));
-    
-    return [...healthCheckupTypes, ...customTypes];
+    return healthCheckupTypes;
   };
 
   return (
@@ -271,7 +318,7 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
           
           <Grid item xs={12}>
             <TextField
-              label={formData.eventType === 'VACCINATION' ? 'Vaccine Name/Description' : 'Description'}
+              label={formData.eventType === 'VACCINATION' ? 'Vaccine Description' : 'Description'}
               name="description"
               value={formData.description}
               onChange={handleChange}
@@ -279,42 +326,66 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
               rows={3}
               fullWidth
               placeholder={formData.eventType === 'VACCINATION' 
-                ? 'Enter vaccine name (e.g., BCG Vaccine (Tuberculosis), DPT Vaccine (Diphtheria, Pertussis, Tetanus), MMR Vaccine (Measles, Mumps, Rubella), etc.)'
+                ? 'Enter vaccine description or details'
                 : 'Enter event description'
               }
               helperText={formData.eventType === 'VACCINATION' 
-                ? 'Common vaccines: BCG, DPT, Polio, Measles, MMR, Hepatitis B, etc.'
+                ? 'Provide details about the vaccination event'
                 : 'Provide details about the health event'
               }
             />
             
-            {/* Show vaccine suggestions for VACCINATION events */}
+            {/* Show vaccine dropdown for VACCINATION events */}
             {formData.eventType === 'VACCINATION' && (
-              <Box sx={{ mt: 1 }}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Quick suggestions (click to use):
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {[
-                    'BCG Vaccine (Tuberculosis)',
-                    'DPT Vaccine (Diphtheria, Pertussis, Tetanus)',
-                    'Polio Vaccine',
-                    'Measles Vaccine',
-                    'MMR Vaccine (Measles, Mumps, Rubella)',
-                    'Hepatitis B Vaccine',
-                    'Other Vaccine Types'
-                  ].map((vaccine) => (
-                    <Chip
-                      key={vaccine}
-                      label={vaccine}
-                      onClick={() => setFormData(prev => ({ ...prev, description: vaccine }))}
-                      variant="outlined"
-                      size="small"
-                      sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'primary.light', color: 'white' } }}
-                    />
-                  ))}
-                </Box>
-              </Box>
+              <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel id="vaccines-select-label">Select Vaccines</InputLabel>
+                <Select
+                  labelId="vaccines-select-label"
+                  multiple
+                  value={Array.isArray(formData.selectedVaccines) ? formData.selectedVaccines : []}
+                  onChange={(e) => {
+                    const selectedVaccines = Array.isArray(e.target.value) ? e.target.value : [];
+                    setFormData(prev => ({
+                      ...prev,
+                      selectedVaccines: selectedVaccines
+                    }));
+                  }}
+                  input={<OutlinedInput label="Select Vaccines" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((vaccineId) => {
+                        const vaccine = vaccines.find(vac => vac.vaccineId.toString() === vaccineId);
+                        const label = vaccine ? vaccine.name : vaccineId;
+                        return <Chip key={vaccineId} label={label} size="small" />;
+                      })}
+                    </Box>
+                  )}
+                  disabled={vaccinesLoading}
+                >
+                  {vaccinesLoading ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={20} />
+                      <Typography sx={{ ml: 1 }}>Loading vaccines...</Typography>
+                    </MenuItem>
+                  ) : (
+                    vaccines.map((vaccine) => (
+                      <MenuItem key={vaccine.vaccineId} value={vaccine.vaccineId.toString()}>
+                        <Typography variant="body2">
+                          <strong>{vaccine.name}</strong>
+                          {vaccine.diseaseTargeted && (
+                            <Typography component="span" variant="caption" color="text.secondary">
+                              {' - '}{vaccine.diseaseTargeted}
+                            </Typography>
+                          )}
+                        </Typography>
+                      </MenuItem>
+                    ))
+                  )}
+                </Select>
+                <FormHelperText>
+                  {vaccinesLoading ? 'Loading vaccines from database...' : 'Select one or more vaccines from the database'}
+                </FormHelperText>
+              </FormControl>
             )}
 
             {/* Show checkup types for HEALTH_CHECKUP events */}
@@ -328,6 +399,7 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
                     value={Array.isArray(formData.typesOfCheckups) ? formData.typesOfCheckups : []}
                     onChange={(e) => setFormData({...formData, typesOfCheckups: Array.isArray(e.target.value) ? e.target.value : []})}
                     input={<OutlinedInput label="Checkup Types" />}
+                    disabled={checkupTypesLoading}
                     renderValue={(selected) => {
                       // Ensure selected is an array before mapping
                       const selectedArray = Array.isArray(selected) ? selected : [];
@@ -341,39 +413,30 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
                       );
                     }}
                   >
-                    {getHealthCheckupTypes().map((type) => (
-                      <MenuItem key={type.value} value={type.value}>
-                        {type.label}
+                    {checkupTypesLoading ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                        <Typography sx={{ ml: 1 }}>Loading checkup types...</Typography>
                       </MenuItem>
-                    ))}
+                    ) : (
+                      getHealthCheckupTypes().map((type) => (
+                        <MenuItem key={type.value} value={type.value}>
+                          <Typography variant="body2">
+                            <strong>{type.label}</strong>
+                            {type.description && (
+                              <Typography component="span" variant="caption" color="text.secondary" display="block">
+                                {type.description}
+                              </Typography>
+                            )}
+                          </Typography>
+                        </MenuItem>
+                      ))
+                    )}
                   </Select>
-                  <FormHelperText>Select one or more checkup types</FormHelperText>
+                  <FormHelperText>
+                    {checkupTypesLoading ? 'Loading checkup types from database...' : 'Select one or more checkup types from the database'}
+                  </FormHelperText>
                 </FormControl>
-                
-                {/* Custom checkup type input for health checkup only */}
-                <Grid container spacing={1} alignItems="center" sx={{ mt: 1 }}>
-                  <Grid item xs={9}>
-                    <TextField
-                      fullWidth
-                      label="Add Custom Checkup Type"
-                      value={customCheckupType}
-                      onChange={(e) => setCustomCheckupType(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Enter new checkup type"
-                    />
-                  </Grid>
-                  <Grid item xs={3}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleAddCustomCheckupType}
-                      fullWidth
-                      disabled={!customCheckupType.trim()}
-                    >
-                      Add
-                    </Button>
-                  </Grid>
-                </Grid>
               </>
             )}
           </Grid>

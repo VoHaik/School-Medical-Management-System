@@ -82,9 +82,6 @@ public class MedicalEvent {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
-    private Set<MedicalSupply> medicalSupplies = new HashSet<>();
-
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

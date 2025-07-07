@@ -63,4 +63,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     // Find students associated with a parent via ParentStudentRelationship
     @Query("SELECT psr.student FROM ParentStudentRelationship psr WHERE psr.parent.parentCode = :parentCode")
     List<com.swp391_8.schoolhealth.model.Student> findStudentsByParentCode(@Param("parentCode") String parentCode);
+
+    // Find all users with roles loaded
+    @Query("SELECT u FROM User u JOIN FETCH u.role")
+    List<User> findAllWithRoles();
 }

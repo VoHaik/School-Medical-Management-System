@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom'; // Added for URL query parameters
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import axiosWithAuth from '../../utils/axiosWithAuth'; // Import the auth utility
+import apiClient from '../../utils/api'; // Import the api client
 import MedicalEventTab from '../../components/medical/MedicalEventTab'; // Import MedicalEventTab component
 import {
   Card,
@@ -176,8 +176,8 @@ function MedicationManagement() {
     setIsLoadingPendingRequests(true);
     setPendingRequestsError(null);
     try {
-      // Use axiosWithAuth as a function
-      const authAxios = axiosWithAuth();
+      // Use apiClient as authenticated axios instance
+      const authAxios = apiClient;
       console.log('Fetching pending medication requests with authorization headers...');
       
       // Add debugging info to help trace the request
@@ -260,7 +260,7 @@ function MedicationManagement() {
   const fetchMedications = async () => {
     try {
       console.log('Fetching medications inventory...');
-      const authAxios = axiosWithAuth();
+      const authAxios = apiClient;
       
       // Add debugging headers
       authAxios.defaults.headers.common['X-Debug-Request'] = 'FetchMedications';
@@ -399,7 +399,7 @@ function MedicationManagement() {
   const handleMedicationFormSubmit = async (data) => {
     try {
       console.log('Medication inventory data:', data);
-      const authAxios = axiosWithAuth();
+      const authAxios = apiClient;
       
       // Format date properly before submitting
       if (data.expiryDate) {
@@ -513,7 +513,7 @@ function MedicationManagement() {
       }
       
       console.log(`Approving request ID: ${requestId}`);
-      const authAxios = axiosWithAuth();
+      const authAxios = apiClient;
       
       // First let's check if the API endpoint is accessible
       console.log(`Sending approval to: /api/medication-requests/${requestId}/approve`);
@@ -559,7 +559,7 @@ function MedicationManagement() {
     if (!selectedRequest) return;
     
     try {
-      const authAxios = axiosWithAuth();
+      const authAxios = apiClient;
       
       // Extract the rejection reason, providing an empty string if null or undefined
       const rejectionReason = data.rejectionReason || '';
@@ -638,7 +638,7 @@ function MedicationManagement() {
     };
     try {
       console.log(`Administering medication for request ID: ${requestId}`);
-      const authAxios = axiosWithAuth();
+      const authAxios = apiClient;
       await authAxios.post(`/api/medication-requests/${requestId}/administer`, administrationData);
       
       // Add success notification
@@ -685,7 +685,7 @@ function MedicationManagement() {
         show: true
       });
       
-      const authAxios = axiosWithAuth();
+      const authAxios = apiClient;
       
       // Add debugging headers
       authAxios.defaults.headers.common['X-Debug'] = 'TestMedicationAPI';

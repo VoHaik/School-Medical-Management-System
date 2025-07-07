@@ -3,10 +3,10 @@ package com.swp391_8.schoolhealth.service.impl;
 import com.swp391_8.schoolhealth.dto.ConsultationDTO;
 import com.swp391_8.schoolhealth.model.Consultation;
 import com.swp391_8.schoolhealth.model.Student;
-import com.swp391_8.schoolhealth.model.StudentHealthCheckup;
+import com.swp391_8.schoolhealth.model.HealthCheckup;
 import com.swp391_8.schoolhealth.repository.ConsultationRepository;
 import com.swp391_8.schoolhealth.repository.StudentRepository;
-import com.swp391_8.schoolhealth.repository.StudentHealthCheckupRepository;
+import com.swp391_8.schoolhealth.repository.HealthCheckupRepository;
 import com.swp391_8.schoolhealth.service.ConsultationService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ public class ConsultationServiceImpl implements ConsultationService {
     private StudentRepository studentRepository;
 
     @Autowired
-    private StudentHealthCheckupRepository studentHealthCheckupRepository;
+    private HealthCheckupRepository healthCheckupRepository;
 
     @Override
     public ConsultationDTO findById(Integer id) {
@@ -58,11 +58,11 @@ public class ConsultationServiceImpl implements ConsultationService {
         existingConsultation.setStudent(student);
 
         if (dto.getCheckupId() != null) {
-            StudentHealthCheckup checkup = studentHealthCheckupRepository.findById(dto.getCheckupId())
-                    .orElseThrow(() -> new EntityNotFoundException("StudentHealthCheckup not found with id: " + dto.getCheckupId()));
-            existingConsultation.setStudentHealthCheckup(checkup); // Corrected method call
+            HealthCheckup checkup = healthCheckupRepository.findById(dto.getCheckupId())
+                    .orElseThrow(() -> new EntityNotFoundException("HealthCheckup not found with id: " + dto.getCheckupId()));
+            existingConsultation.setHealthCheckup(checkup);
         } else {
-            existingConsultation.setStudentHealthCheckup(null); // Corrected method call
+            existingConsultation.setHealthCheckup(null);
         }
 
         existingConsultation.setConsultationDate(dto.getConsultationDate());
@@ -89,8 +89,8 @@ public class ConsultationServiceImpl implements ConsultationService {
             dto.setStudentCode(consultation.getStudent().getStudentCode());
             dto.setStudentName(consultation.getStudent().getFullName()); // Use getFullName from Student
         }
-        if (consultation.getStudentHealthCheckup() != null) { // Corrected method call
-            dto.setCheckupId(consultation.getStudentHealthCheckup().getCheckupResultId()); // Corrected method call and getCheckupResultId
+        if (consultation.getHealthCheckup() != null) {
+            dto.setCheckupId(consultation.getHealthCheckup().getCheckupId());
         }
         dto.setConsultationDate(consultation.getConsultationDate());
         dto.setLocation(consultation.getLocation());
@@ -111,9 +111,9 @@ public class ConsultationServiceImpl implements ConsultationService {
         }
 
         if (dto.getCheckupId() != null) {
-            StudentHealthCheckup checkup = studentHealthCheckupRepository.findById(dto.getCheckupId())
-                    .orElseThrow(() -> new EntityNotFoundException("StudentHealthCheckup not found with id: " + dto.getCheckupId()));
-            consultation.setStudentHealthCheckup(checkup); // Corrected method call
+            HealthCheckup checkup = healthCheckupRepository.findById(dto.getCheckupId())
+                    .orElseThrow(() -> new EntityNotFoundException("HealthCheckup not found with id: " + dto.getCheckupId()));
+            consultation.setHealthCheckup(checkup);
         }
 
         consultation.setConsultationDate(dto.getConsultationDate());

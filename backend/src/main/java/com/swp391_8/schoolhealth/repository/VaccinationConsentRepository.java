@@ -40,9 +40,11 @@ public interface VaccinationConsentRepository extends JpaRepository<VaccinationC
     @Query("SELECT vc FROM VaccinationConsent vc WHERE vc.student.studentCode = :studentCode ORDER BY vc.sentDate DESC")
     List<VaccinationConsent> findByStudentCode(@Param("studentCode") String studentCode);
     
-    // Find all consents for a student with health event and student details
+    // Find all consents for a student with health event, vaccines, and student details
     @Query("SELECT vc FROM VaccinationConsent vc " +
-           "JOIN FETCH vc.healthEvent " +
+           "JOIN FETCH vc.healthEvent he " +
+           "LEFT JOIN FETCH he.healthEventVaccines hev " +
+           "LEFT JOIN FETCH hev.vaccine " +
            "JOIN FETCH vc.student " +
            "WHERE vc.student.studentCode = :studentCode ORDER BY vc.sentDate DESC")
     List<VaccinationConsent> findByStudentCodeWithDetails(@Param("studentCode") String studentCode);

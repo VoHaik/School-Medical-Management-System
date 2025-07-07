@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import axiosWithAuth from '../../utils/axiosWithAuth';
+import apiClient from '../../utils/api';
 import {
   Box,
   Button,
@@ -97,7 +97,7 @@ function MedicalEventTab() {  // State variables
   const fetchMedicalEvents = async () => {
     setLoading(true);
     try {
-      const response = await axiosWithAuth().get('/api/medical-events');
+      const response = await apiClient.get('/api/medical-events');
       setMedicalEvents(response.data);
       setErrorMessage('');
     } catch (error) {
@@ -110,7 +110,7 @@ function MedicalEventTab() {  // State variables
   // Fetch students for dropdown
   const fetchStudents = async () => {
     try {
-      const response = await axiosWithAuth().get('/api/students');
+      const response = await apiClient.get('/api/students');
       setStudents(response.data);
     } catch (error) {
       console.error('Error fetching students:', error);
@@ -120,7 +120,7 @@ function MedicalEventTab() {  // State variables
     // Fetch medications from inventory
   const fetchMedications = async () => {
     try {
-      const response = await axiosWithAuth().get('/api/medications/inventory');
+      const response = await apiClient.get('/api/medications/inventory');
       setMedications(response.data);
     } catch (error) {
       console.error('Error fetching medications:', error);
@@ -142,11 +142,11 @@ function MedicalEventTab() {  // State variables
       };
       
       if (editMode) {
-        const response = await axiosWithAuth().put(`/api/medical-events/${editId}`, formattedData);
+        const response = await apiClient.put(`/api/medical-events/${editId}`, formattedData);
         setSuccessMessage('Medical event updated successfully');
         setMedicalEvents(medicalEvents.map(event => event.id === editId ? response.data : event));
       } else {
-        const response = await axiosWithAuth().post('/api/medical-events', formattedData);
+        const response = await apiClient.post('/api/medical-events', formattedData);
         setSuccessMessage('Medical event added successfully');
         setMedicalEvents([...medicalEvents, response.data]);
       }
@@ -208,7 +208,7 @@ function MedicalEventTab() {  // State variables
     if (window.confirm('Are you sure you want to delete this medical event?')) {
       setLoading(true);
       try {
-        await axiosWithAuth().delete(`/api/medical-events/${id}`);
+        await apiClient.delete(`/api/medical-events/${id}`);
         setSuccessMessage('Medical event deleted successfully');
         setMedicalEvents(medicalEvents.filter(event => event.id !== id));
       } catch (error) {
