@@ -107,5 +107,76 @@ export const deleteUser = async (userId) => {
   }
 };
 
+// Blog Post API functions
+export const getAllBlogPosts = async () => {
+  try {
+    const response = await apiClient.get('/blog');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching blog posts:', error);
+    throw error;
+  }
+};
+
+export const getBlogPostById = async (id) => {
+  try {
+    const response = await apiClient.get(`/blog/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching blog post:', error);
+    throw error;
+  }
+};
+
+export const getBlogPostsByAuthor = async (authorId) => {
+  try {
+    const response = await apiClient.get(`/blog/author/${authorId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching blog posts by author:', error);
+    throw error;
+  }
+};
+
+export const getMyBlogPosts = async () => {
+  try {
+    const response = await apiClient.get('/blog/my-posts');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching my blog posts:', error);
+    throw error;
+  }
+};
+
+export const createBlogPost = async (blogPostData) => {
+  try {
+    const response = await apiClient.post('/blog', blogPostData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating blog post:', error);
+    throw error;
+  }
+};
+
+export const updateBlogPost = async (id, blogPostData) => {
+  try {
+    const response = await apiClient.put(`/blog/${id}`, blogPostData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating blog post:', error);
+    throw error;
+  }
+};
+
+export const deleteBlogPost = async (id) => {
+  try {
+    const response = await apiClient.delete(`/blog/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting blog post:', error);
+    throw error;
+  }
+};
+
 // Re-export apiClient for convenience
 export default apiClient;

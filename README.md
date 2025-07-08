@@ -146,7 +146,7 @@ This will start the Node.js server with nodemon, which will automatically restar
 
 - User authentication (login, registration)
 - Student profile management
-- Student blog
+- Health blog (managed by school nurses)
 - Health documentation
 - Responsive design
 

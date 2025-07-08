@@ -6,8 +6,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import ParentRegistration from './pages/ParentRegistration';
+import BlogPostDetail from './pages/BlogPostDetail';
 
-import StudentBlog from './pages/StudentBlog';
+import NurseBlog from './pages/NurseBlog';
 import DashboardNew from './pages/DashboardNew';
 
 // Parent Pages
@@ -19,7 +20,7 @@ import StudentHealthProfilePage from './pages/parent/StudentHealthProfilePage'; 
 import VaccinationConsent from './pages/parent/VaccinationConsentSimple';
 import CheckupInformation from './pages/parent/CheckupInformation';
 // import Notifications from './pages/parent/Notifications'; // To be replaced by common notifications page
-import EmergencyContacts from './pages/parent/EmergencyContacts';
+// import EmergencyContacts from './pages/parent/EmergencyContacts';
 import ParentDashboard from './pages/parent/ParentDashboard';
 import ChildInformationForm from './pages/parent/ChildInformationForm';
 import ChildProfileView from './pages/parent/ChildProfileView';
@@ -101,6 +102,7 @@ function App() {
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<Home />} />
+                <Route path="/blog/:id" element={<BlogPostDetail />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Navigate to="/parent-registration" replace />} />
                 <Route path="/parent-registration" element={<ParentRegistration />} />
@@ -120,7 +122,8 @@ function App() {
                 } />
 
                 {/* Student Routes */}
-                <Route path="/student/blog" element={<ProtectedRoute roles={['ROLE_STUDENT']}><StudentBlog /></ProtectedRoute>} />
+                <Route path="/health-blog" element={<NurseBlog />} />
+                <Route path="/nurse/blog" element={<ProtectedRoute roles={['ROLE_SCHOOLNURSE']}><NurseBlog /></ProtectedRoute>} />
                 <Route path="/student/health-profile" element={<ProtectedRoute roles={['ROLE_STUDENT']}><HealthProfile /></ProtectedRoute>} />
                 <Route path="/student/medical-history" element={<ProtectedRoute roles={['ROLE_STUDENT']}><MedicalHistory /></ProtectedRoute>} />
                 <Route path="/student/vaccination-record" element={<ProtectedRoute roles={['ROLE_STUDENT']}><VaccinationRecord /></ProtectedRoute>} />
@@ -137,7 +140,7 @@ function App() {
                 <Route path="/parent/vaccination-consent" element={<ProtectedRoute roles={['ROLE_PARENT']}><VaccinationConsent /></ProtectedRoute>} />
                 <Route path="/parent/checkup-information" element={<ProtectedRoute roles={['ROLE_PARENT']}><CheckupInformation /></ProtectedRoute>} />
                 {/* <Route path="/parent/notifications" element={<ProtectedRoute roles={['ROLE_PARENT']}><Notifications /></ProtectedRoute>} /> */}
-                <Route path="/parent/emergency-contacts" element={<ProtectedRoute roles={['ROLE_PARENT']}><EmergencyContacts /></ProtectedRoute>} />
+                {/* <Route path="/parent/emergency-contacts" element={<ProtectedRoute roles={['ROLE_PARENT']}><EmergencyContacts /></ProtectedRoute>} /> */}
                 <Route path="/parent/child-information" element={<ProtectedRoute roles={['ROLE_PARENT']}><ChildInformationForm /></ProtectedRoute>} />
                 <Route path="/parent/child-profile/:childId" element={<ProtectedRoute roles={['ROLE_PARENT']}><ChildProfileView /></ProtectedRoute>} />
                 <Route path="/parent/child-medical-history/:childId" element={<ProtectedRoute roles={['ROLE_PARENT']}><ChildMedicalHistory /></ProtectedRoute>} />

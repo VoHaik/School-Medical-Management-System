@@ -50,6 +50,20 @@ const Dashboard = () => {
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <DashboardCard
+              title="Manage Health Blog"
+              description="Create and manage health education articles"
+              icon="fas fa-edit"
+              link="/nurse/blog"
+              color="green"
+            />
+            <DashboardCard
+              title="View Health Blog"
+              description="Read health tips and articles"
+              icon="fas fa-blog"
+              link="/health-blog"
+              color="purple"
+            />
+            <DashboardCard
               title="Medical Events"
               description="Record and manage medical incidents"
               icon="fas fa-ambulance"
@@ -170,7 +184,7 @@ const Dashboard = () => {
               title="Health Blog"
               description="Read health tips and articles"
               icon="fas fa-blog"
-              link="/blog"
+              link="/health-blog"
               color="purple"
             />
             <DashboardCard

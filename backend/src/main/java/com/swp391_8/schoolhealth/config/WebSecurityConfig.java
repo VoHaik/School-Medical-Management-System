@@ -93,8 +93,8 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public API endpoints - MUST come first
                 .requestMatchers("/api/auth/**").permitAll() // Authentication endpoints
-                .requestMatchers("/api/blog").permitAll() // Public blog endpoints
-                .requestMatchers("/api/blog/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/blog").permitAll() // Public blog list endpoint
+                .requestMatchers(HttpMethod.GET, "/api/blog/{id}").permitAll() // Public blog detail endpoint
                 .requestMatchers("/api/grade-levels/**").permitAll() // Grade levels endpoints for selection
                 .requestMatchers("/api/parent-registration/submit").permitAll() // Parent registration submission
                 .requestMatchers(HttpMethod.POST, "/api/parent-registration/submit").permitAll() // Explicitly allow POST

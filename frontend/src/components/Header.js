@@ -73,8 +73,8 @@ const Header = () => {
               <Link to="/#docs" className="nav-link px-3 py-2 rounded flex items-center">
                 <i className="fas fa-file-medical mr-1"></i> Health Docs
               </Link>
-              <Link to="/#blog" className="nav-link px-3 py-2 rounded flex items-center">
-                <i className="fas fa-blog mr-1"></i> Blog
+              <Link to="/health-blog" className="nav-link px-3 py-2 rounded flex items-center">
+                <i className="fas fa-blog mr-1"></i> Health Blog
               </Link>
               <Link to="/login" className="nav-link px-3 py-2 rounded flex items-center">
                 <i className="fas fa-sign-in-alt mr-1"></i> Login

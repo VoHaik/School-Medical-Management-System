@@ -47,9 +47,7 @@ const Navigation = () => {
           { path: '/parent/medication-submission', label: 'Submit Medication', icon: 'fas fa-pills' },
           { path: '/parent/vaccination-consent', label: 'Vaccination Consent', icon: 'fas fa-syringe' },
           { path: '/parent/checkup-information', label: 'Check up Information', icon: 'fas fa-clipboard-list' },
-          { path: '/parent/notifications', label: 'Notifications', icon: 'fas fa-bell' },
-          { path: '/parent/emergency-contacts', label: 'Emergency Contacts', icon: 'fas fa-phone' },
-          { path: '/student-blog', label: 'Blog/News', icon: 'fas fa-blog' },
+          { path: '/health-blog', label: 'Health Blog', icon: 'fas fa-blog' },
         ];
       case 'ROLE_SCHOOLNURSE':
         console.log('[Navigation.js] Matched ROLE_SCHOOLNURSE');
@@ -61,6 +59,8 @@ const Navigation = () => {
           { path: '/medical/vaccination-management', label: 'Vaccination Management', icon: 'fas fa-syringe' }, // Corrected path
           { path: '/medical/health-checkups', label: 'Health Checkups', icon: 'fas fa-stethoscope' }, // Corrected path
           { path: '/medical/student-management', label: 'Student Management', icon: 'fas fa-users' }, // Corrected path
+          { path: '/nurse/blog', label: 'Manage Health Blog', icon: 'fas fa-edit' },
+          { path: '/health-blog', label: 'View Health Blog', icon: 'fas fa-blog' },
           { path: '/medical/reports', label: 'Reports', icon: 'fas fa-chart-bar' }, // Corrected path
         ];
       case 'ROLE_TEACHER':
@@ -90,7 +90,7 @@ const Navigation = () => {
           { path: '/health-profile', label: 'Health Profile', icon: 'fas fa-heart' },
           { path: '/medical-history', label: 'Medical History', icon: 'fas fa-file-medical' },
           { path: '/vaccination-record', label: 'Vaccination Record', icon: 'fas fa-syringe' },
-          { path: '/blog', label: 'Health Blog', icon: 'fas fa-blog' },
+          { path: '/health-blog', label: 'Health Blog', icon: 'fas fa-blog' },
         ];
       default:
         console.log('[Navigation.js] Defaulting navigation items. No specific role match or primaryRole is null.');

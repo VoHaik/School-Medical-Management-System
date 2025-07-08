@@ -26,6 +26,7 @@ import {
   Warning as EmergencyIcon
 } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
+import HealthBlog from '../components/shared/HealthBlog';
 
 const Home = () => {
   const { currentUser } = useContext(AuthContext);
@@ -60,33 +61,6 @@ const Home = () => {
       icon: <AssignmentIcon sx={{ color: '#303f9f', fontSize: 40 }} />,
       title: "Digital Records",
       description: "Paperless health record management with easy access and sharing capabilities."
-    }
-  ];
-
-  const healthBlogPosts = [
-    {
-      title: "Importance of Regular Health Checkups for Students",
-      excerpt: "Regular health screenings help identify potential health issues early and ensure students stay healthy throughout the academic year.",
-      date: "2024-01-15",
-      author: "Dr. Sarah Johnson",
-      readTime: "5 min read",
-      category: "Prevention"
-    },
-    {
-      title: "Managing Food Allergies in School Environment",
-      excerpt: "A comprehensive guide for parents and school staff on creating a safe environment for students with food allergies.",
-      date: "2024-01-10",
-      author: "Nurse Lisa Chen",
-      readTime: "7 min read",
-      category: "Safety"
-    },
-    {
-      title: "Mental Health Awareness for Students",
-      excerpt: "Understanding the signs of mental health challenges and providing appropriate support for student wellbeing.",
-      date: "2024-01-05",
-      author: "Dr. Michael Brown",
-      readTime: "6 min read",
-      category: "Mental Health"
     }
   ];
 
@@ -426,53 +400,6 @@ const Home = () => {
           </Grid>
         </Box>
 
-        {/* Health Blog Section */}
-        <Box sx={{ mb: 6 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h4" sx={{ fontWeight: 600, color: 'text.primary' }}>
-              Health Blog & Resources
-            </Typography>
-            <Button variant="outlined" color="primary">
-              View All Posts
-            </Button>
-          </Box>
-          <Grid container spacing={4}>
-            {healthBlogPosts.map((post, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <Card sx={{ height: '100%', '&:hover': { boxShadow: 6 }, transition: 'box-shadow 0.3s' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                      <Chip
-                        label={post.category}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        {post.readTime}
-                      </Typography>
-                    </Box>
-                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
-                      {post.title}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                      {post.excerpt}
-                    </Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        By {post.author}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        {new Date(post.date).toLocaleDateString()}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
         {/* Health Tips Section */}
         <Paper 
           sx={{ 
@@ -528,6 +455,9 @@ const Home = () => {
           </Grid>
         </Paper>
       </Container>
+
+      {/* Health Blog Section */}
+      <HealthBlog />
     </Box>
   );
 };

@@ -51,9 +51,7 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/parent/my-requests', label: 'View Medication Requests', icon: 'fas fa-list-alt' },
           { path: '/parent/vaccination-consent', label: 'Vaccination Consent', icon: 'fas fa-syringe' },
           { path: '/parent/checkup-information', label: 'Check up Information', icon: 'fas fa-clipboard-list' },
-          { path: '/parent/notifications', label: 'Notifications', icon: 'fas fa-bell' },
-          { path: '/parent/emergency-contacts', label: 'Emergency Contacts', icon: 'fas fa-phone' },
-          { path: '/student-blog', label: 'Blog/News', icon: 'fas fa-blog' },
+          { path: '/health-blog', label: 'Health Blog', icon: 'fas fa-blog' },
         ];
         break;
       case 'ROLE_SCHOOLNURSE':
@@ -65,6 +63,8 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/medical/vaccination-management', label: 'Vaccination Management', icon: 'fas fa-syringe' },
           { path: '/medical/health-checkups', label: 'Health Checkups', icon: 'fas fa-stethoscope' },
           { path: '/medical/student-management', label: 'Student Management', icon: 'fas fa-users' },
+          { path: '/nurse/blog', label: 'Manage Health Blog', icon: 'fas fa-edit' },
+          { path: '/health-blog', label: 'View Health Blog', icon: 'fas fa-blog' },
           { path: '/medical/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
         ];
         break;
@@ -85,6 +85,7 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/admin/analytics-reports', label: 'Reports & Analytics', icon: 'fas fa-chart-line' },
           { path: '/admin/health-programs', label: 'Health Programs', icon: 'fas fa-heartbeat' },
           { path: '/admin/data-export', label: 'Data Export', icon: 'fas fa-file-export' },
+          { path: '/health-blog', label: 'Health Blog', icon: 'fas fa-blog' },
         ];
         break;
       case 'ROLE_STUDENT':
@@ -92,7 +93,8 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/student/dashboard', label: 'Student Dashboard', icon: 'fas fa-user-graduate' },
           { path: '/health-profile', label: 'Health Profile', icon: 'fas fa-heart' },
           { path: '/medical-history', label: 'Medical History', icon: 'fas fa-file-medical' },
-          { path: '/vaccination-record', label: 'Vaccination Record', icon: 'fas fa-syringe' },          { path: '/blog', label: 'Health Blog', icon: 'fas fa-blog' },
+          { path: '/vaccination-record', label: 'Vaccination Record', icon: 'fas fa-syringe' },
+          { path: '/health-blog', label: 'Health Blog', icon: 'fas fa-blog' },
           { path: '/student/profile', label: 'Profile', icon: 'fas fa-user-circle' },
         ];
         break;
