@@ -77,6 +77,7 @@ const Navigation = () => {
       'fas fa-user-graduate': <School />,
       'fas fa-heart': <FavoriteOutlined />,
       'fas fa-file-medical': <Assignment />,
+      'fas fa-user-circle': <Settings />,
       'fas fa-home': <Home />,
       'fas fa-sign-in-alt': <Login />,
       'fas fa-user-plus': <PersonAdd />,
@@ -163,12 +164,11 @@ const Navigation = () => {
       case 'ROLE_STUDENT':
         console.log('[Navigation.js] Matched ROLE_STUDENT');
         return [
-          // Remove commonItems spread: // ...commonItems,
-          { path: '/student/dashboard', label: 'Student Dashboard', icon: 'fas fa-user-graduate' }, // Added a specific dashboard path
+          { path: '/student/dashboard', label: 'Student Dashboard', icon: 'fas fa-user-graduate' },
           { path: '/health-profile', label: 'Health Profile', icon: 'fas fa-heart' },
           { path: '/medical-history', label: 'Medical History', icon: 'fas fa-file-medical' },
           { path: '/vaccination-record', label: 'Vaccination Record', icon: 'fas fa-syringe' },
-          { path: '/health-blog', label: 'Health Blog', icon: 'fas fa-blog' },
+          { path: '/profile', label: 'Profile', icon: 'fas fa-user-circle' },
         ];
       default:
         console.log('[Navigation.js] Defaulting navigation items. No specific role match or primaryRole is null.');
@@ -234,7 +234,7 @@ const Navigation = () => {
                   '&:hover': { opacity: 0.9 }
                 }}
               >
-                School Health
+                FPT Junior High School
               </Typography>
             </Box>
           </motion.div>

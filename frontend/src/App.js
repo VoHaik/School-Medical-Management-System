@@ -66,6 +66,11 @@ import HealthResources from './pages/student/HealthResources';
 import Profile from './pages/student/Profile';
 import StudentHealthCheckupHistory from './pages/student/StudentHealthCheckupHistory'; // Added for student
 
+// Student Components (New)
+import StudentHealthProfile from './components/student/StudentHealthProfile';
+import StudentMedicalHistory from './components/student/StudentMedicalHistory';
+import StudentVaccinationRecords from './components/student/StudentVaccinationRecords';
+
 // Common Pages
 import NotificationsPage from './pages/common/NotificationsPage'; // Import the new common notifications page
 
@@ -124,6 +129,17 @@ function App() {
                 {/* Student Routes */}
                 <Route path="/health-blog" element={<NurseBlog />} />
                 <Route path="/nurse/blog" element={<ProtectedRoute roles={['ROLE_SCHOOLNURSE']}><NurseBlog /></ProtectedRoute>} />
+                
+                {/* Student Dashboard */}
+                <Route path="/student/dashboard" element={<ProtectedRoute roles={['ROLE_STUDENT']}><DashboardNew /></ProtectedRoute>} />
+                
+                {/* New Student Routes with Updated Components */}
+                <Route path="/health-profile" element={<ProtectedRoute roles={['ROLE_STUDENT']}><StudentHealthProfile /></ProtectedRoute>} />
+                <Route path="/medical-history" element={<ProtectedRoute roles={['ROLE_STUDENT']}><StudentMedicalHistory /></ProtectedRoute>} />
+                <Route path="/vaccination-record" element={<ProtectedRoute roles={['ROLE_STUDENT']}><StudentVaccinationRecords /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute roles={['ROLE_STUDENT']}><Profile /></ProtectedRoute>} />
+                
+                {/* Legacy Student Routes */}
                 <Route path="/student/health-profile" element={<ProtectedRoute roles={['ROLE_STUDENT']}><HealthProfile /></ProtectedRoute>} />
                 <Route path="/student/medical-history" element={<ProtectedRoute roles={['ROLE_STUDENT']}><MedicalHistory /></ProtectedRoute>} />
                 <Route path="/student/vaccination-record" element={<ProtectedRoute roles={['ROLE_STUDENT']}><VaccinationRecord /></ProtectedRoute>} />

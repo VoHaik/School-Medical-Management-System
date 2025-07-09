@@ -423,7 +423,7 @@ const Dashboard = () => {
                     {getWelcomeMessage()}
                   </Typography>
                   <Typography variant="h6" sx={{ opacity: 0.9 }}>
-                    Welcome to the School Health Management System
+                    Welcome to the FPT Junior High School Health Management System
                   </Typography>
                 </motion.div>
               </Grid>

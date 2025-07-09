@@ -258,6 +258,48 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Optional<HealthDeclarationDTO> getAcceptedHealthDeclarationByStudentCode(String studentCode) {
+        logger.info("Looking for ACCEPTED health declaration for student: {}", studentCode);
+        
+        // First, let's see all health declarations for this student for debugging
+        List<HealthDeclaration> allDeclarations = healthDeclarationRepository.findAllByStudent_StudentCodeOrderByDeclarationDateDesc(studentCode);
+        logger.info("Found {} total health declarations for student {}", allDeclarations.size(), studentCode);
+        
+        for (HealthDeclaration decl : allDeclarations) {
+            logger.info("Declaration ID: {}, Status: {}, Date: {}", decl.getDeclarationId(), decl.getStatus(), decl.getDeclarationDate());
+        }
+        
+        // Find the most recent accepted health declaration for the student
+        Optional<HealthDeclaration> declaration = healthDeclarationRepository
+            .findFirstByStudent_StudentCodeAndStatusOrderByDeclarationDateDesc(
+                studentCode, 
+                HealthDeclaration.HealthDeclarationStatus.ACCEPTED
+            );
+            
+        if (declaration.isPresent()) {
+            logger.info("Found ACCEPTED health declaration with ID: {}", declaration.get().getDeclarationId());
+            return declaration.map(this::convertToDTO);
+        }
+        
+        // Try APPROVED as fallback
+        logger.info("No ACCEPTED found, trying APPROVED as fallback");
+        Optional<HealthDeclaration> approvedDeclaration = healthDeclarationRepository
+            .findFirstByStudent_StudentCodeAndStatusOrderByDeclarationDateDesc(
+                studentCode, 
+                HealthDeclaration.HealthDeclarationStatus.APPROVED
+            );
+            
+        if (approvedDeclaration.isPresent()) {
+            logger.info("Found APPROVED health declaration with ID: {}", approvedDeclaration.get().getDeclarationId());
+            return approvedDeclaration.map(this::convertToDTO);
+        }
+        
+        logger.warn("No ACCEPTED or APPROVED health declaration found for student: {}", studentCode);
+        return Optional.empty();
+    }
+    
+    @Override
     public HealthDeclarationDTO getHealthDeclarationById(Integer declarationId) {
         HealthDeclaration declaration = healthDeclarationRepository.findById(declarationId)
             .orElseThrow(() -> new ResourceNotFoundException("Health Declaration", "id", declarationId));

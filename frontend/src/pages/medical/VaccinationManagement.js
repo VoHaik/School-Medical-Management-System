@@ -73,6 +73,7 @@ import PageHeader from '../../components/PageHeader';
 const vaccinationUpdateSchema = yup.object().shape({
   nextDueDate: yup.date().required('Next due date is required'),
   dose: yup.string().required('Dose is required'),
+  vaccineName: yup.string().required('Vaccine name is required'),
   reactions: yup.array().of(yup.string()).min(1, 'At least one reaction status is required'),
   notes: yup.string().required('Notes are required'),
   vaccinationStatus: yup.string().required('Status is required')
@@ -528,6 +529,7 @@ function VaccinationManagement() {
     updateForm.reset({
       nextDueDate: record.nextDueDate ? new Date(record.nextDueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       dose: record.dose || '1st dose',
+      vaccineName: record.vaccineName || '',
       reactions: existingReactions,
       notes: record.notes || 'No additional notes',
       vaccinationStatus: record.status || 'COMPLETED'
@@ -569,6 +571,7 @@ function VaccinationManagement() {
         vaccinationDate: new Date().toISOString().split('T')[0], // Auto-set to today's date
         nextDueDate: data.nextDueDate,
         dose: data.dose,
+        vaccineName: data.vaccineName,
         adverseReactions: data.reactions.join(', '),
         notes: data.notes
       };
@@ -1199,6 +1202,18 @@ function VaccinationManagement() {
                   error={!!updateForm.formState.errors.dose}
                   helperText={updateForm.formState.errors.dose?.message}
                   placeholder="e.g., 1st dose, 2nd dose, Booster"
+                  required
+                  inputProps={{ required: true }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Vaccine Name *"
+                  {...updateForm.register('vaccineName')}
+                  error={!!updateForm.formState.errors.vaccineName}
+                  helperText={updateForm.formState.errors.vaccineName?.message}
+                  placeholder="e.g., BCG Vaccine, DPT Vaccine"
                   required
                   inputProps={{ required: true }}
                 />

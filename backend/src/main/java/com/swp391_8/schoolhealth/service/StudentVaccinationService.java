@@ -6,6 +6,7 @@ import com.swp391_8.schoolhealth.exception.ResourceNotFoundException;
 import com.swp391_8.schoolhealth.model.*;
 import com.swp391_8.schoolhealth.repository.StudentRepository;
 import com.swp391_8.schoolhealth.repository.StudentVaccinationRepository;
+import com.swp391_8.schoolhealth.repository.StudentVaccinationRecordRepository;
 import com.swp391_8.schoolhealth.repository.UserRepository;
 import com.swp391_8.schoolhealth.repository.VaccineRepository;
 import com.swp391_8.schoolhealth.repository.HealthEventRepository;
@@ -27,6 +28,8 @@ public class StudentVaccinationService {
 
     @Autowired
     private StudentVaccinationRepository studentVaccinationRepository;
+    @Autowired
+    private StudentVaccinationRecordRepository studentVaccinationRecordRepository;
     @Autowired
     private StudentRepository studentRepository;
     @Autowired
@@ -73,6 +76,27 @@ public class StudentVaccinationService {
         }
         dto.setCreatedAt(sv.getCreatedAt());
         dto.setUpdatedAt(sv.getUpdatedAt());
+        return dto;
+    }
+
+    // Overloaded method for StudentVaccinationRecord
+    private StudentVaccinationDTO convertToDTO(StudentVaccinationRecord svr) {
+        StudentVaccinationDTO dto = new StudentVaccinationDTO();
+        dto.setId(svr.getVaccinationRecordId());
+        dto.setStudentCode(svr.getStudent().getStudentCode());
+        dto.setStudentName(svr.getStudent().getFullName()); 
+        dto.setVaccineName(svr.getVaccineName());
+        dto.setVaccinationDate(svr.getVaccinationDate());
+        dto.setAdministeredByNurseName(svr.getAdministeredBy());
+        dto.setConsentStatus(svr.getVaccinationStatus().name());
+        if (svr.getHealthEvent() != null) {
+            dto.setVaccinationEventId(svr.getHealthEvent().getEventId());
+            dto.setVaccinationEventName(svr.getHealthEvent().getEventName());
+        }
+        dto.setAdministrationNotes(svr.getNotes());
+        dto.setNextDueDate(svr.getNextDueDate());
+        dto.setCreatedAt(svr.getCreatedAt());
+        dto.setUpdatedAt(svr.getUpdatedAt());
         return dto;
     }
 
@@ -161,6 +185,21 @@ public class StudentVaccinationService {
 
         // Corrected repository method name
         return studentVaccinationRepository.findByStudent_StudentCode(studentCode).stream() 
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<StudentVaccinationDTO> getCompletedVaccinationsByStudentCode(String studentCode) {
+        // Verify student exists
+        studentRepository.findByStudentCode(studentCode)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with code: " + studentCode));
+
+        // Get completed vaccination records for the student
+        List<StudentVaccinationRecord> completedRecords = studentVaccinationRecordRepository.findCompletedVaccinationsByStudentCode(studentCode);
+        
+        // Convert to DTO
+        return completedRecords.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }

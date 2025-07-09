@@ -635,7 +635,7 @@ const ReportsAnalytics = () => {
       
       <Alert severity="info" sx={{ mb: 3 }}>
         <Typography variant="body2">
-          This report is automatically generated based on data from the school health management system.
+          This report is automatically generated based on data from FPT Junior High School Health Management System.
           Last updated: {new Date(reportData.summary.lastUpdated).toLocaleString()}
         </Typography>
       </Alert>

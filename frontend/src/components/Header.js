@@ -42,7 +42,7 @@ const Header = () => {
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
           <i className="fas fa-heartbeat text-2xl mr-2 animate-pulse"></i>
-          <Link to="/" className="text-2xl font-bold hover:text-gray-200">School Health Management System</Link>
+          <Link to="/" className="text-2xl font-bold hover:text-gray-200">FPT Junior High School Health Management System</Link>
         </div>
         <nav className="flex space-x-2 items-center">
           <ThemeToggle />

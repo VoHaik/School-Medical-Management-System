@@ -305,7 +305,7 @@ const AnalyticsReports = () => {
       {/* Footer Note */}
       <Paper sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5' }}>
         <Typography variant="body2" color="text.secondary" align="center">
-          📊 All data shown above is real-time information from the school health management system
+          📊 All data shown above is real-time information from FPT Junior High School Health Management System
         </Typography>
       </Paper>
     </div>

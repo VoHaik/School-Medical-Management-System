@@ -78,7 +78,7 @@ const ChildProfileView = () => {
         dateOfBirth: '2015-03-15',
         gender: 'Male',
         className: 'Grade 3A',
-        school: 'Springfield Elementary',
+        school: 'FPT Junior High School',
         bloodType: 'O+',
         allergies: ['Peanuts', 'Shellfish'],
         medicalConditions: ['Asthma'],

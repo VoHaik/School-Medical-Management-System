@@ -169,6 +169,7 @@ public class HealthDeclaration {
     public enum HealthDeclarationStatus {
         PENDING, // Đang chờ phê duyệt
         APPROVED, // Đã được phê duyệt
+        ACCEPTED, // Đã được chấp nhận (tương thích với database)
         REJECTED, // Đã bị từ chối
         DRAFT // Bản nháp (chưa gửi)
     }

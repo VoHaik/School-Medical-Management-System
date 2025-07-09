@@ -169,7 +169,7 @@ const HealthPrograms = () => {
           imageUrl: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
           startDate: '2025-04-01',
           endDate: '2025-05-15',
-          targetAudience: 'Elementary Students',
+          targetAudience: 'Junior High Students',
           coordinator: 'Dr. James Wilson',
           status: 'completed',
           progress: 100,

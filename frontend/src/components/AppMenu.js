@@ -94,15 +94,15 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/health-profile', label: 'Health Profile', icon: 'fas fa-heart' },
           { path: '/medical-history', label: 'Medical History', icon: 'fas fa-file-medical' },
           { path: '/vaccination-record', label: 'Vaccination Record', icon: 'fas fa-syringe' },
-          { path: '/health-blog', label: 'Health Blog', icon: 'fas fa-blog' },
-          { path: '/student/profile', label: 'Profile', icon: 'fas fa-user-circle' },
+          { path: '/profile', label: 'Profile', icon: 'fas fa-user-circle' },
         ];
         break;
       default:
         items = []; // No specific items if role doesn't match known ones
     }
-    // Add Profile link for all authenticated users if not already present    // Đã có mục Profile đúng cho student, không thêm /profile mặc định nữa
-    if (!items.find(item => item.path === '/profile' || item.path === '/student/profile')) {
+    // Add Profile link for all authenticated users if not already present
+    // Student already has /profile, other roles get /profile as well
+    if (!items.find(item => item.path === '/profile')) {
         items.push({ path: '/profile', label: 'Profile', icon: 'fas fa-user-circle' });
     }
     return items;

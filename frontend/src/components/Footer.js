@@ -101,7 +101,7 @@ const Footer = () => {
                     <FavoriteOutlined fontSize="large" />
                   </Avatar>
                   <Typography variant="h5" fontWeight="bold">
-                    School Health
+                    FPT Junior High School
                   </Typography>
                 </Box>
                 
@@ -281,7 +281,7 @@ const Footer = () => {
             />
             <Box textAlign="center">
               <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                © {new Date().getFullYear()} School Health Management System. All rights reserved.
+                © {new Date().getFullYear()} FPT Junior High School Health Management System. All rights reserved.
               </Typography>
             </Box>
           </motion.div>

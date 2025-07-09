@@ -129,7 +129,7 @@ const Register = () => {
         <div className="max-w-md mx-auto login-container">
           <div className="text-center mb-8 animate-fadeIn">
             <h2 className="text-4xl font-bold mb-4">Create Account</h2>
-            <p className="text-gray-600">Join our school health management system</p>
+            <p className="text-gray-600">Join FPT Junior High School Health Management System</p>
           </div>
 
           {message && (

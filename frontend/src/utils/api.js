@@ -911,5 +911,33 @@ export const exportHealthCheckups = async () => {
   }
 };
 
+// Student API functions
+export const getStudentHealthProfile = async () => {
+  try {
+    const response = await apiClient.get('/student/health-profile');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch student health profile');
+  }
+};
+
+export const getStudentMedicalHistory = async () => {
+  try {
+    const response = await apiClient.get('/student/medical-history');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch student medical history');
+  }
+};
+
+export const getStudentVaccinationRecords = async () => {
+  try {
+    const response = await apiClient.get('/student/vaccination-records');
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'fetch student vaccination records');
+  }
+};
+
 export { apiClient };
 export default apiClient;

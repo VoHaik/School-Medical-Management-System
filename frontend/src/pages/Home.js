@@ -86,10 +86,10 @@ const Home = () => {
   ];
 
   const schoolInfo = {
-    name: "Springfield Elementary School",
-    address: "123 Education Street, Springfield, ST 12345",
-    phone: "(555) 123-4567",
-    email: "health@springfield-elem.edu",
+    name: "FPT Junior High School",
+    address: "123 Education Street, Hanoi, Vietnam",
+    phone: "(024) 123-4567",
+    email: "health@fpt-junior.edu.vn",
     healthOfficeHours: "Monday - Friday: 8:00 AM - 4:00 PM",
     nurseOnDuty: "Nurse Sarah Williams, RN"
   };
@@ -159,7 +159,7 @@ const Home = () => {
           <Grid container spacing={4} alignItems="center">
             <Grid item xs={12} md={8}>
               <Typography variant="h2" sx={{ fontWeight: 'bold', mb: 2 }}>
-                School Health Management System
+                FPT Junior High School Health Management System
               </Typography>
               <Typography variant="h5" sx={{ mb: 3, opacity: 0.9 }}>
                 Comprehensive health tracking and management for {schoolInfo.name}

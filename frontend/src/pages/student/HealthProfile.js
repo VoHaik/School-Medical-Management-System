@@ -70,9 +70,9 @@ const studentData = {
   ],
   address: {
     street: '123 Oak Street',
-    city: 'Springfield',
-    state: 'IL',
-    zipCode: '62701'
+    city: 'Hanoi',
+    state: 'Vietnam',
+    zipCode: '10000'
   },
   classInfo: {
     teacher: 'Mrs. Smith',
