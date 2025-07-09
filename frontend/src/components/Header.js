@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react'; // Added useState
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import DarkModeToggle from './DarkModeToggle';
+import ThemeToggle from './shared/ThemeToggle';
 import AppMenu from './AppMenu'; // Import the new AppMenu component
 import { IconButton } from '@mui/material'; // For menu button. Removed Badge as NotificationBell handles it.
 import MenuIcon from '@mui/icons-material/Menu'; // Standard menu icon
@@ -45,7 +45,7 @@ const Header = () => {
           <Link to="/" className="text-2xl font-bold hover:text-gray-200">School Health Management System</Link>
         </div>
         <nav className="flex space-x-2 items-center">
-          <DarkModeToggle />
+          <ThemeToggle />
           
           {isAuthenticated() ? (
             <>

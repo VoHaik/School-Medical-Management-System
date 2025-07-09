@@ -70,7 +70,7 @@ import StudentHealthCheckupHistory from './pages/student/StudentHealthCheckupHis
 import NotificationsPage from './pages/common/NotificationsPage'; // Import the new common notifications page
 
 import { AuthProvider } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
+import { AppThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
 console.log('--- App.js MODULE LOADED - V3 ---');
@@ -95,7 +95,7 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <ThemeProvider>
+        <AppThemeProvider>
           <div className="app-container">
             <Header />
             <main className="main-content">
@@ -179,7 +179,7 @@ function App() {
             </main>
             <Footer />
           </div>
-        </ThemeProvider>
+        </AppThemeProvider>
       </AuthProvider>
     </ErrorBoundary>
   );

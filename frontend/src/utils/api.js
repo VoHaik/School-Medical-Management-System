@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = '/api'; // Adjust if your Spring Boot backend is on a different port/path
+const API_URL = '/api'; // Set to /api so all requests automatically get the /api prefix
 
 // Helper function to get the auth token from localStorage
 const getAuthToken = () => {

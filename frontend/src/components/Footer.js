@@ -1,69 +1,293 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import {
+  Box,
+  Container,
+  Grid,
+  Typography,
+  IconButton,
+  useTheme,
+  alpha,
+  Avatar,
+  Divider,
+  Stack,
+} from '@mui/material';
+import {
+  FavoriteOutlined,
+  Facebook,
+  Twitter,
+  Instagram,
+  LinkedIn,
+  Home,
+  Assignment,
+  MenuBook,
+  Login,
+  Policy,
+  Vaccines,
+  LocalHospital,
+  HelpOutline,
+  LocationOn,
+  Phone,
+  Email,
+  AccessTime,
+  ChevronRight,
+} from '@mui/icons-material';
 
 const Footer = () => {
+  const theme = useTheme();
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        delayChildren: 0.2,
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
-    <footer className="footer py-10 text-white">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="md:col-span-1">
-            <div className="flex items-center mb-4">
-              <i className="fas fa-heartbeat text-2xl mr-2"></i>
-              <h4 className="text-xl font-bold">School Health</h4>
-            </div>
-            <p className="text-gray-200 mb-4">Providing comprehensive health management solutions for schools and educational institutions.</p>
-            <div className="flex space-x-4">
-              <a href="https://facebook.com" className="text-white hover:text-gray-200 transition-all" aria-label="Facebook">
-                <i className="fab fa-facebook-f text-lg"></i>
-              </a>
-              <a href="https://twitter.com" className="text-white hover:text-gray-200 transition-all" aria-label="Twitter">
-                <i className="fab fa-twitter text-lg"></i>
-              </a>
-              <a href="https://instagram.com" className="text-white hover:text-gray-200 transition-all" aria-label="Instagram">
-                <i className="fab fa-instagram text-lg"></i>
-              </a>
-              <a href="https://linkedin.com" className="text-white hover:text-gray-200 transition-all" aria-label="LinkedIn">
-                <i className="fab fa-linkedin-in text-lg"></i>
-              </a>
-            </div>
-          </div>
+    <Box
+      component="footer"
+      sx={{
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+        color: 'white',
+        py: 6,
+        mt: 'auto',
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `radial-gradient(circle at 20% 80%, ${alpha('#fff', 0.1)} 0%, transparent 50%), 
+                      radial-gradient(circle at 80% 20%, ${alpha('#fff', 0.1)} 0%, transparent 50%)`,
+          pointerEvents: 'none',
+        }
+      }}
+    >
+      <Container maxWidth="lg">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+        >
+          <Grid container spacing={4}>
+            {/* Brand Section */}
+            <Grid item xs={12} md={4}>
+              <motion.div variants={itemVariants}>
+                <Box display="flex" alignItems="center" mb={3}>
+                  <Avatar
+                    sx={{
+                      bgcolor: alpha('#fff', 0.2),
+                      color: 'white',
+                      mr: 2,
+                      width: 48,
+                      height: 48,
+                    }}
+                  >
+                    <FavoriteOutlined fontSize="large" />
+                  </Avatar>
+                  <Typography variant="h5" fontWeight="bold">
+                    School Health
+                  </Typography>
+                </Box>
+                
+                <Typography
+                  variant="body2"
+                  sx={{ 
+                    mb: 3, 
+                    opacity: 0.9, 
+                    lineHeight: 1.6,
+                    maxWidth: 300 
+                  }}
+                >
+                  Providing comprehensive health management solutions for schools and educational institutions.
+                </Typography>
+                
+                <Stack direction="row" spacing={1}>
+                  {[
+                    { icon: <Facebook />, href: 'https://facebook.com', label: 'Facebook' },
+                    { icon: <Twitter />, href: 'https://twitter.com', label: 'Twitter' },
+                    { icon: <Instagram />, href: 'https://instagram.com', label: 'Instagram' },
+                    { icon: <LinkedIn />, href: 'https://linkedin.com', label: 'LinkedIn' },
+                  ].map((social, index) => (
+                    <motion.div
+                      key={social.label}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <IconButton
+                        component="a"
+                        href={social.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={social.label}
+                        sx={{
+                          color: 'white',
+                          bgcolor: alpha('#fff', 0.1),
+                          '&:hover': {
+                            bgcolor: alpha('#fff', 0.2),
+                            transform: 'translateY(-2px)',
+                          },
+                          transition: 'all 0.2s ease-in-out',
+                        }}
+                      >
+                        {social.icon}
+                      </IconButton>
+                    </motion.div>
+                  ))}
+                </Stack>
+              </motion.div>
+            </Grid>
 
-          <div>
-            <h5 className="text-lg font-semibold mb-4">Quick Links</h5>
-            <ul className="space-y-2">
-              <li><Link to="/" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> Home</Link></li>
-              <li><Link to="/#docs" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> Health Docs</Link></li>
-              <li><Link to="/#blog" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> Blog</Link></li>
-              <li><Link to="/login" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> Login</Link></li>
-            </ul>
-          </div>
+            {/* Quick Links */}
+            <Grid item xs={12} sm={6} md={2}>
+              <motion.div variants={itemVariants}>
+                <Typography variant="h6" fontWeight="bold" mb={3}>
+                  Quick Links
+                </Typography>
+                <Stack spacing={1.5}>
+                  {[
+                    { icon: <Home fontSize="small" />, label: 'Home', to: '/' },
+                    { icon: <Assignment fontSize="small" />, label: 'Health Docs', to: '/#docs' },
+                    { icon: <MenuBook fontSize="small" />, label: 'Blog', to: '/#blog' },
+                    { icon: <Login fontSize="small" />, label: 'Login', to: '/login' },
+                  ].map((link) => (
+                    <Box
+                      key={link.label}
+                      component={Link}
+                      to={link.to}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: 'white',
+                        textDecoration: 'none',
+                        opacity: 0.9,
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                          opacity: 1,
+                          transform: 'translateX(4px)',
+                        }
+                      }}
+                    >
+                      <ChevronRight fontSize="small" sx={{ mr: 1, fontSize: '0.875rem' }} />
+                      {link.icon}
+                      <Typography variant="body2" sx={{ ml: 1 }}>
+                        {link.label}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              </motion.div>
+            </Grid>
 
-          <div>
-            <h5 className="text-lg font-semibold mb-4">Resources</h5>
-            <ul className="space-y-2">
-              <li><Link to="/resources/health-policies" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> Health Policies</Link></li>
-              <li><Link to="/resources/vaccination-info" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> Vaccination Info</Link></li>
-              <li><Link to="/resources/emergency-procedures" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> Emergency Procedures</Link></li>
-              <li><Link to="/resources/faq" className="footer-link flex items-center"><i className="fas fa-chevron-right text-xs mr-2"></i> FAQ</Link></li>
-            </ul>
-          </div>
+            {/* Resources */}
+            <Grid item xs={12} sm={6} md={3}>
+              <motion.div variants={itemVariants}>
+                <Typography variant="h6" fontWeight="bold" mb={3}>
+                  Resources
+                </Typography>
+                <Stack spacing={1.5}>
+                  {[
+                    { icon: <Policy fontSize="small" />, label: 'Health Policies', to: '/resources/health-policies' },
+                    { icon: <Vaccines fontSize="small" />, label: 'Vaccination Info', to: '/resources/vaccination-info' },
+                    { icon: <LocalHospital fontSize="small" />, label: 'Emergency Procedures', to: '/resources/emergency-procedures' },
+                    { icon: <HelpOutline fontSize="small" />, label: 'FAQ', to: '/resources/faq' },
+                  ].map((link) => (
+                    <Box
+                      key={link.label}
+                      component={Link}
+                      to={link.to}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: 'white',
+                        textDecoration: 'none',
+                        opacity: 0.9,
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                          opacity: 1,
+                          transform: 'translateX(4px)',
+                        }
+                      }}
+                    >
+                      <ChevronRight fontSize="small" sx={{ mr: 1, fontSize: '0.875rem' }} />
+                      {link.icon}
+                      <Typography variant="body2" sx={{ ml: 1 }}>
+                        {link.label}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              </motion.div>
+            </Grid>
 
-          <div>
-            <h5 className="text-lg font-semibold mb-4">Contact Us</h5>
-            <ul className="space-y-2">
-              <li className="flex items-center"><i className="fas fa-map-marker-alt mr-3"></i> 123 Education St, School City</li>
-              <li className="flex items-center"><i className="fas fa-phone-alt mr-3"></i> (123) 456-7890</li>
-              <li className="flex items-center"><i className="fas fa-envelope mr-3"></i> health@school.edu</li>
-              <li className="flex items-center"><i className="fas fa-clock mr-3"></i> Mon-Fri: 8:00 AM - 5:00 PM</li>
-            </ul>
-          </div>
-        </div>
+            {/* Contact Info */}
+            <Grid item xs={12} md={3}>
+              <motion.div variants={itemVariants}>
+                <Typography variant="h6" fontWeight="bold" mb={3}>
+                  Contact Us
+                </Typography>
+                <Stack spacing={2}>
+                  {[
+                    { icon: <LocationOn />, text: '123 Education St, School City' },
+                    { icon: <Phone />, text: '(123) 456-7890' },
+                    { icon: <Email />, text: 'health@school.edu' },
+                    { icon: <AccessTime />, text: 'Mon-Fri: 8:00 AM - 5:00 PM' },
+                  ].map((contact, index) => (
+                    <Box key={index} display="flex" alignItems="center">
+                      <Avatar
+                        sx={{
+                          bgcolor: alpha('#fff', 0.1),
+                          color: 'white',
+                          width: 32,
+                          height: 32,
+                          mr: 2,
+                        }}
+                      >
+                        {React.cloneElement(contact.icon, { fontSize: 'small' })}
+                      </Avatar>
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                        {contact.text}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              </motion.div>
+            </Grid>
+          </Grid>
 
-        <div className="border-t border-indigo-400 mt-8 pt-8 text-center">
-          <p>&copy; {new Date().getFullYear()} School Health Management System. All rights reserved.</p>
-        </div>
-      </div>
-    </footer>
+          {/* Copyright */}
+          <motion.div variants={itemVariants}>
+            <Divider 
+              sx={{ 
+                my: 4, 
+                borderColor: alpha('#fff', 0.2),
+                opacity: 0.6 
+              }} 
+            />
+            <Box textAlign="center">
+              <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                © {new Date().getFullYear()} School Health Management System. All rights reserved.
+              </Typography>
+            </Box>
+          </motion.div>
+        </motion.div>
+      </Container>
+    </Box>
   );
 };
 

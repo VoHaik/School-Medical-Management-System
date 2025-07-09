@@ -13,6 +13,7 @@ module.exports = function(app) {
       target: 'http://localhost:8080', // URL của backend Spring Boot chính
       changeOrigin: true,
       secure: false, // Thường là false cho môi trường dev localhost
+      // Không dùng pathRewrite vì backend đã có /api trong @RequestMapping
       onProxyReq: (proxyReq, req, res) => {
         console.log(`[Proxy] Forwarding ${req.method} ${req.path} to ${proxyReq.protocol}//${proxyReq.host}${proxyReq.path}`);
       },
