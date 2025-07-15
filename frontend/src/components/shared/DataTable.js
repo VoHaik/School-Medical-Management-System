@@ -1,3 +1,7 @@
+// NOTE VN: Component DataTable - Advanced data table với full features
+// - Material-UI Table components với sorting, pagination, search
+// - Configurable columns, actions, và selection
+// - Export functionality và filtering support
 import React, { useState } from 'react';
 import {
   Paper,
@@ -45,6 +49,7 @@ const DataTable = ({
   pageSize = 10,
   className = ''
 }) => {
+  // NOTE VN: State management cho table functionality
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(pageSize);
   const [orderBy, setOrderBy] = useState('');

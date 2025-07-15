@@ -1,3 +1,7 @@
+// NOTE VN: Component Footer - Footer chính của website
+// - Grid layout responsive với 4 columns
+// - Social media links và contact information
+// - Navigation links và resources
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -5,13 +9,17 @@ const Footer = () => {
   return (
     <footer className="footer py-10 text-white">
       <div className="container mx-auto px-4">
+        {/* NOTE VN: Grid layout responsive - 1 column mobile, 4 columns desktop */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          
+          {/* NOTE VN: Brand section với logo, description và social links */}
           <div className="md:col-span-1">
             <div className="flex items-center mb-4">
               <i className="fas fa-heartbeat text-2xl mr-2"></i>
               <h4 className="text-xl font-bold">School Health</h4>
             </div>
             <p className="text-gray-200 mb-4">Providing comprehensive health management solutions for schools and educational institutions.</p>
+            {/* NOTE VN: Social media icons với hover effects */}
             <div className="flex space-x-4">
               <a href="https://facebook.com" className="text-white hover:text-gray-200 transition-all" aria-label="Facebook">
                 <i className="fab fa-facebook-f text-lg"></i>
@@ -28,6 +36,7 @@ const Footer = () => {
             </div>
           </div>
 
+          {/* NOTE VN: Quick Links section */}
           <div>
             <h5 className="text-lg font-semibold mb-4">Quick Links</h5>
             <ul className="space-y-2">
@@ -38,6 +47,7 @@ const Footer = () => {
             </ul>
           </div>
 
+          {/* NOTE VN: Resources section với health-related links */}
           <div>
             <h5 className="text-lg font-semibold mb-4">Resources</h5>
             <ul className="space-y-2">
@@ -48,6 +58,7 @@ const Footer = () => {
             </ul>
           </div>
 
+          {/* NOTE VN: Contact information section */}
           <div>
             <h5 className="text-lg font-semibold mb-4">Contact Us</h5>
             <ul className="space-y-2">
@@ -59,6 +70,7 @@ const Footer = () => {
           </div>
         </div>
 
+        {/* NOTE VN: Copyright section với border top */}
         <div className="border-t border-indigo-400 mt-8 pt-8 text-center">
           <p>&copy; {new Date().getFullYear()} School Health Management System. All rights reserved.</p>
         </div>
@@ -66,5 +78,16 @@ const Footer = () => {
     </footer>
   );
 };
+
+// NOTE VN: Export Footer component
+// CHỨC NĂNG CHÍNH:
+// 1. Website footer với complete information layout
+// 2. Responsive grid system (mobile-first design)
+// 3. Brand identity với logo và description
+// 4. Social media integration
+// 5. Navigation links organization
+// 6. Resource links cho health information
+// 7. Contact information display
+// 8. Copyright notice với dynamic year
 
 export default Footer;

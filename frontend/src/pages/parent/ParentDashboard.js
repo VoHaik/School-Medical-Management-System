@@ -44,10 +44,10 @@ import {
   Edit as EditIcon,
   Visibility as ViewIcon,
   CheckCircle as CheckIcon,
-  Warning as WarningIcon,
-  Schedule as ScheduleIcon,
+  Warning as WarningIcon,  Schedule as ScheduleIcon,
   CalendarToday as CalendarIcon,
-  TrendingUp as TrendingIcon
+  TrendingUp as TrendingIcon,
+  ChildCare as ChildCareIcon
 } from '@mui/icons-material';
 import { AuthContext } from '../../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -55,7 +55,6 @@ import axios from 'axios';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import MedicationIcon from '@mui/icons-material/Medication';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
-import ChildCareIcon from '@mui/icons-material/ChildCare'; // For child selection
 import { CalendarToday } from '@mui/icons-material'; // Ensured CalendarToday is imported
 
 const ParentDashboard = () => {

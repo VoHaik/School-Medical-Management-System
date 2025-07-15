@@ -1,3 +1,7 @@
+// NOTE VN: Component FormBuilder - Dynamic form generator
+// - Sử dụng react-hook-form với yup validation
+// - Material-UI components integration
+// - Configurable field types và validation
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -27,6 +31,7 @@ const FormBuilder = ({
   description,
   loading = false
 }) => {
+  // NOTE VN: React Hook Form setup với yup validation resolver
   const {
     control,
     handleSubmit,
@@ -37,6 +42,9 @@ const FormBuilder = ({
     resolver: validationSchema ? yupResolver(validationSchema) : undefined
   });
 
+  // NOTE VN: Function để render field dựa trên field type
+  // - Switch case cho different field types
+  // - Grid integration cho responsive layout
   const renderField = (field) => {
     const { name, label, type, options, required, placeholder, fullWidth = true, gridSize = 12 } = field;
     
@@ -45,6 +53,7 @@ const FormBuilder = ({
       case 'email':
       case 'password':
       case 'number':
+        // NOTE VN: Text input fields với validation
         return (
           <Grid item xs={12} sm={gridSize} key={name}>
             <Controller

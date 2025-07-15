@@ -1,3 +1,7 @@
+// NOTE VN: Component StatsCard - Card hiển thị statistics và metrics
+// - Material-UI Card với customizable colors và icons
+// - Support trend indicators, progress bars, và loading states
+// - Configurable actions và responsive design
 import React from 'react';
 import {
   Card,
@@ -29,6 +33,7 @@ const StatsCard = ({
   actions,
   className = ''
 }) => {
+  // NOTE VN: Function để get color classes dựa trên color prop
   const getColorClasses = () => {
     switch (color) {
       case 'success':
@@ -44,6 +49,7 @@ const StatsCard = ({
     }
   };
 
+  // NOTE VN: Function để get icon color dựa trên color scheme
   const getIconColor = () => {
     switch (color) {
       case 'success':

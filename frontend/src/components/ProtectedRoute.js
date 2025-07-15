@@ -1,3 +1,7 @@
+// NOTE VN: Component ProtectedRoute - Route protection với role-based access
+// - Kiểm tra authentication state và user roles
+// - Redirect unauthenticated users đến login
+// - Display access denied cho insufficient permissions
 import React, { useContext } from 'react';
 import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
@@ -5,6 +9,7 @@ import { AuthContext } from '../context/AuthContext';
 function ProtectedRoute({ children, allowedRoles = [] }) {
   const { currentUser, loading } = useContext(AuthContext);
 
+  // NOTE VN: Loading state - Hiển thị spinner khi đang check auth
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -14,10 +19,12 @@ function ProtectedRoute({ children, allowedRoles = [] }) {
     );
   }
 
+  // NOTE VN: Unauthenticated user - Redirect đến login page
   if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
 
+  // NOTE VN: Role-based access control - Check user role against allowed roles
   if (allowedRoles.length > 0 && !allowedRoles.includes(currentUser.role)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -35,7 +42,17 @@ function ProtectedRoute({ children, allowedRoles = [] }) {
     );
   }
 
+  // NOTE VN: Authorized user - Render protected content
   return children;
 }
+
+// NOTE VN: Export ProtectedRoute component
+// CHỨC NĂNG CHÍNH:
+// 1. Authentication guard cho protected routes
+// 2. Role-based access control (RBAC)
+// 3. Loading state management
+// 4. Redirect unauthenticated users
+// 5. Access denied UI cho unauthorized users
+// 6. Navigation history support với Go Back button
 
 export default ProtectedRoute; 
