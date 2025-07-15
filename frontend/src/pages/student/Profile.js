@@ -132,9 +132,6 @@ const Profile = () => {
     };
     
     // Debug log to check what we're sending
-    console.log('Submitting data:', submitData);
-    console.log('Date of birth value:', editData.dateOfBirth);
-    
     try {
       setSaving(true);
       setMessage('');

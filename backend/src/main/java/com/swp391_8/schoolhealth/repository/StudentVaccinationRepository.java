@@ -23,4 +23,7 @@ public interface StudentVaccinationRepository extends JpaRepository<StudentVacci
 
     // Find by consent status
     List<StudentVaccination> findByConsentStatus(StudentVaccination.ConsentStatus consentStatus);
+
+    // Find completed vaccinations for a student
+    List<StudentVaccination> findByStudent_StudentCodeAndConsentStatus(String studentCode, StudentVaccination.ConsentStatus consentStatus);
 }

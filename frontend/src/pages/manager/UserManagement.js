@@ -290,8 +290,6 @@ const UserManagement = () => {
   // Handle form submission
   const handleSubmitForm = () => {
     // In a real application, you would send this to your API
-    console.log("Form submitted:", userForm);
-    
     // Mock implementation for UI demonstration
     if (dialogMode === 'add') {
       // Mock adding new user

@@ -44,13 +44,8 @@ const HealthDeclarationApproval = () => {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewError, setReviewError] = useState(null);
   const [reviewSuccess, setReviewSuccess] = useState(null);
-    useEffect(() => {
-    // Log thông tin người dùng và quyền hạn để debug
-    console.log('Current user:', currentUser);
-    console.log('User roles:', currentUser?.roles);
-    console.log('Has ROLE_NURSE:', currentUser?.roles?.includes('ROLE_NURSE'));
-    console.log('Has ROLE_SCHOOLNURSE:', currentUser?.roles?.includes('ROLE_SCHOOLNURSE'));
-    
+  
+  useEffect(() => {
     // Check if user has the required role before fetching declarations
     if (currentUser && 
         (currentUser.roles?.includes('ROLE_SCHOOLNURSE') || 
@@ -68,24 +63,24 @@ const HealthDeclarationApproval = () => {
     try {
       // Get auth headers and check if token exists
       const headers = authHeader();
-      console.log('Auth headers:', headers);
+      
       
       if (!headers.Authorization) {
-        console.error('No authorization token found');
+        
         setError('Authentication token is missing. Please try logging out and logging in again.');
         setLoading(false);
         return;
       }
       
-      console.log('Request URL:', '/api/health-declaration/pending');
+      
       
       // Try to refresh the token first if needed
       try {
         await axios.get('/api/auth/me', { headers });
-        console.log('Token validation successful');
+        
       } catch (validationErr) {
         if (validationErr.response?.status === 401) {
-          console.error('Token validation failed, user needs to login again');
+          
           setError('Your session has expired. Please log in again.');
           setLoading(false);
           return;
@@ -98,40 +93,33 @@ const HealthDeclarationApproval = () => {
         { headers }
       );
       
-      // Enhanced logging for the response
-      console.log('API response status:', response.status);
-      console.log('API response data type:', typeof response.data);
-      console.log('API response data:', JSON.stringify(response.data, null, 2));
-      
       if (Array.isArray(response.data)) {
-        console.log('Response is an array with length:', response.data.length);
+        setDeclarations(response.data);
       } else {
-        console.log('Response is not an array, actual type:', Object.prototype.toString.call(response.data));
+        setDeclarations([]);
       }
-      
-      setDeclarations(response.data);
       
       // Thêm thông báo kiểm tra số lượng dữ liệu
       if (response.data && response.data.length === 0) {
-        setError('Không tìm thấy khai báo sức khỏe nào đang chờ duyệt. Có thể tất cả đã được xử lý hoặc chưa có khai báo nào được gửi.');
+        setError('No pending health declarations found. All may have been processed or no declarations have been submitted.');
       }
     } catch (err) {
-      console.error('Error fetching pending health declarations:', err);
-      console.error('Error details:', err.response?.data || err.message);
-      console.error('Error status:', err.response?.status);
-      console.error('Error headers:', err.response?.headers);
+      
+      
+      
+      
       
       if (err.response?.status === 401) {
-        setError('Phiên đăng nhập của bạn đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.');
+        setError('Your session has expired or is invalid. Please log in again.');
         
         // Optional: Redirect to login page after a delay
         setTimeout(() => {
           window.location.href = '/login';
         }, 3000);
       } else if (err.response?.status === 403) {
-        setError('Bạn không có quyền xem danh sách khai báo sức khỏe đang chờ duyệt.');
+        setError('You do not have permission to view pending health declarations.');
       } else {
-        setError('Không thể tải danh sách khai báo sức khỏe. Lỗi: ' + (err.response?.data?.message || err.message));
+        setError('Unable to load health declaration list. Error: ' + (err.response?.data?.message || err.message));
       }
     } finally {
       setLoading(false);
@@ -156,7 +144,7 @@ const HealthDeclarationApproval = () => {
       setSelectedDeclaration(response.data);
       setOpenDialog(true);
     } catch (err) {
-      console.error('Error fetching declaration details:', err);
+      
       setError('Could not load declaration details. Please try again.');
     } finally {
       setLoading(false);
@@ -200,7 +188,7 @@ const HealthDeclarationApproval = () => {
       }, 1000);
       
     } catch (err) {
-      console.error('Error reviewing health declaration:', err);
+      
       setReviewError('Could not submit review. Please try again.');
     } finally {
       setReviewLoading(false);
@@ -312,7 +300,7 @@ const HealthDeclarationApproval = () => {
         </>
       )}
       
-      {/* Dialog hiển thị chi tiết khai báo sức khỏe */}
+      {/* Dialog to display health declaration details */}
       <Dialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
@@ -351,7 +339,7 @@ const HealthDeclarationApproval = () => {
                 {selectedDeclaration.allergies && selectedDeclaration.allergies.length > 0 ? (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                     {selectedDeclaration.allergies.map((allergy, index) => (
-                      <Chip key={index} label={allergy} size="small" />
+                      <Chip key={index} label={allergy} size="small" color="error" />
                     ))}
                   </Box>
                 ) : (
@@ -359,23 +347,137 @@ const HealthDeclarationApproval = () => {
                 )}
               </Box>
               
-              {/* Medical Conditions */}
+              {/* Chronic Illnesses */}
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle1">Medical Conditions</Typography>
-                {selectedDeclaration.medicalConditions && selectedDeclaration.medicalConditions.length > 0 ? (
+                <Typography variant="subtitle1">Chronic Illnesses</Typography>
+                {selectedDeclaration.chronicIllnesses && selectedDeclaration.chronicIllnesses.length > 0 ? (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selectedDeclaration.medicalConditions.map((condition, index) => (
-                      <Chip key={index} label={condition} size="small" />
+                    {selectedDeclaration.chronicIllnesses.map((illness, index) => (
+                      <Chip key={index} label={illness} size="small" color="warning" />
                     ))}
                   </Box>
                 ) : (
-                  <Typography variant="body2" color="textSecondary">No medical conditions declared</Typography>
+                  <Typography variant="body2" color="textSecondary">No chronic illnesses declared</Typography>
                 )}
               </Box>
-              
-              {/* Medications */}
+
+              {/* Medical History */}
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle1">Medications</Typography>
+                <Typography variant="subtitle1">Relevant Medical History</Typography>
+                <Typography variant="body2">
+                  {selectedDeclaration.medicalHistory || 'No medical history provided'}
+                </Typography>
+              </Box>
+
+              {/* Emergency Contacts */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle1">Emergency Contacts</Typography>
+                {selectedDeclaration.emergencyContacts && selectedDeclaration.emergencyContacts.length > 0 ? (
+                  <TableContainer component={Paper} variant="outlined">
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Name</TableCell>
+                          <TableCell>Relationship</TableCell>
+                          <TableCell>Phone</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {selectedDeclaration.emergencyContacts.map((contact, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{contact.name}</TableCell>
+                            <TableCell>{contact.relationship}</TableCell>
+                            <TableCell>{contact.phone}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <Typography variant="body2" color="textSecondary">No emergency contacts provided</Typography>
+                )}
+              </Box>
+
+              {/* Vision and Hearing Status */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle1">Vision & Hearing Status</Typography>
+                <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                  <Box>
+                    <Typography variant="caption" color="textSecondary">Vision Status</Typography>
+                    <Typography variant="body2">{selectedDeclaration.visionStatus || 'Not specified'}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="textSecondary">Hearing Status</Typography>
+                    <Typography variant="body2">{selectedDeclaration.hearingStatus || 'Not specified'}</Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Vaccinations */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle1">Vaccinations</Typography>
+                {selectedDeclaration.vaccinations && selectedDeclaration.vaccinations.length > 0 ? (
+                  <TableContainer component={Paper} variant="outlined">
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Vaccine</TableCell>
+                          <TableCell>Date</TableCell>
+                          <TableCell>Dose Number</TableCell>
+                          <TableCell>Provider</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {selectedDeclaration.vaccinations.map((vaccination, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{vaccination.vaccineName}</TableCell>
+                            <TableCell>{vaccination.vaccinationDate ? format(new Date(vaccination.vaccinationDate), 'dd/MM/yyyy') : 'N/A'}</TableCell>
+                            <TableCell>{vaccination.doseNumber || 'N/A'}</TableCell>
+                            <TableCell>{vaccination.providerName || 'N/A'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <Typography variant="body2" color="textSecondary">No vaccinations declared</Typography>
+                )}
+              </Box>
+
+              {/* Other Health Information */}
+              <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>Other Health Information</Typography>
+              
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle1">Special Needs or Accommodations</Typography>
+                <Typography variant="body2">
+                  {selectedDeclaration.specialNeeds || 'None specified'}
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle1">Physical Limitations or Activity Restrictions</Typography>
+                <Typography variant="body2">
+                  {selectedDeclaration.physicalLimitations || 'None specified'}
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle1">Mental or Emotional Health Concerns</Typography>
+                <Typography variant="body2">
+                  {selectedDeclaration.mentalHealthConcerns || 'None specified'}
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle1">Dietary Restrictions or Preferences</Typography>
+                <Typography variant="body2">
+                  {selectedDeclaration.dietaryRestrictions || 'None specified'}
+                </Typography>
+              </Box>
+
+              {/* Current Medications */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle1">Current Medications</Typography>
                 {selectedDeclaration.medications && selectedDeclaration.medications.length > 0 ? (
                   <TableContainer component={Paper} variant="outlined">
                     <Table size="small">
@@ -384,29 +486,31 @@ const HealthDeclarationApproval = () => {
                           <TableCell>Medication</TableCell>
                           <TableCell>Dosage</TableCell>
                           <TableCell>Frequency</TableCell>
+                          <TableCell>Reason</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {selectedDeclaration.medications.map((med, index) => (
                           <TableRow key={index}>
                             <TableCell>{med.medicationName || med.name}</TableCell>
-                            <TableCell>{med.dosage}</TableCell>
-                            <TableCell>{med.frequency}</TableCell>
+                            <TableCell>{med.dosage || 'N/A'}</TableCell>
+                            <TableCell>{med.frequency || 'N/A'}</TableCell>
+                            <TableCell>{med.reason || 'N/A'}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
                 ) : (
-                  <Typography variant="body2" color="textSecondary">No medications declared</Typography>
+                  <Typography variant="body2" color="textSecondary">No current medications</Typography>
                 )}
               </Box>
-              
+
               {/* Notes */}
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle1">Notes</Typography>
+                <Typography variant="subtitle1">Additional Notes</Typography>
                 <Typography variant="body2">
-                  {selectedDeclaration.notes || 'No notes provided'}
+                  {selectedDeclaration.additionalInfo || selectedDeclaration.notes || 'No additional notes provided'}
                 </Typography>
               </Box>
             </Box>

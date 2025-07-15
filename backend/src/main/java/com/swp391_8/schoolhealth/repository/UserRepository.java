@@ -19,6 +19,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     Boolean existsByEmail(String email);
 
+    Boolean existsByPhoneNumber(String phoneNumber);
+
     Optional<User> findByUserCode(String userCode);
 
     Boolean existsByUserCode(String userCode); // Added to check if a user_code already exists
@@ -63,4 +65,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     // Find students associated with a parent via ParentStudentRelationship
     @Query("SELECT psr.student FROM ParentStudentRelationship psr WHERE psr.parent.parentCode = :parentCode")
     List<com.swp391_8.schoolhealth.model.Student> findStudentsByParentCode(@Param("parentCode") String parentCode);
+
+    // Find all users with roles loaded
+    @Query("SELECT u FROM User u JOIN FETCH u.role")
+    List<User> findAllWithRoles();
 }

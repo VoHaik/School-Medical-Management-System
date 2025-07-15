@@ -2,10 +2,8 @@ package com.swp391_8.schoolhealth.controller;
 
 import com.swp391_8.schoolhealth.dto.MedicationRequestDTO;
 import com.swp391_8.schoolhealth.dto.MedicationRequestResponseDTO;
-import com.swp391_8.schoolhealth.model.MedicationRequest;
 // import com.swp391_8.schoolhealth.model.User; // Not directly used here
 import com.swp391_8.schoolhealth.service.MedicationRequestService;
-import com.swp391_8.schoolhealth.service.SecurityService; // Keep for @PreAuthorize if complex checks remain
 import org.slf4j.Logger; // Added for logging
 import org.slf4j.LoggerFactory; // Added for logging
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +26,6 @@ public class MedicationRequestController {
 
     @Autowired
     private MedicationRequestService medicationRequestService;
-    
-    @Autowired
-    private com.swp391_8.schoolhealth.repository.MedicationRequestRepository medicationRequestRepository;
 
     // Parent endpoints
     @PostMapping("")
@@ -152,6 +147,39 @@ public class MedicationRequestController {
         }
     }
 
+    /**
+     * Get count of pending medication requests
+     * Endpoint: GET /api/medication-requests/pending/count
+     */
+    @GetMapping("/pending/count")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('ROLE_SCHOOLNURSE') or hasAuthority('Admin') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> getPendingMedicationRequestsCount(Authentication authentication) {
+        logger.info("Controller: Getting pending medication requests count");
+        
+        try {
+            List<MedicationRequestResponseDTO> requests = medicationRequestService.getAllPendingMedicationRequests(authentication);
+            Map<String, Object> response = Map.of(
+                "count", requests.size(),
+                "status", "success"
+            );
+            logger.info("Found {} pending medication requests", requests.size());
+            return ResponseEntity.ok(response);
+        } catch (AccessDeniedException e) {
+            logger.error("Access denied when getting pending requests count: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "error", e.getMessage(),
+                "endpoint", "/api/medication-requests/pending/count"
+            ));
+        } catch (Exception e) {
+            logger.error("Error retrieving pending medication requests count", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                    "error", "Could not retrieve pending medication requests count: " + e.getMessage(),
+                    "endpoint", "/api/medication-requests/pending/count"
+                ));
+        }
+    }
+
     @PutMapping("/{requestId}/approve")
     @PreAuthorize("hasAnyRole('SCHOOLNURSE', 'ADMIN')")
     public ResponseEntity<?> approveMedicationRequest(@PathVariable Integer requestId, Authentication authentication) {
@@ -248,28 +276,6 @@ public class MedicationRequestController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
-    }
-
-    // Endpoint to get count of pending medication requests for nurse dashboard
-    @GetMapping("/pending/count")
-    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('ROLE_SCHOOLNURSE') or hasAuthority('Admin') or hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<Long> getPendingRequestsCount() {
-        logger.info("Getting count of PENDING medication requests");
-        
-        // Log the current authentication details for debugging
-        org.springframework.security.core.Authentication auth = 
-            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null) {
-            logger.info("Current authentication: Principal={}, Authorities={}", 
-                auth.getPrincipal(), 
-                auth.getAuthorities());
-        } else {
-            logger.warn("No authentication found in security context");
-        }
-        
-        long count = medicationRequestRepository.countByStatus(MedicationRequest.MedicationRequestStatus.PENDING);
-        logger.info("Found {} pending medication requests", count);
-        return ResponseEntity.ok(count);
     }
 }
 

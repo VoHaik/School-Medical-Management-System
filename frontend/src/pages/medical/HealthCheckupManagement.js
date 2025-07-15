@@ -252,7 +252,6 @@ function HealthCheckupManagement() {
         }));
         setStudents(mappedStudents);
       } else {
-        console.warn('No valid student data received:', data);
         setStudents([]);
       }
     } catch (error) {
@@ -275,7 +274,6 @@ function HealthCheckupManagement() {
         }));
         setHealthEvents(mappedEvents);
       } else {
-        console.warn('No valid health events data received:', data);
         setHealthEvents([]);
       }
     } catch (error) {
@@ -297,7 +295,6 @@ function HealthCheckupManagement() {
         }));
         setNurses(mappedNurses);
       } else {
-        console.warn('No valid nurses data received:', data);
         setNurses([]);
       }
     } catch (error) {

@@ -39,15 +39,13 @@ export const AuthProvider = ({ children }) => {
               roles,
               accessToken: token // Include the token in the currentUser object
             };
-            // console.log('Token validation successful, user data:', updatedUser);
-            localStorage.setItem('user', JSON.stringify(updatedUser)); // Store updated user (with token)
+            // localStorage.setItem('user', JSON.stringify(updatedUser)); // Store updated user (with token)
             setCurrentUser(updatedUser);
           } catch (error) {
             console.error('Token validation failed:', error);
             // If the request fails with 401, the token is invalid or expired
             if (error.response && error.response.status === 401) {
-              // console.log('Token expired or invalid, clearing storage');
-              localStorage.removeItem('token');
+              // localStorage.removeItem('token');
               localStorage.removeItem('user');
               setCurrentUser(null);
             }
@@ -90,8 +88,7 @@ export const AuthProvider = ({ children }) => {
         accessToken: token // Include the token in the currentUser object
       };
 
-      // console.log('Login successful, user data:', user);
-      localStorage.setItem('user', JSON.stringify(user)); // Store user (with token)
+      // localStorage.setItem('user', JSON.stringify(user)); // Store user (with token)
       setCurrentUser(user);
 
       return { success: true, user }; // MODIFIED: return user object
@@ -151,8 +148,6 @@ export const AuthProvider = ({ children }) => {
   // Get authenticated axios instance
   const getAuthAxios = () => {
     const token = localStorage.getItem('token');
-    console.log('[getAuthAxios] Token from localStorage:', token ? 'Available' : 'Not available');
-    
     // Also try to get token from user object as a fallback
     let userToken = null;
     const userJson = localStorage.getItem('user');
@@ -160,16 +155,13 @@ export const AuthProvider = ({ children }) => {
       try {
         const user = JSON.parse(userJson);
         userToken = user?.accessToken || user?.token;
-        console.log('[getAuthAxios] Token from user object:', userToken ? 'Available' : 'Not available');
-      } catch (e) {
+        } catch (e) {
         console.error('[getAuthAxios] Error parsing user JSON:', e);
       }
     }
     
     // Use the most reliable token source
     const finalToken = token || userToken;
-    console.log('[getAuthAxios] Using token?', finalToken ? 'Yes' : 'No');
-    
     const instance = axios.create({
       headers: {
         'Content-Type': 'application/json',
@@ -178,15 +170,12 @@ export const AuthProvider = ({ children }) => {
     });
     
     // Log headers for debugging
-    console.log('[getAuthAxios] Headers set:', instance.defaults.headers);
-    
     // Add request interceptor for dynamic token check
     instance.interceptors.request.use(
       config => {
         // Check token again at request time (in case it was updated)
         const currentToken = localStorage.getItem('token');
         if (currentToken && (!config.headers.Authorization || config.headers.Authorization !== `Bearer ${currentToken}`)) {
-          console.log('[getAuthAxios] Updating token in request');
           config.headers.Authorization = `Bearer ${currentToken}`;
         }
         return config;
@@ -200,9 +189,7 @@ export const AuthProvider = ({ children }) => {
     instance.interceptors.response.use(
       response => response,
       error => {
-        console.log('[getAuthAxios] Response error:', error.response?.status, error.message);
         if (error.response && error.response.status === 401) {
-          console.log('[getAuthAxios] 401 Unauthorized - logging out');
           logout();
           window.location.href = '/login?error=session_expired';
         }

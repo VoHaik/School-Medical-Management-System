@@ -32,7 +32,6 @@ export const useUIText = () => {
         day: 'numeric'
       });
     } catch (error) {
-      console.warn('Date formatting error:', error);
       return UI_TEXT.notAvailable;
     }
   };
@@ -52,7 +51,6 @@ export const useUIText = () => {
         minute: '2-digit'
       });
     } catch (error) {
-      console.warn('DateTime formatting error:', error);
       return UI_TEXT.notAvailable;
     }
   };

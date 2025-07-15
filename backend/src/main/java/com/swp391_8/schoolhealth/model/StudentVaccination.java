@@ -62,6 +62,9 @@ public class StudentVaccination { // Renamed from Vaccination
     public enum ConsentStatus {
         PENDING_SUBMISSION,     // Parent needs to submit consent form
         PENDING_VERIFICATION,   // Nurse needs to verify submitted consent
+        PENDING,                // Database compatibility - general pending status
+        APPROVED,               // Database compatibility - consent approved
+        REJECTED,               // Database compatibility - consent rejected
         CONSENT_GIVEN,
         CONSENT_DENIED,         // Explicitly denied by parent
         CONSENT_REFUSED,        // Renamed from DENIED for clarity or specific workflow step

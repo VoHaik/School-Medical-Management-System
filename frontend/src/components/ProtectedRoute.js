@@ -2,17 +2,10 @@ import React, { useContext } from 'react';
 import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
-// console.log('--- ProtectedRoute.js MODULE LOADED - V3 ---');
-// console.log('[ProtectedRoute] MODULE LOADED - This log is at the top of ProtectedRoute.js'); // New log
-
 function ProtectedRoute({ children, roles = [], allowedRoles = [] }) {
   // Support both 'roles' and 'allowedRoles' props for backwards compatibility
   const effectiveRoles = roles.length > 0 ? roles : allowedRoles;
-  // console.log('[ProtectedRoute] FUNCTION CALLED - Path:', window.location.pathname); // New log
   const { currentUser, loading } = useContext(AuthContext);
-
-  // console.log('[ProtectedRoute] Component rendered. Loading:', loading, 'CurrentUser:', currentUser);
-  // console.log('[ProtectedRoute] Allowed roles for this route:', allowedRoles);
 
   if (loading) {
     return (
@@ -24,24 +17,14 @@ function ProtectedRoute({ children, roles = [], allowedRoles = [] }) {
   }
 
   if (!currentUser) {
-    // console.error('[ProtectedRoute] CRITICAL: No currentUser found. Redirecting to login.');
     return <Navigate to="/login" replace />;
   }
 
-  // console.log('[ProtectedRoute] Checking roles. currentUser.roles:', currentUser.roles);
   const userHasRequiredRole =
     effectiveRoles.length === 0 ||
     (currentUser.roles && currentUser.roles.some(role => effectiveRoles.includes(role)));
 
-  console.log('[ProtectedRoute] Result of role check - userHasRequiredRole:', userHasRequiredRole);
-
   if (!userHasRequiredRole) {
-    // console.error(
-    //   '[ProtectedRoute] CRITICAL: Access Denied. User roles:',
-    //   currentUser.roles,
-    //   'Required roles for route:',
-    //   allowedRoles
-    // );
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

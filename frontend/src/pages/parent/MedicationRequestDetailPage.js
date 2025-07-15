@@ -109,8 +109,7 @@ const MedicationRequestDetailPage = () => {
             errorMessage.includes('Could not extract column') ||
             errorMessage.includes('data type mismatch') ||
             errorMessage.includes('String or binary data would be truncated')) {
-          console.log('Known database error detected. Using fallback medication request data.');
-            // Provide fallback data for the UI with our enhanced structure
+          // Provide fallback data for the UI with our enhanced structure
           setRequestDetails({
             requestId: parseInt(requestId),
             studentName: "Your Child",

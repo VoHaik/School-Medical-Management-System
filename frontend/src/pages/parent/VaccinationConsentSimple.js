@@ -63,8 +63,7 @@ const VaccinationConsent = () => {
         severity: 'success'
       });
       
-      console.log(`Consent ${consentId} ${displayStatus}d successfully`);
-    } catch (error) {
+      } catch (error) {
       console.error('Error submitting consent:', error);
       setSnackbar({
         open: true,

@@ -51,6 +51,11 @@ public class UserService {
         return userRepository.existsByEmail(email);
     }
 
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
+    }
+
     private synchronized String generateNextUserCode(String prefix, int length) {
         String likePattern = prefix + "%";
         Optional<String> lastUserCodeOpt = userRepository.findLastUserCodeByPrefix(likePattern);
@@ -186,5 +191,41 @@ public class UserService {
 
     public Optional<User> findByUserCode(String userCode) {
         return userRepository.findByUserCode(userCode);
+    }
+    
+    public List<User> getAllUsers() {
+        return userRepository.findAllWithRoles();
+    }
+    
+    public User updateUser(Long userId, User userData) {
+        Optional<User> userOpt = userRepository.findById(userId.intValue());
+        if (!userOpt.isPresent()) {
+            throw new RuntimeException("User not found");
+        }
+        
+        User user = userOpt.get();
+        
+        // Update fields if provided
+        if (userData.getFullName() != null) {
+            user.setFullName(userData.getFullName());
+        }
+        if (userData.getEmail() != null) {
+            user.setEmail(userData.getEmail());
+        }
+        if (userData.getPhoneNumber() != null) {
+            user.setPhoneNumber(userData.getPhoneNumber());
+        }
+        if (userData.getIsActive() != null) {
+            user.setIsActive(userData.getIsActive());
+        }
+        
+        return userRepository.save(user);
+    }
+    
+    public void deleteUser(Long userId) {
+        if (!userRepository.existsById(userId.intValue())) {
+            throw new RuntimeException("User not found");
+        }
+        userRepository.deleteById(userId.intValue());
     }
 }

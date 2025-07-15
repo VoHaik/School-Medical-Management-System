@@ -154,7 +154,6 @@ const EventManagement = () => {
   };
 
   const onSubmit = (data) => {
-    console.log('Form submitted:', data);
     setDialogOpen(false);
     reset();
   };

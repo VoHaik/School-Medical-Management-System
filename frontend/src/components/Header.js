@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react'; // Added useState
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import DarkModeToggle from './DarkModeToggle';
+import ThemeToggle from './shared/ThemeToggle';
 import AppMenu from './AppMenu'; // Import the new AppMenu component
 import { IconButton } from '@mui/material'; // For menu button. Removed Badge as NotificationBell handles it.
 import MenuIcon from '@mui/icons-material/Menu'; // Standard menu icon
@@ -42,10 +42,10 @@ const Header = () => {
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
           <i className="fas fa-heartbeat text-2xl mr-2 animate-pulse"></i>
-          <Link to="/" className="text-2xl font-bold hover:text-gray-200">School Health Management System</Link>
+          <Link to="/" className="text-2xl font-bold hover:text-gray-200">FPT Junior High School Health Management System</Link>
         </div>
         <nav className="flex space-x-2 items-center">
-          <DarkModeToggle />
+          <ThemeToggle />
           
           {isAuthenticated() ? (
             <>
@@ -73,8 +73,8 @@ const Header = () => {
               <Link to="/#docs" className="nav-link px-3 py-2 rounded flex items-center">
                 <i className="fas fa-file-medical mr-1"></i> Health Docs
               </Link>
-              <Link to="/#blog" className="nav-link px-3 py-2 rounded flex items-center">
-                <i className="fas fa-blog mr-1"></i> Blog
+              <Link to="/health-blog" className="nav-link px-3 py-2 rounded flex items-center">
+                <i className="fas fa-blog mr-1"></i> Health Blog
               </Link>
               <Link to="/login" className="nav-link px-3 py-2 rounded flex items-center">
                 <i className="fas fa-sign-in-alt mr-1"></i> Login

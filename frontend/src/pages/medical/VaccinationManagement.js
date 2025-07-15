@@ -73,6 +73,7 @@ import PageHeader from '../../components/PageHeader';
 const vaccinationUpdateSchema = yup.object().shape({
   nextDueDate: yup.date().required('Next due date is required'),
   dose: yup.string().required('Dose is required'),
+  vaccineName: yup.string().required('Vaccine name is required'),
   reactions: yup.array().of(yup.string()).min(1, 'At least one reaction status is required'),
   notes: yup.string().required('Notes are required'),
   vaccinationStatus: yup.string().required('Status is required')
@@ -207,10 +208,7 @@ function VaccinationManagement() {
 
   const fetchVaccinationRecords = async () => {
     try {
-      console.log('Fetching vaccination records from API...');
       const records = await getAllVaccinationRecords();
-      console.log('API returned records:', records);
-      
       if (records && Array.isArray(records)) {
         // Transform API data to match UI format and handle grouped vaccines
         const transformedRecords = records.map(record => {
@@ -528,6 +526,7 @@ function VaccinationManagement() {
     updateForm.reset({
       nextDueDate: record.nextDueDate ? new Date(record.nextDueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       dose: record.dose || '1st dose',
+      vaccineName: record.vaccineName || '',
       reactions: existingReactions,
       notes: record.notes || 'No additional notes',
       vaccinationStatus: record.status || 'COMPLETED'
@@ -542,8 +541,7 @@ function VaccinationManagement() {
         // Refresh the vaccination records list
         await fetchVaccinationRecords();
         // Show success message (optional - you can add a snackbar/toast)
-        console.log('Vaccination record deleted successfully');
-      } catch (error) {
+        } catch (error) {
         console.error('Error deleting vaccination record:', error);
         // Show error message (optional - you can add a snackbar/toast)
         alert('Failed to delete vaccination record. Please try again.');
@@ -569,6 +567,7 @@ function VaccinationManagement() {
         vaccinationDate: new Date().toISOString().split('T')[0], // Auto-set to today's date
         nextDueDate: data.nextDueDate,
         dose: data.dose,
+        vaccineName: data.vaccineName,
         adverseReactions: data.reactions.join(', '),
         notes: data.notes
       };
@@ -1199,6 +1198,18 @@ function VaccinationManagement() {
                   error={!!updateForm.formState.errors.dose}
                   helperText={updateForm.formState.errors.dose?.message}
                   placeholder="e.g., 1st dose, 2nd dose, Booster"
+                  required
+                  inputProps={{ required: true }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Vaccine Name *"
+                  {...updateForm.register('vaccineName')}
+                  error={!!updateForm.formState.errors.vaccineName}
+                  helperText={updateForm.formState.errors.vaccineName?.message}
+                  placeholder="e.g., BCG Vaccine, DPT Vaccine"
                   required
                   inputProps={{ required: true }}
                 />

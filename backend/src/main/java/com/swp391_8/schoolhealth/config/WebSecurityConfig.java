@@ -91,19 +91,26 @@ public class WebSecurityConfig {
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // API endpoints configuration - prioritize these
+                // Public API endpoints - MUST come first
                 .requestMatchers("/api/auth/**").permitAll() // Authentication endpoints
-                .requestMatchers("/api/blog").permitAll() // Public blog endpoints
-                .requestMatchers("/api/blog/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/blog").permitAll() // Public blog list endpoint
+                .requestMatchers(HttpMethod.GET, "/api/blog/{id}").permitAll() // Public blog detail endpoint
                 .requestMatchers("/api/grade-levels/**").permitAll() // Grade levels endpoints for selection
+                .requestMatchers("/api/parent-registration/submit").permitAll() // Parent registration submission
+                .requestMatchers(HttpMethod.POST, "/api/parent-registration/submit").permitAll() // Explicitly allow POST
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS preflight requests for all paths
                 
-                // Explicitly define API endpoints that require authentication
+                // Admin-only API endpoints
+                .requestMatchers("/api/parent-registration/requests/**").hasRole("ADMIN") // Admin parent registration management
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                
+                // Authenticated API endpoints
                 .requestMatchers("/api/medication-requests/**").authenticated()
                 .requestMatchers("/api/health-declaration/**").authenticated()
                 .requestMatchers("/api/nurse/**").authenticated()
-                .requestMatchers("/api/admin/**").authenticated()
+                .requestMatchers("/api/**").authenticated() // All other API endpoints require authentication
                 
-                // Static resource paths (that should not conflict with API)
+                // Static resource paths
                 .requestMatchers("/").permitAll()
                 .requestMatchers("/*.html").permitAll()
                 .requestMatchers("/register.html").permitAll()
@@ -115,8 +122,8 @@ public class WebSecurityConfig {
                 .requestMatchers("/logo192.png").permitAll()
                 .requestMatchers("/static/**").permitAll() // All static resources in the /static directory
                 
-                // Default rule
-                .anyRequest().authenticated()
+                // Default rule for non-API requests
+                .anyRequest().permitAll()
             );
 
         http.authenticationProvider(authenticationProvider());

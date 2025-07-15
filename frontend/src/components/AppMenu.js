@@ -51,9 +51,7 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/parent/my-requests', label: 'View Medication Requests', icon: 'fas fa-list-alt' },
           { path: '/parent/vaccination-consent', label: 'Vaccination Consent', icon: 'fas fa-syringe' },
           { path: '/parent/checkup-information', label: 'Check up Information', icon: 'fas fa-clipboard-list' },
-          { path: '/parent/notifications', label: 'Notifications', icon: 'fas fa-bell' },
-          { path: '/parent/emergency-contacts', label: 'Emergency Contacts', icon: 'fas fa-phone' },
-          { path: '/student-blog', label: 'Blog/News', icon: 'fas fa-blog' },
+          { path: '/health-blog', label: 'Health Blog', icon: 'fas fa-blog' },
         ];
         break;
       case 'ROLE_SCHOOLNURSE':
@@ -65,13 +63,12 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/medical/vaccination-management', label: 'Vaccination Management', icon: 'fas fa-syringe' },
           { path: '/medical/health-checkups', label: 'Health Checkups', icon: 'fas fa-stethoscope' },
           { path: '/medical/student-management', label: 'Student Management', icon: 'fas fa-users' },
-          { path: '/medical/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
+          { path: '/nurse/blog', label: 'Health Blog Management', icon: 'fas fa-blog' },
         ];
         break;
       case 'ROLE_TEACHER': // Assuming manager role is teacher
         items = [
           { path: '/teacher/dashboard', label: 'Teacher Dashboard', icon: 'fas fa-chalkboard-teacher' },
-          { path: '/manager/reports', label: 'Reports & Analytics', icon: 'fas fa-chart-bar' },
           { path: '/manager/user-management', label: 'User Management', icon: 'fas fa-users-cog' },
           { path: '/manager/health-programs', label: 'Health Programs', icon: 'fas fa-heartbeat' },
           { path: '/manager/content', label: 'Content Management', icon: 'fas fa-file-alt' },
@@ -81,9 +78,10 @@ const AppMenu = ({ isOpen, closeMenu }) => {
         items = [
           { path: '/admin/dashboard', label: 'Admin Dashboard', icon: 'fas fa-user-shield' },
           { path: '/admin/user-management', label: 'User Management', icon: 'fas fa-users-cog' },
-          { path: '/admin/analytics-reports', label: 'Reports & Analytics', icon: 'fas fa-chart-line' },
+          { path: '/admin/parent-registration-management', label: 'Parent Registration', icon: 'fas fa-user-plus' },
           { path: '/admin/health-programs', label: 'Health Programs', icon: 'fas fa-heartbeat' },
           { path: '/admin/data-export', label: 'Data Export', icon: 'fas fa-file-export' },
+          { path: '/health-blog', label: 'Health Blog', icon: 'fas fa-blog' },
         ];
         break;
       case 'ROLE_STUDENT':
@@ -91,17 +89,19 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/student/dashboard', label: 'Student Dashboard', icon: 'fas fa-user-graduate' },
           { path: '/health-profile', label: 'Health Profile', icon: 'fas fa-heart' },
           { path: '/medical-history', label: 'Medical History', icon: 'fas fa-file-medical' },
-          { path: '/vaccination-record', label: 'Vaccination Record', icon: 'fas fa-syringe' },          { path: '/blog', label: 'Health Blog', icon: 'fas fa-blog' },
-          { path: '/student/profile', label: 'Profile', icon: 'fas fa-user-circle' },
+          { path: '/vaccination-record', label: 'Vaccination Record', icon: 'fas fa-syringe' },
+          { path: '/profile', label: 'Profile', icon: 'fas fa-user-circle' },
         ];
         break;
       default:
         items = []; // No specific items if role doesn't match known ones
     }
-    // Add Profile link for all authenticated users if not already present    // Đã có mục Profile đúng cho student, không thêm /profile mặc định nữa
-    if (!items.find(item => item.path === '/profile' || item.path === '/student/profile')) {
+    
+    // Only add Profile link for students
+    if (primaryRole === 'ROLE_STUDENT' && !items.find(item => item.path === '/profile')) {
         items.push({ path: '/profile', label: 'Profile', icon: 'fas fa-user-circle' });
     }
+    
     return items;
   };
 

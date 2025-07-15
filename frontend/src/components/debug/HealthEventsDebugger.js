@@ -11,11 +11,7 @@ const HealthEventsDebugger = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Testing getAllHealthEvents API...');
-      
       const response = await getAllHealthEvents();
-      console.log('Health events response:', response);
-      
       setHealthEvents(response || []);
     } catch (err) {
       console.error('Error testing health events API:', err);

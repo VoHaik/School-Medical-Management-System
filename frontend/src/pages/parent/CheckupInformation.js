@@ -138,7 +138,6 @@ const CheckupInformation = () => {
       // Handle each API call separately to prevent one failure from affecting the other
       const [checkupHistory] = await Promise.all([
         getStudentHealthCheckupsByStudentId(studentCode).catch(error => {
-          console.warn('Failed to load student health checkups:', error);
           return []; // Return empty array if this fails
         })
       ]);
@@ -288,18 +287,15 @@ const CheckupInformation = () => {
             setHealthEvents(eventsData);
             setLastEventCount(eventsData.length); // Initialize count
           } else {
-            console.warn('No valid health events data received:', eventsData);
             setHealthEvents([]);
           }
         }).catch(error => {
-          console.warn('Failed to load health events data:', error);
           setHealthEvents([]);
         });
         
         // Load checkup data for the first student
         await loadCheckupData(firstStudent.studentCode);
       } else {
-        console.log('No students found in API response:', studentsData);
         setError('No students found for this parent account. Please contact the school administrator to ensure your account is properly linked to your child\'s records.');
       }
     } catch (error) {
@@ -347,14 +343,12 @@ const CheckupInformation = () => {
           // Check if new events were added
           if (lastEventCount > 0 && eventsData.length > lastEventCount) {
             // Show notification for new events
-            console.log('New health events detected!', eventsData.length - lastEventCount, 'new events');
-          }
+            }
           setHealthEvents(eventsData);
           setLastEventCount(eventsData.length);
         }
       }).catch(error => {
-        console.warn('Failed to auto-refresh health events:', error);
-      });
+        });
     }, 30000); // 30 seconds
 
     return () => clearInterval(interval);
@@ -448,7 +442,6 @@ const CheckupInformation = () => {
               variant="text" 
               size="small" 
               onClick={() => {
-                console.log('Current user:', currentUser);
                 console.log('Auth token exists:', !!localStorage.getItem('token'));
                 console.log('User from localStorage:', localStorage.getItem('user'));
               }}
@@ -462,9 +455,7 @@ const CheckupInformation = () => {
               color="secondary"
               onClick={async () => {
                 try {
-                  console.log('=== Testing API directly ===');
                   const response = await getParentStudents();
-                  console.log('Direct API response:', response);
                   alert(`API Response: ${JSON.stringify(response, null, 2)}`);
                 } catch (error) {
                   console.error('Direct API error:', error);
@@ -491,11 +482,6 @@ const CheckupInformation = () => {
             size="small" 
             variant="outlined" 
             onClick={() => {
-              console.log('=== CheckupInformation Debug ===');
-              console.log('Students:', students);
-              console.log('Selected student:', selectedStudent);
-              console.log('Data:', data);
-              console.log('Current user:', currentUser);
               console.log('Auth token:', localStorage.getItem('token'));
             }}
             sx={{ mt: 1 }}

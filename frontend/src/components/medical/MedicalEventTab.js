@@ -97,11 +97,11 @@ function MedicalEventTab() {  // State variables
   const fetchMedicalEvents = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get('/api/medical-events');
+      const response = await apiClient.get('/medical-events');
       setMedicalEvents(response.data);
       setErrorMessage('');
     } catch (error) {
-      console.error('Error fetching medical events:', error);
+      
       setErrorMessage('Failed to load medical events. ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
@@ -110,21 +110,21 @@ function MedicalEventTab() {  // State variables
   // Fetch students for dropdown
   const fetchStudents = async () => {
     try {
-      const response = await apiClient.get('/api/students');
+      const response = await apiClient.get('/students');
       setStudents(response.data);
     } catch (error) {
-      console.error('Error fetching students:', error);
+      
       setErrorMessage('Failed to load students. ' + (error.response?.data?.message || error.message));
     }
   };
     // Fetch medications from inventory
   const fetchMedications = async () => {
     try {
-      const response = await apiClient.get('/api/medications/inventory');
+      const response = await apiClient.get('/medications/inventory');
       setMedications(response.data);
     } catch (error) {
-      console.error('Error fetching medications:', error);
-      setErrorMessage('Không thể tải danh sách thuốc. ' + (error.response?.data?.message || error.message));
+      
+      setErrorMessage('Unable to load medication list. ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -142,11 +142,11 @@ function MedicalEventTab() {  // State variables
       };
       
       if (editMode) {
-        const response = await apiClient.put(`/api/medical-events/${editId}`, formattedData);
+        const response = await apiClient.put(`/medical-events/${editId}`, formattedData);
         setSuccessMessage('Medical event updated successfully');
         setMedicalEvents(medicalEvents.map(event => event.id === editId ? response.data : event));
       } else {
-        const response = await apiClient.post('/api/medical-events', formattedData);
+        const response = await apiClient.post('/medical-events', formattedData);
         setSuccessMessage('Medical event added successfully');
         setMedicalEvents([...medicalEvents, response.data]);
       }
@@ -154,7 +154,7 @@ function MedicalEventTab() {  // State variables
       handleCloseDialog();
       fetchMedicalEvents(); // Refresh the list
     } catch (error) {
-      console.error('Error saving medical event:', error);
+      
       setErrorMessage('Failed to save medical event. ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
@@ -208,11 +208,11 @@ function MedicalEventTab() {  // State variables
     if (window.confirm('Are you sure you want to delete this medical event?')) {
       setLoading(true);
       try {
-        await apiClient.delete(`/api/medical-events/${id}`);
+        await apiClient.delete(`/medical-events/${id}`);
         setSuccessMessage('Medical event deleted successfully');
         setMedicalEvents(medicalEvents.filter(event => event.id !== id));
       } catch (error) {
-        console.error('Error deleting medical event:', error);
+        
         setErrorMessage('Failed to delete medical event. ' + (error.response?.data?.message || error.message));
       } finally {
         setLoading(false);

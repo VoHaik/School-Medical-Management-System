@@ -98,8 +98,6 @@ const ParentDashboard = () => {
     const childName = child ? child.fullName : '';
 
     // Log children data for debugging
-    console.log("Current children data:", currentChildren);
-
     const filterItems = (items) => {
       if (!Array.isArray(items)) return [];
       if (!selectedChildId) return items; // If no child selected, show all items for the parent
@@ -146,8 +144,6 @@ const ParentDashboard = () => {
       upcomingEventsCount: Array.isArray(filteredEvents) ? filteredEvents.length : 0,
     };
     
-    console.log("Updated health summary:", updatedHealthSummary);
-    
     setDashboardData(prevData => ({
       ...prevData,
       healthSummary: updatedHealthSummary
@@ -158,7 +154,7 @@ const ParentDashboard = () => {
   // This useEffect will re-fetch data if the selectedChildId changes,
   // or if the current user changes (e.g., on login)
   useEffect(() => {
-    console.log("ParentDashboard currentUser state in useEffect:", currentUser); // Debug currentUser
+    // Debug currentUser
     if (currentUser && currentUser.accessToken) {
       fetchDashboardData();
     } else if (currentUser && !currentUser.accessToken) {
@@ -172,7 +168,6 @@ const ParentDashboard = () => {
         healthSummary: { totalChildren: 0, activeAlerts: 0, pendingRequests: 0, upcomingEventsCount: 0 }
       });
     } else if (!currentUser) {
-      console.log("ParentDashboard: currentUser is null. Waiting for user data. Data fetch skipped.");
       setLoading(false); // Stop loading if no user
        setDashboardData({ // Reset data
         children: [],
@@ -209,7 +204,6 @@ const ParentDashboard = () => {
       const headers = { Authorization: `Bearer ${currentUser.accessToken}` };
       
       // Fetch children data first - this is critical
-      console.log(`Fetching children for parent: ${currentUser.username}`);
       let childrenData = [];
       try {
         const childrenResponse = await axios.get(`/api/parent/students`, { headers });
@@ -227,8 +221,7 @@ const ParentDashboard = () => {
       }
       
       if (!childrenData || childrenData.length === 0) {
-        console.warn("No children found for this parent");
-      }
+        }
 
       const studentCodeParam = selectedChildId ? `?studentCode=${selectedChildId}` : '';
       const parentUsername = currentUser.username;
@@ -252,7 +245,6 @@ const ParentDashboard = () => {
       const [notificationsResult, eventsResult, medicationRequestsResult] = await Promise.allSettled([
         // Notifications request
         (async () => {
-          console.log(`Fetching notifications for parent: ${parentUsername}, student: ${selectedChildId || 'All'}`);
           try {
             const response = await axios.get(`/api/notifications/parent/${parentUsername}${studentCodeParam}`, { headers });
             return response.data || [];
@@ -264,7 +256,6 @@ const ParentDashboard = () => {
         
         // Events request
         (async () => {
-          console.log(`Fetching events for parent: ${parentUsername}, student: ${selectedChildId || 'All'}`);
           try {
             const response = await axios.get(`/api/events/parent/${parentUsername}${studentCodeParam}`, { headers });
             return response.data || [];
@@ -274,7 +265,6 @@ const ParentDashboard = () => {
           }
         })(),        // Medication requests
         (async () => {
-          console.log(`Fetching medication requests for parent: ${parentUsername}`);
           try {
             const response = await axios.get('/api/medication-requests/mine', { headers });
             return response.data || [];
@@ -285,8 +275,6 @@ const ParentDashboard = () => {
                 errorMessage.includes('Could not extract column') ||
                 errorMessage.includes('data type mismatch') ||
                 errorMessage.includes('String or binary data would be truncated')) {
-              console.log('Known database error detected. Using fallback medication requests data.');
-              
               // Get child information from available data
               const firstChild = childrenData.length > 0 ? childrenData[0] : null;
               const secondChild = childrenData.length > 1 ? childrenData[1] : null;
@@ -882,7 +870,7 @@ const ParentDashboard = () => {
               variant="contained"
               color="primary"
               fullWidth
-              onClick={() => navigate('/parent/appointments')}
+              onClick={() => navigate('/parent/checkup-information')}
               sx={{ 
                 mt: 'auto', 
                 borderTopLeftRadius: 0, 
@@ -905,17 +893,6 @@ const ParentDashboard = () => {
           aria-label="dashboard tabs"
           sx={{ bgcolor: '#f5f5f5' }}
         >
-          <Tab 
-            icon={<NotificationsActiveIcon />} 
-            iconPosition="start"
-            label={`NOTIFICATIONS (${recentNotifications.length || 0})`} 
-            sx={{ 
-              textTransform: 'uppercase',
-              fontWeight: 'medium',
-              fontSize: '0.75rem',
-              py: 2
-            }}
-          />
           <Tab 
             icon={<EventIcon />} 
             iconPosition="start"
@@ -952,31 +929,6 @@ const ParentDashboard = () => {
         </Tabs>
 
         <TabPanel value={activeTab} index={0}>
-          {recentNotifications.length > 0 ? (
-            <List>
-              {recentNotifications.map((notification) => (
-                <ListItem key={notification.id} divider>
-                  <ListItemIcon>
-                    <NotificationIcon />
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={notification.title}
-                    secondary={`${notification.message} - ${new Date(notification.date || notification.createdAt).toLocaleDateString()}`}
-                  />
-                  <Chip 
-                    label={notification.priority || 'normal'} 
-                    color={getPriorityColor(notification.priority)} 
-                    size="small" 
-                  />
-                </ListItem>
-              ))}
-            </List>
-          ) : (
-            <Typography>No notifications to display.</Typography>
-          )}
-        </TabPanel>
-
-        <TabPanel value={activeTab} index={1}>
           {upcomingEvents.length > 0 ? (
             <Grid container spacing={2}>
               {upcomingEvents.map((event) => (
@@ -996,7 +948,7 @@ const ParentDashboard = () => {
           )}
         </TabPanel>
 
-        <TabPanel value={activeTab} index={2}>
+        <TabPanel value={activeTab} index={1}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6">Medication Requests</Typography>
             <Button 
@@ -1090,7 +1042,7 @@ const ParentDashboard = () => {
           )}
         </TabPanel>
 
-        <TabPanel value={activeTab} index={3}>
+        <TabPanel value={activeTab} index={2}>
           {dashboardData.children.length > 0 ? (
             <Grid container spacing={2}>
               {dashboardData.children.map((child) => (

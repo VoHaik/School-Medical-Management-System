@@ -1,5 +1,6 @@
 package com.swp391_8.schoolhealth.controller;
 
+import com.swp391_8.schoolhealth.dto.BlogPostDTO;
 import com.swp391_8.schoolhealth.model.BlogPost;
 import com.swp391_8.schoolhealth.security.services.UserDetailsImpl;
 import com.swp391_8.schoolhealth.service.BlogPostService;
@@ -19,8 +20,8 @@ public class BlogPostController {
 
     @Autowired
     private BlogPostService blogPostService;    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<BlogPost>> getAllPosts() {
-        List<BlogPost> posts = blogPostService.getAllPosts();
+    public ResponseEntity<List<BlogPostDTO>> getAllPosts() {
+        List<BlogPostDTO> posts = blogPostService.getAllPostsDTO();
         return ResponseEntity.ok(posts);
     }    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<BlogPost> getPostById(@PathVariable Integer id) {
@@ -35,16 +36,16 @@ public class BlogPostController {
     }
 
     @GetMapping(value = "/my-posts", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAuthority('Student') or hasAuthority('Parent')")
-    public ResponseEntity<List<BlogPost>> getMyPosts() {
+    @PreAuthorize("hasAuthority('SCHOOLNURSE') or hasRole('SCHOOLNURSE')")
+    public ResponseEntity<List<BlogPostDTO>> getMyPosts() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        List<BlogPost> posts = blogPostService.getPostsByAuthorId(userDetails.getId());
+        List<BlogPostDTO> posts = blogPostService.getPostsDTOByAuthorId(userDetails.getId());
         return ResponseEntity.ok(posts);
     }
 
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAuthority('Student') or hasAuthority('Parent')")
+    @PreAuthorize("hasAuthority('SCHOOLNURSE') or hasRole('SCHOOLNURSE')")
     public ResponseEntity<BlogPost> createPost(@RequestBody BlogPost blogPost) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -67,14 +68,14 @@ public class BlogPostController {
     }
 
     @PutMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("(hasAuthority('Student') or hasAuthority('Parent')) and @securityService.isPostAuthor(authentication, #id)")
+    @PreAuthorize("hasAuthority('SCHOOLNURSE') and @securityService.isPostAuthor(authentication, #id)")
     public ResponseEntity<BlogPost> updatePost(@PathVariable Integer id, @RequestBody BlogPost blogPost) {
         BlogPost updatedPost = blogPostService.updatePost(id, blogPost);
         return ResponseEntity.ok(updatedPost);
     }
 
     @DeleteMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("((hasAuthority('Student') or hasAuthority('Parent')) and @securityService.isPostAuthor(authentication, #id)) or hasAuthority('Admin')")
+    @PreAuthorize("(hasAuthority('SCHOOLNURSE') and @securityService.isPostAuthor(authentication, #id)) or hasAuthority('Admin')")
     public ResponseEntity<?> deletePost(@PathVariable Integer id) {
         blogPostService.deletePost(id);
         return ResponseEntity.ok().build();

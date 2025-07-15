@@ -1,8 +1,10 @@
 package com.swp391_8.schoolhealth.controller;
 
 import com.swp391_8.schoolhealth.dto.StudentDTO;
-import com.swp391_8.schoolhealth.dto.NurseDTO;
+import com.swp391_8.schoolhealth.dto.UserDTO;
 import com.swp391_8.schoolhealth.model.Nurse;
+import com.swp391_8.schoolhealth.model.Student;
+import com.swp391_8.schoolhealth.model.User;
 import com.swp391_8.schoolhealth.service.UserService;
 import com.swp391_8.schoolhealth.service.StudentService;
 import com.swp391_8.schoolhealth.service.NurseService;
@@ -14,9 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -30,6 +32,9 @@ public class AdminController {
     private NurseService nurseService;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private HealthCheckupRecordService healthCheckupRecordService;
 
     @Autowired
@@ -39,48 +44,17 @@ public class AdminController {
     private HealthEventService healthEventService;
 
     /**
-     * Get all users (students and nurses) for admin management
+     * Get all users from users table
      */
     @GetMapping("/users")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<List<Map<String, Object>>> getAllUsers() {
+    public ResponseEntity<List<UserDTO>> getAllUsers() {
         try {
-            List<Map<String, Object>> users = new ArrayList<>();
-            
-            // Get all students
-            List<StudentDTO> students = studentService.getAllStudents();
-            for (StudentDTO student : students) {
-                Map<String, Object> user = new HashMap<>();
-                user.put("id", student.getStudentCode());
-                user.put("username", student.getStudentCode());
-                user.put("fullName", student.getFullName());
-                user.put("email", student.getStudentCode() + "@school.edu"); // Generate email from student code
-                user.put("role", "STUDENT");
-                user.put("status", "active"); // Default status
-                user.put("lastLogin", null);
-                user.put("createdAt", LocalDateTime.now());
-                user.put("grade", student.getGradeName());
-                users.add(user);
-            }
-            
-            // Get all nurses
-            List<Nurse> nurses = nurseService.getAllNurses();
-            for (Nurse nurse : nurses) {
-                Map<String, Object> user = new HashMap<>();
-                user.put("id", nurse.getNurseCode());
-                user.put("username", nurse.getNurseCode());
-                user.put("fullName", nurse.getFullName());
-                user.put("email", nurse.getNurseCode() + "@school.edu"); // Generate email from nurse code
-                user.put("role", "NURSE");
-                user.put("status", "active"); // Default status
-                user.put("lastLogin", null);
-                user.put("createdAt", LocalDateTime.now());
-                user.put("qualification", nurse.getQualification());
-                user.put("specialization", nurse.getSpecialization());
-                users.add(user);
-            }
-            
-            return ResponseEntity.ok(users);
+            List<User> allUsers = userService.getAllUsers();
+            List<UserDTO> userDTOs = allUsers.stream()
+                .map(UserDTO::new)
+                .toList();
+            return ResponseEntity.ok(userDTOs);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
@@ -210,5 +184,48 @@ public class AdminController {
         response.put("message", "User activation requires backend user management implementation");
         response.put("userId", userId);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Update user
+     */
+    @PutMapping("/users/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> updateUser(
+            @PathVariable Long userId,
+            @RequestBody User userData) {
+        try {
+            User updatedUser = userService.updateUser(userId, userData);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "User updated successfully");
+            response.put("user", updatedUser);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Error updating user: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+
+    /**
+     * Delete user
+     */
+    @DeleteMapping("/users/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable Long userId) {
+        try {
+            userService.deleteUser(userId);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "User deleted successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Error deleting user: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
     }
 }

@@ -209,7 +209,7 @@ const HealthCheckups = () => {
       }));
       
       setStudents(formattedStudents);
-      console.log('Fetched students from database:', formattedStudents); // Debug log
+      // Debug log
     } catch (error) {
       console.error('Error fetching students:', error);
       // Temporary fallback data to test the feature

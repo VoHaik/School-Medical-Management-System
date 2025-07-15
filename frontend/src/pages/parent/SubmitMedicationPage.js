@@ -45,7 +45,6 @@ const SubmitMedicationPage = () => {
              setChildren(response.data.children);
         }
         else {
-            console.warn("Unexpected children data structure:", response.data);
             setChildren([]);
         }
       } catch (err) {

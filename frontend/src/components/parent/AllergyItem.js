@@ -1,7 +1,7 @@
 import React from 'react';
 
 const AllergyItem = React.memo(({ allergy, index, onChange, onRemove }) => {
-  // console.log(`Rendering AllergyItem for index: ${index}, value: ${allergy}`); // Uncomment for debugging memoization
+  // // Uncomment for debugging memoization
 
   const handleInputChange = (e) => {
     onChange(index, e.target.value);

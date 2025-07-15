@@ -22,7 +22,7 @@ const Login = () => {
     if (currentUser) {
       // Redirect based on role if currentUser is available
       if (currentUser.roles && (currentUser.roles.includes('Parent') || currentUser.roles.includes('ROLE_PARENT'))) {
-        navigate('/parent/dashboard');
+        navigate('/');
       } else {
         navigate('/'); // Default redirect for other roles or if role is not yet defined
       }
@@ -79,7 +79,7 @@ const Login = () => {
         // Redirect based on role
         // setTimeout(() => { // MODIFIED: Removed setTimeout for immediate redirection based on role
           if (result.user.roles && (result.user.roles.includes('Parent') || result.user.roles.includes('ROLE_PARENT'))) {
-            navigate('/parent/dashboard');
+            navigate('/');
           } else {
             navigate('/'); // Default redirect for other roles
           }
@@ -208,6 +208,13 @@ const Login = () => {
               Don't have an account? 
               <Link to="/register" className="text-indigo-600 font-medium hover:text-indigo-800 transition-all ml-1">
                 Register here
+              </Link>
+            </p>
+            
+            <p className="text-center mt-3 text-gray-600">
+              Are you a parent? 
+              <Link to="/parent-registration" className="text-green-600 font-medium hover:text-green-800 transition-all ml-1">
+                Register as Parent
               </Link>
             </p>
           </form>

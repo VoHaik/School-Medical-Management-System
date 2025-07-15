@@ -17,7 +17,8 @@ import {
   Chip,
   IconButton,
   Button,
-  Alert
+  Alert,
+  TablePagination
 } from '@mui/material';
 import {
   People,
@@ -27,9 +28,7 @@ import {
   TrendingUp,
   Warning,
   CheckCircle,
-  Refresh,
-  Block,
-  CheckCircleOutline
+  Refresh
 } from '@mui/icons-material';
 import { 
   BarChart, 
@@ -43,7 +42,7 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { getAdminDashboardStats, getAllUsers, deactivateUser, activateUser } from '../../utils/api';
+import { getAdminDashboardStats, getAllUsers } from '../../utils/api';
 import PageHeader from '../../components/PageHeader';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -53,6 +52,8 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     loadDashboardData();
@@ -75,26 +76,6 @@ const AdminDashboard = () => {
       setError('Failed to load dashboard data. Please try again.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleUserStatusToggle = async (userId, currentStatus) => {
-    try {
-      if (currentStatus === 'active') {
-        await deactivateUser(userId);
-      } else {
-        await activateUser(userId);
-      }
-      
-      // Update local state
-      setUsers(users.map(user => 
-        user.id === userId 
-          ? { ...user, status: currentStatus === 'active' ? 'inactive' : 'active' }
-          : user
-      ));
-    } catch (err) {
-      console.error('Error updating user status:', err);
-      setError('Failed to update user status. This feature requires backend implementation.');
     }
   };
 
@@ -135,13 +116,22 @@ const AdminDashboard = () => {
     );
   }
 
+  // Calculate real user statistics from actual data
+  const activeUsers = users.filter(u => u.status !== 'INACTIVE').length; // Only show as inactive if explicitly set
+  const inactiveUsers = users.filter(u => u.status === 'INACTIVE').length;
+  
   const userStatusData = [
-    { name: 'Active Users', value: stats?.activeUsers || 0, color: '#4caf50' },
-    { name: 'Inactive Users', value: Math.max((stats?.totalUsers || 0) - (stats?.activeUsers || 0), 0), color: '#ff9800' }
+    { name: 'Active Users', value: activeUsers, color: '#4caf50' },
+    { name: 'Inactive Users', value: inactiveUsers, color: '#ff9800' }
   ];
 
-  // Get monthly data from backend or show empty state
-  const monthlyData = stats?.monthlyActivity || [];
+  // Calculate role distribution
+  const roleData = [
+    { name: 'Students', value: users.filter(u => u.role === 'STUDENT').length, color: '#2196f3' },
+    { name: 'Nurses', value: users.filter(u => u.role === 'NURSE').length, color: '#9c27b0' },
+    { name: 'Admins', value: users.filter(u => u.role === 'ADMIN').length, color: '#ff5722' },
+    { name: 'Others', value: users.filter(u => !['STUDENT', 'NURSE', 'ADMIN'].includes(u.role)).length, color: '#607d8b' }
+  ].filter(item => item.value > 0); // Only show roles that have users
 
   return (
     <div className="p-6">
@@ -162,7 +152,7 @@ const AdminDashboard = () => {
                 </Avatar>
                 <Box>
                   <Typography variant="h6" component="div">
-                    {stats?.totalUsers || 0}
+                    {users.length}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Total Users
@@ -235,39 +225,12 @@ const AdminDashboard = () => {
       </Grid>
 
       <Grid container spacing={3}>
-        {/* Activity Chart */}
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Monthly Activity
-              </Typography>
-              {monthlyData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="checkups" fill="#4caf50" name="Health Checkups" />
-                    <Bar dataKey="vaccinations" fill="#2196f3" name="Vaccinations" />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <Box display="flex" justifyContent="center" alignItems="center" height={300}>
-                  <Typography color="text.secondary">No monthly activity data available</Typography>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-
         {/* User Status Pie Chart */}
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                User Status
+                User Status Distribution
               </Typography>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -291,21 +254,55 @@ const AdminDashboard = () => {
           </Card>
         </Grid>
 
-        {/* Recent Users */}
+        {/* Role Distribution Pie Chart */}
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Role Distribution
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={roleData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, value }) => `${name}: ${value}`}
+                  >
+                    {roleData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* User Management Table */}
         <Grid item xs={12}>
           <Card>
             <CardContent>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <Typography variant="h6">
-                  User Management
+                  User Management (View Only)
                 </Typography>
-                <Button 
-                  startIcon={<Refresh />} 
-                  onClick={loadDashboardData}
-                  size="small"
-                >
-                  Refresh
-                </Button>
+                <Box>
+                  <Typography variant="body2" color="textSecondary" sx={{ mr: 2, display: 'inline' }}>
+                    Total Users: {users.length}
+                  </Typography>
+                  <Button 
+                    startIcon={<Refresh />} 
+                    onClick={loadDashboardData}
+                    size="small"
+                  >
+                    Refresh
+                  </Button>
+                </Box>
               </Box>
               
               <TableContainer component={Paper} variant="outlined">
@@ -316,11 +313,12 @@ const AdminDashboard = () => {
                       <TableCell>Role</TableCell>
                       <TableCell>Status</TableCell>
                       <TableCell>Details</TableCell>
-                      <TableCell>Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {users.slice(0, 10).map((user) => (
+                    {users
+                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
                           <Box display="flex" alignItems="center">
@@ -346,27 +344,16 @@ const AdminDashboard = () => {
                         </TableCell>
                         <TableCell>
                           <Chip 
-                            label={user.status || 'active'} 
-                            color={(user.status || 'active') === 'active' ? 'success' : 'error'}
+                            label={user.status === 'INACTIVE' ? 'Inactive' : 'Active'} 
+                            color={user.status === 'INACTIVE' ? 'error' : 'success'}
                             size="small"
-                            icon={(user.status || 'active') === 'active' ? <CheckCircle /> : <Warning />}
+                            icon={user.status === 'INACTIVE' ? <Warning /> : <CheckCircle />}
                           />
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2">
-                            {user.role === 'STUDENT' ? `Grade: ${user.grade || 'N/A'}` : 
-                             user.role === 'NURSE' ? `Spec: ${user.specialization || 'General'}` : 'N/A'}
+                            Role: {user.role || 'N/A'}
                           </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleUserStatusToggle(user.id, user.status || 'active')}
-                            color={(user.status || 'active') === 'active' ? 'error' : 'success'}
-                            title={(user.status || 'active') === 'active' ? 'Deactivate User' : 'Activate User'}
-                          >
-                            {(user.status || 'active') === 'active' ? <Block /> : <CheckCircleOutline />}
-                          </IconButton>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -374,13 +361,18 @@ const AdminDashboard = () => {
                 </Table>
               </TableContainer>
               
-              {users.length > 10 && (
-                <Box mt={2} textAlign="center">
-                  <Typography variant="body2" color="text.secondary">
-                    Showing 10 of {users.length} users
-                  </Typography>
-                </Box>
-              )}
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                component="div"
+                count={users.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={(event, newPage) => setPage(newPage)}
+                onRowsPerPageChange={(event) => {
+                  setRowsPerPage(parseInt(event.target.value, 10));
+                  setPage(0);
+                }}
+              />
             </CardContent>
           </Card>
         </Grid>

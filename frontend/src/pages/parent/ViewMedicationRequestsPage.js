@@ -66,11 +66,9 @@ const ViewMedicationRequestsPage = () => {
             try {
                 // Use the correct API endpoint from the backend controller
                 const headers = { Authorization: `Bearer ${currentUser.accessToken}` };
-                console.log('Fetching medication requests for the authenticated parent');
                 const response = await axios.get('/api/medication-requests/mine', { headers });
                 setRequests(response.data || []);
-                console.log("Medication requests data:", response.data);
-            } catch (err) {
+                } catch (err) {
                 console.error("Error fetching medication requests:", err);
                 console.error("Error details:", err.response?.data);
                 setError(err.response?.data?.error || err.message || 'Failed to fetch medication requests.');
@@ -170,8 +168,6 @@ const ViewMedicationRequestsPage = () => {
         );
     }    // Function to load fallback data if the server request fails
     const loadFallbackData = () => {
-        console.log("Loading fallback medication request data due to server error");
-        
         // Set some enhanced mock data to ensure the UI can still be displayed
         const today = new Date();
         const fallbackRequests = [

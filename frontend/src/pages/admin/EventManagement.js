@@ -338,8 +338,7 @@ const EventManagement = () => {
       }
       
       if (targetGradeNames.length !== data.targetGradeIds.length) {
-        console.warn(`Warning: Some grade IDs could not be converted. Original: ${data.targetGradeIds.length}, Converted: ${targetGradeNames.length}`);
-      }
+        }
 
       // Format the data for the API
       const eventData = {
