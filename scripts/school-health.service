@@ -1,0 +1,30 @@
+[Unit]
+Description=School Medical Management System
+After=network.target
+
+[Service]
+Type=simple
+User=schoolhealth
+Group=schoolhealth
+WorkingDirectory=/opt/school-health
+ExecStart=/usr/bin/java -Xms512m -Xmx2048m -XX:+UseG1GC -XX:+UseStringDeduplication -Djava.security.egd=file:/dev/./urandom -jar /opt/school-health/SWP391-Project-1.0-SNAPSHOT.jar --spring.profiles.active=production
+ExecStop=/bin/kill -15 $MAINPID
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=school-health
+
+# Environment variables - Set these in /etc/environment or override file
+Environment=SPRING_PROFILES_ACTIVE=production
+Environment=SERVER_PORT=8080
+
+# Security settings
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/school-health/logs
+
+[Install]
+WantedBy=multi-user.target
