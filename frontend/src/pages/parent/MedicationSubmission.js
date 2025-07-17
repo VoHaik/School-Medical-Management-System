@@ -1,188 +1,202 @@
-import React, { useState, useEffect, useContext } from 'react'; // Added useContext
-import { useForm, Controller } from 'react-hook-form';
+import React, { useState, useEffect, useContext } from 'react';
+import { useForm, Controller } from 'react-hook-form'; // Removed useWatch as frequency is now a direct input or part of notes
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import axios from 'axios';
-import { AuthContext } from '../../context/AuthContext'; // Added AuthContext import
+import { AuthContext } from '../../context/AuthContext';
+import { useLocation, useNavigate } from 'react-router-dom'; // Added useNavigate
 
+// Updated schema for MedicationRequestDTO
 const schema = yup.object().shape({
-  studentId: yup.string().required('Child selection is required'), // Added studentId
+  studentCode: yup.string().required('Child selection is required'),
   medicationName: yup.string().required('Medication name is required'),
   dosage: yup.string().required('Dosage is required'),
-  frequency: yup.string().required('Frequency is required'),
-  administrationTime: yup.array().min(1, 'At least one administration time is required'),
-  duration: yup.string().required('Duration is required'),
-  instructions: yup.string().required('Instructions are required'),
-  prescribedBy: yup.string().required('Prescribing doctor is required'),
+  frequency: yup.string().required('Frequency is required (e.g., Once a day, Twice a day at 8am and 5pm)'),
+  startDate: yup.date().required('Start date is required').typeError('Start date must be a valid date'),
+  endDate: yup.date().required('End date is required').min(yup.ref('startDate'), 'End date cannot be before start date').typeError('End date must be a valid date'),
   reason: yup.string().required('Reason for medication is required'),
-  sideEffects: yup.string(),
-  storageInstructions: yup.string(),
-  emergencyContact: yup.string().required('Emergency contact is required'),
-  parentSignature: yup.boolean().oneOf([true], 'Parent signature is required'),
-  doctorNote: yup.mixed()
+  notes: yup.string().nullable() // Optional notes
 });
 
+// Consider renaming the component to MedicationRequest or ParentMedicationRequests
 const MedicationSubmission = () => {
-  const { currentUser } = useContext(AuthContext); // Get currentUser
+  const { currentUser } = useContext(AuthContext);
+  const location = useLocation();
+  const navigate = useNavigate(); // For navigation
   const [children, setChildren] = useState([]);
-  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [selectedStudentCode, setSelectedStudentCode] = useState('');
   const [loadingChildren, setLoadingChildren] = useState(false);
-  const [submissions, setSubmissions] = useState([]);
-  const [loading, setLoading] = useState(true); // This will now be for submissions
+  const [requests, setRequests] = useState([]); // Renamed from submissions
+  const [loadingRequests, setLoadingRequests] = useState(true); // Renamed from loading
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   
-  const { control, handleSubmit, reset, formState: { errors }, setValue } = useForm({ // Added setValue
+  const { control, handleSubmit, reset, formState: { errors }, setValue } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
-      studentId: '', // Added studentId
-      administrationTime: [],
-      parentSignature: false
+      studentCode: '',
+      medicationName: '',
+      dosage: '',
+      frequency: '',
+      startDate: '', // Initialize as empty string for date inputs
+      endDate: '',
+      reason: '',
+      notes: ''
     }
   });
+
+  // Removed useWatch for frequency as it's now a direct input or part of notes
 
   // Effect to fetch children
   useEffect(() => {
     const fetchChildren = async () => {
-      if (currentUser && currentUser.id) {
+      if (currentUser && currentUser.username) {
         setLoadingChildren(true);
         try {
           const token = localStorage.getItem('token');
-          const response = await axios.get(`/api/students/parent/${currentUser.id}`, {
+          const response = await axios.get(`/api/users/students-by-parent/${currentUser.username}`, { // Assuming this endpoint exists
             headers: { Authorization: `Bearer ${token}` }
           });
           setChildren(response.data || []);
           if (response.data && response.data.length > 0) {
-            // Optionally, auto-select the first child or leave it for user selection
-            // setSelectedStudentId(response.data[0].id); 
-            // setValue('studentId', response.data[0].id);
+            if (location.state?.studentCode) {
+              setSelectedStudentCode(location.state.studentCode);
+              setValue('studentCode', location.state.studentCode);
+            } else {
+              // Optionally auto-select the first child
+              // setSelectedStudentCode(response.data[0].studentCode);
+              // setValue('studentCode', response.data[0].studentCode);
+            }
           }
         } catch (error) {
-          console.error('Error fetching children:', error);
-          // Handle error (e.g., show a message to the user)
+          console.error('Error fetching children:', error.response ? error.response.data : error);
         } finally {
           setLoadingChildren(false);
         }
       }
     };
     fetchChildren();
-  }, [currentUser]);
+  }, [currentUser, location.state, setValue]);
 
-  // Effect to fetch medication submissions for the selected child
+  // Effect to fetch medication requests for the selected child
   useEffect(() => {
-    if (selectedStudentId) {
-      fetchMedicationSubmissions();
+    if (selectedStudentCode) {
+      fetchMedicationRequests(); // Renamed function
     } else {
-      setSubmissions([]); // Clear submissions if no child is selected
-      setLoading(false); // Stop loading if no child selected
+      setRequests([]); // Renamed state variable
+      setLoadingRequests(false); // Renamed state variable
     }
-  }, [selectedStudentId]); // Re-run when selectedStudentId changes
+  }, [selectedStudentCode]);
 
-  const fetchMedicationSubmissions = async () => {
-    if (!selectedStudentId) return; // Don't fetch if no child is selected
-    setLoading(true); // For submissions loading
+  const fetchMedicationRequests = async () => { // Renamed function
+    if (!selectedStudentCode) return;
+    setLoadingRequests(true); // Renamed state variable
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/medication-submissions?studentId=${selectedStudentId}`, { // Use selectedStudentId
+      // Fetching requests for the selected student by the authenticated parent
+      const response = await axios.get(`/api/medication-requests/student/${selectedStudentCode}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setSubmissions(response.data);
+      setRequests(response.data); // Renamed state variable
     } catch (error) {
-      console.error('Error fetching medication submissions:', error);
+      console.error('Error fetching medication requests:', error.response ? error.response.data : error);
+      setRequests([]); // Clear requests on error
     } finally {
-      setLoading(false);
+      setLoadingRequests(false); // Renamed state variable
     }
   };
 
   const onSubmit = async (data) => {
-    if (!selectedStudentId) {
+    if (!selectedStudentCode) {
       alert('Please select a child first.');
       return;
     }
     setSubmitting(true);
+
+    const payload = {
+      studentCode: selectedStudentCode, // Use selectedStudentCode directly
+      medicationName: data.medicationName,
+      dosage: data.dosage,
+      frequency: data.frequency,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      reason: data.reason,
+      notes: data.notes
+    };
+
     try {
       const token = localStorage.getItem('token');
-      const formData = new FormData();
-
-      // Create a submission DTO object (or ensure `data` matches the DTO structure)
-      // The backend controller expects a @RequestPart("submission") MedicationSubmissionDTO
-      // and @RequestPart("doctorNote") MultipartFile
-      const submissionData = { ...data };
-      delete submissionData.doctorNote; // Remove file from the main data object
-
-      // Append the DTO as a JSON string part
-      formData.append('submission', new Blob([JSON.stringify(submissionData)], { type: 'application/json' }));
-
-      // Append the file if it exists
-      if (data.doctorNote && data.doctorNote[0]) {
-        formData.append('doctorNote', data.doctorNote[0]);
-      }
-
-      // studentId is already in submissionData from react-hook-form
-
-      await axios.post('/api/medication-submissions', formData, {
+      await axios.post('/api/medication-requests', payload, {
         headers: { 
           Authorization: `Bearer ${token}`,
-          // Content-Type is automatically set by browser for FormData
+          'Content-Type': 'application/json' // Ensure correct content type
         }
       });
       
-      alert('Medication submission successful!');
-      reset({ 
-        studentId: selectedStudentId, // Keep selected studentId
+      alert('Medication request submitted successfully!');
+      reset({
+        studentCode: selectedStudentCode, 
         medicationName: '',
         dosage: '',
         frequency: '',
-        administrationTime: [],
-        duration: '',
-        instructions: '',
-        prescribedBy: '',
+        startDate: '',
+        endDate: '',
         reason: '',
-        sideEffects: '',
-        storageInstructions: '',
-        emergencyContact: '',
-        parentSignature: false,
-        doctorNote: null
+        notes: ''
       });
       setShowForm(false);
-      fetchMedicationSubmissions(); // Refresh submissions for the current child
+      fetchMedicationRequests(); // Refresh requests for the current child
     } catch (error) {
-      console.error('Error submitting medication:', error.response ? error.response.data : error);
-      alert('Error submitting medication. Please try again.');
+      console.error('Error submitting medication request:', error.response ? error.response.data : error);
+      const errorMessage = error.response?.data?.error || 'Error submitting medication request. Please try again.';
+      alert(errorMessage);
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleChildChange = (e) => {
-    const studentId = e.target.value;
-    setSelectedStudentId(studentId);
-    setValue('studentId', studentId); // Update form state
-    if (!studentId) {
-        setShowForm(false); // Hide form if no child is selected
+    const studentCodeValue = e.target.value;
+    setSelectedStudentCode(studentCodeValue);
+    setValue('studentCode', studentCodeValue);
+    if (!studentCodeValue) {
+        setShowForm(false);
+        setRequests([]); // Clear requests if no child is selected
     }
   };
 
-  const handleTimeChange = (time, checked, field) => {
-    const currentTimes = field.value || [];
-    if (checked) {
-      field.onChange([...currentTimes, time]);
-    } else {
-      field.onChange(currentTimes.filter(t => t !== time));
-    }
-  };
+  // handleTimeChange is removed as administrationTime field is removed
 
   const getStatusBadge = (status) => {
+    const statusFormatted = status ? status.toLowerCase() : '';
     const badges = {
       pending: 'bg-yellow-100 text-yellow-800',
       approved: 'bg-green-100 text-green-800',
       rejected: 'bg-red-100 text-red-800',
-      administered: 'bg-blue-100 text-blue-800'
+      administered: 'bg-blue-100 text-blue-800',
+      cancelled_by_parent: 'bg-gray-100 text-gray-800',
+      cancelled_by_nurse: 'bg-gray-200 text-gray-800'
     };
-    return badges[status] || 'bg-gray-100 text-gray-800';
+    return badges[statusFormatted] || 'bg-gray-100 text-gray-800';
+  };
+  
+  const handleCancelRequest = async (requestId) => {
+    if (!window.confirm("Are you sure you want to cancel this medication request?")) return;
+    try {
+        const token = localStorage.getItem('token');
+        await axios.put(`/api/medication-requests/${requestId}/cancel`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        alert('Medication request cancelled successfully.');
+        fetchMedicationRequests(); // Refresh the list
+    } catch (error) {
+        console.error('Error cancelling medication request:', error.response ? error.response.data : error);
+        const errorMessage = error.response?.data?.error || 'Failed to cancel medication request.';
+        alert(errorMessage);
+    }
   };
 
-  if (loadingChildren && !currentUser) { // Show initial loading if current user or children are loading
+  if (loadingChildren && !children.length) { // Show initial loading if children are being fetched for the first time
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
@@ -193,15 +207,13 @@ const MedicationSubmission = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Medication Submissions</h1>
-                    <p className="text-gray-600 mt-1">Submit and manage medication requests for your child</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Medication Requests</h1>
+                    <p className="text-gray-600 mt-1">Submit and manage medication requests for your child.</p>
                 </div>
-                {/* Child Selector */}
                 <div className="mt-4 sm:mt-0">
                     <label htmlFor="child-select" className="block text-sm font-medium text-gray-700 mb-1">
                         Select Child
@@ -209,49 +221,46 @@ const MedicationSubmission = () => {
                     <select
                         id="child-select"
                         name="child-select"
-                        value={selectedStudentId}
+                        value={selectedStudentCode}
                         onChange={handleChildChange}
                         disabled={loadingChildren || children.length === 0}
                         className="w-full sm:w-auto p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     >
-                        <option value="">{loadingChildren ? 'Loading children...' : '-- Select a Child --'}</option>
+                        <option value="">{loadingChildren ? 'Loading children...' : (children.length === 0 ? 'No children found' : '-- Select a Child --')}</option>
                         {children.map(child => (
-                        <option key={child.id} value={child.id}>{child.fullName}</option>
+                        <option key={child.studentCode} value={child.studentCode}>{child.fullName} ({child.studentCode})</option>
                         ))}
                     </select>
-                    {errors.studentId && !selectedStudentId && ( // Show error if studentId is required and not selected
-                        <p className="text-red-600 text-sm mt-1">{errors.studentId.message}</p>
-                    )}
+                    {/* Error for studentCode is handled by react-hook-form if form is submitted without selection */}
                 </div>
             </div>
-            {selectedStudentId && (
+            {selectedStudentCode && (
                 <div className="mt-4 flex justify-end">
                     <button
                         onClick={() => setShowForm(!showForm)}
-                        disabled={!selectedStudentId}
+                        disabled={!selectedStudentCode}
                         className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
                     >
                         <i className={`fas ${showForm ? 'fa-times' : 'fa-plus'} mr-2`}></i>
-                        {showForm ? 'Cancel' : 'New Submission'}
+                        {showForm ? 'Cancel New Request' : 'New Medication Request'}
                     </button>
                 </div>
             )}
           </div>
         </div>
 
-        {/* Medication Submission Form */}
-        {showForm && selectedStudentId && (
+        {showForm && selectedStudentCode && (
           <div className="bg-white rounded-lg shadow mb-6">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">Submit New Medication Request</h2>
             </div>
             
             <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
-              {/* Hidden studentId field for form submission, already handled by setValue and defaultValues */}
-              {/* Basic Information */}
+              {/* studentCode is implicitly set via selectedStudentCode in onSubmit */}
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="medicationName" className="block text-sm font-medium text-gray-700 mb-2">
                     Medication Name *
                   </label>
                   <Controller
@@ -260,6 +269,7 @@ const MedicationSubmission = () => {
                     render={({ field }) => (
                       <input
                         {...field}
+                        id="medicationName"
                         type="text"
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                         placeholder="Enter medication name"
@@ -272,7 +282,7 @@ const MedicationSubmission = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="dosage" className="block text-sm font-medium text-gray-700 mb-2">
                     Dosage *
                   </label>
                   <Controller
@@ -281,6 +291,7 @@ const MedicationSubmission = () => {
                     render={({ field }) => (
                       <input
                         {...field}
+                        id="dosage"
                         type="text"
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                         placeholder="e.g., 5mg, 1 tablet"
@@ -293,164 +304,71 @@ const MedicationSubmission = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="frequency" className="block text-sm font-medium text-gray-700 mb-2">
                     Frequency *
                   </label>
                   <Controller
                     name="frequency"
                     control={control}
                     render={({ field }) => (
-                      <select
+                      <input
                         {...field}
+                        id="frequency"
+                        type="text"
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                      >
-                        <option value="">Select frequency</option>
-                        <option value="once_daily">Once daily</option>
-                        <option value="twice_daily">Twice daily</option>
-                        <option value="three_times_daily">Three times daily</option>
-                        <option value="four_times_daily">Four times daily</option>
-                        <option value="as_needed">As needed</option>
-                        <option value="other">Other</option>
-                      </select>
+                        placeholder="e.g., Once daily, Twice daily at 8am & 5pm"
+                      />
                     )}
                   />
                   {errors.frequency && (
                     <p className="text-red-600 text-sm mt-1">{errors.frequency.message}</p>
                   )}
                 </div>
-
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Duration *
+                  <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
+                    Start Date *
                   </label>
                   <Controller
-                    name="duration"
+                    name="startDate"
                     control={control}
                     render={({ field }) => (
                       <input
                         {...field}
-                        type="text"
+                        id="startDate"
+                        type="date"
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="e.g., 7 days, 2 weeks, ongoing"
                       />
                     )}
                   />
-                  {errors.duration && (
-                    <p className="text-red-600 text-sm mt-1">{errors.duration.message}</p>
+                  {errors.startDate && (
+                    <p className="text-red-600 text-sm mt-1">{errors.startDate.message}</p>
                   )}
                 </div>
-              </div>
 
-              {/* Administration Times */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Administration Times *
-                </label>
-                <Controller
-                  name="administrationTime"
-                  control={control}
-                  render={({ field }) => (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {[
-                        { value: 'morning', label: 'Morning (8:00 AM)' },
-                        { value: 'noon', label: 'Noon (12:00 PM)' },
-                        { value: 'afternoon', label: 'Afternoon (3:00 PM)' },
-                        { value: 'evening', label: 'Evening (6:00 PM)' },
-                        { value: 'before_breakfast', label: 'Before Breakfast' },
-                        { value: 'after_breakfast', label: 'After Breakfast' },
-                        { value: 'before_lunch', label: 'Before Lunch' },
-                        { value: 'after_lunch', label: 'After Lunch' }
-                      ].map(time => (
-                        <label key={time.value} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={(field.value || []).includes(time.value)}
-                            onChange={(e) => handleTimeChange(time.value, e.target.checked, field)}
-                            className="mr-2"
-                          />
-                          <span className="text-sm">{time.label}</span>
-                        </label>
-                      ))}
-
-                      {/* Additional time slots for "Other" frequency */}
-                      {control.getValues('frequency') === 'other' && (
-                        <>
-                          <div className="col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Specify Other Times
-                            </label>
-                            <Controller
-                              name="otherTimes"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  {...field}
-                                  type="text"
-                                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                                  placeholder="e.g., 10:00 AM, 2:00 PM"
-                                />
-                              )}
-                            />
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                />
-                {errors.administrationTime && (
-                  <p className="text-red-600 text-sm mt-1">{errors.administrationTime.message}</p>
-                )}
-              </div>
-
-              {/* Medical Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prescribed By *
+                  <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-2">
+                    End Date *
                   </label>
                   <Controller
-                    name="prescribedBy"
+                    name="endDate"
                     control={control}
                     render={({ field }) => (
                       <input
                         {...field}
-                        type="text"
+                        id="endDate"
+                        type="date"
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="Doctor's name and contact"
                       />
                     )}
                   />
-                  {errors.prescribedBy && (
-                    <p className="text-red-600 text-sm mt-1">{errors.prescribedBy.message}</p>
+                  {errors.endDate && (
+                    <p className="text-red-600 text-sm mt-1">{errors.endDate.message}</p>
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Emergency Contact *
-                  </label>
-                  <Controller
-                    name="emergencyContact"
-                    control={control}
-                    render={({ field }) => (
-                      <input
-                        {...field}
-                        type="text"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="Parent/Guardian contact number"
-                      />
-                    )}
-                  />
-                  {errors.emergencyContact && (
-                    <p className="text-red-600 text-sm mt-1">{errors.emergencyContact.message}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Detailed Information */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                 <div>
+                  <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-2">
                     Reason for Medication *
                   </label>
                   <Controller
@@ -459,6 +377,7 @@ const MedicationSubmission = () => {
                     render={({ field }) => (
                       <textarea
                         {...field}
+                        id="reason"
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                         rows="3"
                         placeholder="Describe the medical condition requiring this medication"
@@ -469,126 +388,45 @@ const MedicationSubmission = () => {
                     <p className="text-red-600 text-sm mt-1">{errors.reason.message}</p>
                   )}
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Administration Instructions *
-                  </label>
-                  <Controller
-                    name="instructions"
-                    control={control}
-                    render={({ field }) => (
-                      <textarea
-                        {...field}
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                        rows="3"
-                        placeholder="Detailed instructions for administering the medication"
-                      />
-                    )}
-                  />
-                  {errors.instructions && (
-                    <p className="text-red-600 text-sm mt-1">{errors.instructions.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Possible Side Effects
-                  </label>
-                  <Controller
-                    name="sideEffects"
-                    control={control}
-                    render={({ field }) => (
-                      <textarea
-                        {...field}
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                        rows="2"
-                        placeholder="List any known side effects and what to watch for"
-                      />
-                    )}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Storage Instructions
-                  </label>
-                  <Controller
-                    name="storageInstructions"
-                    control={control}
-                    render={({ field }) => (
-                      <input
-                        {...field}
-                        type="text"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="e.g., Store in refrigerator, Keep at room temperature"
-                      />
-                    )}
-                  />
-                </div>
               </div>
 
-              {/* File Upload */}
+              {/* Removed sections for administration times, prescribedBy, sideEffects, storage, emergency contact, signature, doctor note */}
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Doctor's Note/Prescription
+                <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
+                  Additional Notes / Instructions
                 </label>
                 <Controller
-                  name="doctorNote"
+                  name="notes"
                   control={control}
-                  render={({ field: { onChange } }) => (
-                    <input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={(e) => onChange(e.target.files)}
+                  render={({ field }) => (
+                    <textarea
+                      {...field}
+                      id="notes"
                       className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                      rows="4"
+                      placeholder="Any additional information, specific administration instructions, or details for the nurse (e.g., 'Administer with food', 'Student knows how to take it')"
                     />
                   )}
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  Upload doctor's note or prescription (PDF, JPG, PNG files only)
-                </p>
+                {/* errors.notes is not shown as it's optional, but you can add if needed */}
               </div>
 
-              {/* Consent */}
-              <div className="border-t border-gray-200 pt-6">
-                <div className="space-y-4">
-                  <Controller
-                    name="parentSignature"
-                    control={control}
-                    render={({ field }) => (
-                      <label className="flex items-start">
-                        <input
-                          type="checkbox"
-                          checked={field.value}
-                          onChange={field.onChange}
-                          className="mt-1 mr-3"
-                        />
-                        <div className="text-sm">
-                          <p className="font-medium text-gray-900">Parent/Guardian Consent *</p>
-                          <p className="text-gray-600">
-                            I hereby give my consent for the school medical staff to administer the above-mentioned 
-                            medication to my child as prescribed. I understand that I am responsible for providing 
-                            the medication in its original container with proper labeling, and I will notify the 
-                            school immediately of any changes to the medication regimen.
-                          </p>
-                        </div>
-                      </label>
-                    )}
-                  />
-                  {errors.parentSignature && (
-                    <p className="text-red-600 text-sm">{errors.parentSignature.message}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Submit Buttons */}
               <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={() => {
                     setShowForm(false);
-                    reset({ studentId: selectedStudentId, administrationTime: [], parentSignature: false }); // Reset form but keep studentId
+                    reset({
+                        studentCode: selectedStudentCode, 
+                        medicationName: '',
+                        dosage: '',
+                        frequency: '',
+                        startDate: '',
+                        endDate: '',
+                        reason: '',
+                        notes: ''
+                    });
                   }}
                   className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                 >
@@ -606,98 +444,76 @@ const MedicationSubmission = () => {
           </div>
         )}
 
-        {/* Submissions List */}
-        {selectedStudentId && ( // Only show submissions list if a child is selected
-            <div className="bg-white rounded-lg shadow">
+        {selectedStudentCode && (
+            <div className="bg-white rounded-lg shadow mt-8">
                 <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900">
-                    Previous Submissions for {children.find(c => c.id === selectedStudentId)?.fullName || 'Selected Child'}
+                    Medication Requests for {children.find(c => c.studentCode === selectedStudentCode)?.fullName || 'Selected Child'}
                 </h2>
                 </div>
                 
-                {loading && ( // Loading indicator for submissions
+                {loadingRequests && (
                     <div className="p-6 text-center">
                         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto"></div>
-                        <p className="mt-2 text-gray-600">Loading submissions...</p>
+                        <p className="mt-2 text-gray-600">Loading requests...</p>
                     </div>
                 )}
 
-                {!loading && submissions.length === 0 && (
+                {!loadingRequests && requests.length === 0 && (
                     <div className="p-6 text-center text-gray-500">
-                        No medication submissions found for this child.
+                        No medication requests found for this child.
                     </div>
                 )}
 
-                {!loading && submissions.length > 0 && (
+                {!loadingRequests && requests.length > 0 && (
                     <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Medication
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Dosage
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Frequency
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Submitted
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
-                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medication</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates (Start-End)</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested On</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {submissions.length === 0 ? (
-                          <tr>
-                            <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                              No medication submissions found
-                            </td>
-                          </tr>
-                        ) : (
-                          submissions.map((submission) => (
-                            <tr key={submission.id} className="hover:bg-gray-50">
+                        {requests.map((request) => (
+                            <tr key={request.requestId} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {submission.medicationName}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {submission.reason}
-                                </div>
+                                <div className="text-sm font-medium text-gray-900">{request.medicationName}</div>
+                                <div className="text-sm text-gray-500">Dosage: {request.dosage}</div>
+                                <div className="text-sm text-gray-500">Freq: {request.frequency}</div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {submission.dosage}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {submission.frequency}
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(submission.status)}`}>
-                                  {submission.status}
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(request.status)}`}>
+                                  {request.status ? request.status.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) : 'N/A'}
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {new Date(submission.submittedAt).toLocaleDateString()}
+                                {new Date(request.requestDate).toLocaleDateString()}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button className="text-indigo-600 hover:text-indigo-900 mr-4">
+                                <button 
+                                  onClick={() => navigate(`/parent/medication-request/${request.requestId}`, { state: { requestDetail: request } })} 
+                                  className="text-indigo-600 hover:text-indigo-900 mr-4"
+                                >
                                   View Details
                                 </button>
-                                {submission.status === 'pending' && (
-                                  <button className="text-red-600 hover:text-red-900">
-                                    Cancel
+                                {(request.status === 'PENDING') && (
+                                  <button 
+                                    onClick={() => handleCancelRequest(request.requestId)}
+                                    className="text-red-600 hover:text-red-900"
+                                  >
+                                    Cancel Request
                                   </button>
                                 )}
                               </td>
                             </tr>
-                          ))
-                        )}
+                          ))}
                       </tbody>
                     </table>
                     </div>

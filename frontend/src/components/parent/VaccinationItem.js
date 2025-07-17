@@ -1,7 +1,6 @@
 import React from 'react';
 
 const VaccinationItem = React.memo(({ vaccination, index, onChange, onRemove }) => {
-  console.log(`Rendering VaccinationItem: ${index}`);
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
       <input

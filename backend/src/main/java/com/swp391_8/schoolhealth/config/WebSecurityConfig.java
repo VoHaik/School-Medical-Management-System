@@ -50,23 +50,19 @@ public class WebSecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
-    }
-
-    @Bean
+    }    @Bean
     public PasswordEncoder passwordEncoder() {
         // For testing: use NoOp password encoder (stores passwords in plain text)
         // WARNING: This is only for development/testing purposes
-        // return org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance(); // Commented out NoOp
+        return org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance(); // ENABLED for testing
         
         // For production, use BCrypt:
-        return new BCryptPasswordEncoder(); // UNCOMMENTED for production
-    }
-
-    @Bean
+        // return new BCryptPasswordEncoder(); // COMMENTED OUT for testing
+    }    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         // Set up a more permissive CORS configuration for development
-        configuration.setAllowedOriginPatterns(java.util.Arrays.asList("http://localhost:3000")); // MODIFIED: Use specific origin pattern
+        configuration.setAllowedOriginPatterns(java.util.Arrays.asList("http://localhost:3000", "http://localhost:5173")); // Support both React dev servers
         configuration.setAllowedHeaders(java.util.Arrays.asList("*"));
         configuration.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
         configuration.setAllowCredentials(true);
@@ -89,26 +85,45 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // For debugging, temporarily allow all requests to test connectivity
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Use the local bean
             .csrf(csrf -> csrf.disable()) // Disable CSRF entirely for simplicity in development
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll() // Common authentication endpoints
-                .requestMatchers("/api/blog").permitAll() // Cho phép GET /api/blog không cần xác thực
-                .requestMatchers("/api/blog/**").permitAll() // Cho phép GET /api/blog/{id} không cần xác thực
+                // Public API endpoints - MUST come first
+                .requestMatchers("/api/auth/**").permitAll() // Authentication endpoints
+                .requestMatchers(HttpMethod.GET, "/api/blog").permitAll() // Public blog list endpoint
+                .requestMatchers(HttpMethod.GET, "/api/blog/{id}").permitAll() // Public blog detail endpoint
+                .requestMatchers("/api/grade-levels/**").permitAll() // Grade levels endpoints for selection
+                .requestMatchers("/api/parent-registration/submit").permitAll() // Parent registration submission
+                .requestMatchers(HttpMethod.POST, "/api/parent-registration/submit").permitAll() // Explicitly allow POST
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS preflight requests for all paths
+                
+                // Admin-only API endpoints
+                .requestMatchers("/api/parent-registration/requests/**").hasRole("ADMIN") // Admin parent registration management
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                
+                // Authenticated API endpoints
+                .requestMatchers("/api/medication-requests/**").authenticated()
+                .requestMatchers("/api/health-declaration/**").authenticated()
+                .requestMatchers("/api/nurse/**").authenticated()
+                .requestMatchers("/api/**").authenticated() // All other API endpoints require authentication
+                
+                // Static resource paths
                 .requestMatchers("/").permitAll()
                 .requestMatchers("/*.html").permitAll()
                 .requestMatchers("/register.html").permitAll()
-                .requestMatchers("/auth-test.html").permitAll() // Allow test page
+                .requestMatchers("/auth-test.html").permitAll()
                 .requestMatchers("/css/**").permitAll()
                 .requestMatchers("/js/**").permitAll()
                 .requestMatchers("/images/**").permitAll()
                 .requestMatchers("/favicon.ico").permitAll()
-                .requestMatchers("/logo192.png").permitAll() // Thêm cho phép truy cập logo192.png
-                .anyRequest().authenticated() // All other requests must be authenticated
+                .requestMatchers("/logo192.png").permitAll()
+                .requestMatchers("/static/**").permitAll() // All static resources in the /static directory
+                
+                // Default rule for non-API requests
+                .anyRequest().permitAll()
             );
 
         http.authenticationProvider(authenticationProvider());

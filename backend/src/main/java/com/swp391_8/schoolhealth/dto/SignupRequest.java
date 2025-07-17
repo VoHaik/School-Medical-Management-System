@@ -25,7 +25,12 @@ public class SignupRequest {
     @Email
     private String email;
 
-    private String phone;    private UserRole role = UserRole.Student;
+    private String phone;
+
+    private String gender; // Added gender
+    private String relationship; // Added relationship (for Parent)
+
+    private UserRole role = UserRole.Student; // Default role
 
     // Manual getters/setters for compatibility
     public String getUsername() {
@@ -66,6 +71,22 @@ public class SignupRequest {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getGender() { // Added getter for gender
+        return gender;
+    }
+
+    public void setGender(String gender) { // Added setter for gender
+        this.gender = gender;
+    }
+
+    public String getRelationship() { // Added getter for relationship
+        return relationship;
+    }
+
+    public void setRelationship(String relationship) { // Added setter for relationship
+        this.relationship = relationship;
     }
 
     public UserRole getRole() {

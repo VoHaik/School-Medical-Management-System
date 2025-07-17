@@ -1,7 +1,6 @@
 import React from 'react';
 
 const ChronicIllnessItem = React.memo(({ illness, index, onChange, onRemove }) => {
-  console.log(`Rendering ChronicIllnessItem: ${index}`);
   return (
     <div className="flex items-center space-x-2">
       <input

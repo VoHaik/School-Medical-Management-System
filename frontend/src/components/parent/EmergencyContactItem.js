@@ -1,7 +1,6 @@
 import React from 'react';
 
 const EmergencyContactItem = React.memo(({ contact, index, onChange, onRemove }) => {
-  console.log(`Rendering EmergencyContactItem: ${index}`);
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
       <input

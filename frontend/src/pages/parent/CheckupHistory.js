@@ -16,47 +16,22 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   TextField,
   InputAdornment,
-  IconButton,
-  Tooltip,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider,
-  Alert,
-  LinearProgress,
   Avatar,
-  Badge
+  Alert
 } from '@mui/material';
 import {
   HealthAndSafety,
   Search,
-  FilterList,
-  Download,
-  Print,
   Visibility,
-  Close,
   Schedule,
-  Assignment,
-  TrendingUp,
-  Warning,
   CheckCircle,
-  MonitorHeart,
-  Height,
-  FitnessCenter,
-  Psychology,
   LocalHospital
 } from '@mui/icons-material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { format, parseISO, subMonths } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
-// Mock data for checkup history
+// Simplified mock data for checkup information
 const mockCheckupData = {
   student: {
     id: 'STU-2024-001',
@@ -80,24 +55,9 @@ const mockCheckupData = {
       location: 'School Health Clinic',
       status: 'completed',
       overallScore: 95,
-      measurements: {
-        height: 165.2,
-        weight: 58.5,
-        bmi: 21.4,
-        bloodPressure: '110/70',
-        heartRate: 72,
-        temperature: 36.8
-      },
-      screenings: [
-        { test: 'Vision Screening', result: '20/20', status: 'normal' },
-        { test: 'Hearing Test', result: 'Normal', status: 'normal' },
-        { test: 'Dental Check', result: '2 cavities', status: 'requires-followup' },
-        { test: 'Mental Health Screening', result: 'No concerns', status: 'normal' }
-      ],
       notes: 'Student is in excellent health. Recommend follow-up dental care for cavities.',
       followUpRequired: true,
-      followUpDate: '2024-02-15',
-      followUpReason: 'Dental treatment'
+      followUpDate: '2024-02-15'
     },
     {
       id: 2,
@@ -107,19 +67,6 @@ const mockCheckupData = {
       location: 'Sports Medicine Clinic',
       status: 'completed',
       overallScore: 98,
-      measurements: {
-        height: 163.8,
-        weight: 56.2,
-        bmi: 21.0,
-        bloodPressure: '108/68',
-        heartRate: 68,
-        temperature: 36.6
-      },
-      screenings: [
-        { test: 'Cardiovascular Screening', result: 'Excellent', status: 'normal' },
-        { test: 'Musculoskeletal Exam', result: 'No issues', status: 'normal' },
-        { test: 'Flexibility Test', result: 'Above average', status: 'normal' }
-      ],
       notes: 'Cleared for all sports activities. Excellent cardiovascular fitness.',
       followUpRequired: false
     },
@@ -131,48 +78,9 @@ const mockCheckupData = {
       location: 'School Health Office',
       status: 'completed',
       overallScore: 88,
-      measurements: {
-        height: 162.1,
-        weight: 54.8,
-        bmi: 20.9,
-        bloodPressure: '112/72',
-        heartRate: 75,
-        temperature: 36.7
-      },
-      screenings: [
-        { test: 'Vision Screening', result: '20/25', status: 'monitor' },
-        { test: 'Hearing Test', result: 'Normal', status: 'normal' },
-        { test: 'Scoliosis Screening', result: 'Normal', status: 'normal' }
-      ],
       notes: 'Slight vision decline noted. Recommend eye exam.',
       followUpRequired: true,
-      followUpDate: '2023-06-15',
-      followUpReason: 'Eye examination'
-    },
-    {
-      id: 4,
-      date: '2023-01-12',
-      type: 'Annual Physical Examination',
-      provider: 'Dr. Sarah Johnson',
-      location: 'School Health Clinic',
-      status: 'completed',
-      overallScore: 91,
-      measurements: {
-        height: 160.5,
-        weight: 53.2,
-        bmi: 20.6,
-        bloodPressure: '105/65',
-        heartRate: 70,
-        temperature: 36.5
-      },
-      screenings: [
-        { test: 'Vision Screening', result: '20/20', status: 'normal' },
-        { test: 'Hearing Test', result: 'Normal', status: 'normal' },
-        { test: 'Dental Check', result: 'Good oral health', status: 'normal' },
-        { test: 'Mental Health Screening', result: 'No concerns', status: 'normal' }
-      ],
-      notes: 'Overall excellent health. Continue current health practices.',
-      followUpRequired: false
+      followUpDate: '2023-06-15'
     }
   ],
   upcomingCheckups: [
@@ -185,18 +93,6 @@ const mockCheckupData = {
       status: 'scheduled',
       notes: 'Annual comprehensive health examination'
     }
-  ],
-  growthData: [
-    { date: '2023-01', height: 160.5, weight: 53.2, bmi: 20.6 },
-    { date: '2023-05', height: 162.1, weight: 54.8, bmi: 20.9 },
-    { date: '2023-09', height: 163.8, weight: 56.2, bmi: 21.0 },
-    { date: '2024-01', height: 165.2, weight: 58.5, bmi: 21.4 }
-  ],
-  vitalTrends: [
-    { date: '2023-01', systolic: 105, diastolic: 65, heartRate: 70 },
-    { date: '2023-05', systolic: 112, diastolic: 72, heartRate: 75 },
-    { date: '2023-09', systolic: 108, diastolic: 68, heartRate: 68 },
-    { date: '2024-01', systolic: 110, diastolic: 70, heartRate: 72 }
   ]
 };
 
@@ -214,40 +110,44 @@ function TabPanel({ children, value, index, ...other }) {
   );
 }
 
-const CheckupHistory = () => {
+const CheckupInformation = () => {
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedCheckup, setSelectedCheckup] = useState(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterYear, setFilterYear] = useState('all');
   const [data, setData] = useState(mockCheckupData);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
-  const handleViewDetails = (checkup) => {
-    setSelectedCheckup(checkup);
-    setDetailsOpen(true);
-  };
-
-  const handleCloseDetails = () => {
-    setDetailsOpen(false);
-    setSelectedCheckup(null);
-  };
-
   const filteredCheckups = data.checkupHistory.filter(checkup => {
     const matchesSearch = checkup.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          checkup.provider.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesYear = filterYear === 'all' || 
-                       new Date(checkup.date).getFullYear().toString() === filterYear;
-    return matchesSearch && matchesYear;
+    return matchesSearch;
   });
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'normal':
+      case 'completed':
         return 'success';
+      case 'scheduled':
+        return 'primary';
+      case 'pending':
+        return 'warning';
+      default:
+        return 'default';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle />;
+      case 'scheduled':
+        return <Schedule />;
+      default:
+        return <LocalHospital />;
+    }
+  };
       case 'monitor':
         return 'warning';
       case 'requires-followup':

@@ -13,14 +13,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/consultations")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true") // Updated CORS for consistency
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"}, allowCredentials = "true") // Updated CORS for consistency
 public class ConsultationController {
 
     @Autowired
     private ConsultationService consultationService;
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN') or @securityService.isParentOfStudentByConsultationId(authentication, #id)")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or @securityService.isParentOfStudentByConsultationId(authentication, #id)")
     public ResponseEntity<?> getConsultationById(@PathVariable Integer id) {
         try {
             ConsultationDTO consultation = consultationService.findById(id);
@@ -32,12 +32,12 @@ public class ConsultationController {
         }
     }
 
-    @GetMapping("/student/{studentId}")
-    // Assuming securityService.isParentOfStudent(authentication, studentId) or similar method exists for this check
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN') or @securityService.isParentOfStudent(authentication, #studentId)")
-    public ResponseEntity<?> getConsultationsByStudentId(@PathVariable Integer studentId) {
+    @GetMapping("/student/{studentCode}") // Changed from studentId to studentCode
+    // Assuming securityService.isParentOfStudentByCode(authentication, studentCode) or similar method exists for this check
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or @securityService.isParentOfStudentByCode(authentication, #studentCode)") // Updated to use isParentOfStudentByCode
+    public ResponseEntity<?> getConsultationsByStudentId(@PathVariable String studentCode) { // Changed from Integer studentId to String studentCode
         try {
-            List<ConsultationDTO> consultations = consultationService.findByStudentId(studentId);
+            List<ConsultationDTO> consultations = consultationService.findByStudentCode(studentCode); // Changed from findByStudentId to findByStudentCode
             if (consultations.isEmpty()) {
                 return ResponseEntity.noContent().build();
             }
@@ -48,7 +48,7 @@ public class ConsultationController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<?> createConsultation(@RequestBody ConsultationDTO consultationDTO) {
         try {
             ConsultationDTO createdConsultation = consultationService.createConsultation(consultationDTO);
@@ -61,7 +61,7 @@ public class ConsultationController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<?> updateConsultation(@PathVariable Integer id, @RequestBody ConsultationDTO consultationDTO) {
         try {
             ConsultationDTO updatedConsultation = consultationService.updateConsultation(id, consultationDTO);
@@ -74,7 +74,7 @@ public class ConsultationController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SCHOOLNURSE') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<?> deleteConsultation(@PathVariable Integer id) {
         try {
             consultationService.deleteConsultation(id);

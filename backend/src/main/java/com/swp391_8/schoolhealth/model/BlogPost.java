@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDateTime;
 
@@ -19,16 +20,22 @@ public class BlogPost {
     @Column(name = "post_id")
     private Integer id;
 
+    @Nationalized
     @Column(nullable = false, length = 200)
-    private String title;    @Column(nullable = false, columnDefinition = "TEXT")
+    private String title;
+
+    @Nationalized
+    @Column(nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String content;
 
+    @Nationalized
     @Column(length = 500)
     private String summary;
 
     @ElementCollection
     @CollectionTable(name = "blog_post_tags", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "tag")
+    @Nationalized
     private java.util.List<String> tags;
 
     @Column(name = "category_id")

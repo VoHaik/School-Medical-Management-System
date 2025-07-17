@@ -1,5 +1,6 @@
 package com.swp391_8.schoolhealth.service;
 
+import com.swp391_8.schoolhealth.dto.BlogPostDTO;
 import com.swp391_8.schoolhealth.exception.ResourceNotFoundException;
 import com.swp391_8.schoolhealth.model.BlogPost;
 import com.swp391_8.schoolhealth.model.User;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class BlogPostService {
@@ -66,5 +68,45 @@ public class BlogPostService {
     public void deletePost(Integer id) {
         BlogPost blogPost = getPostById(id);
         blogPostRepository.delete(blogPost);
+    }
+
+    public List<BlogPostDTO> getAllPostsDTO() {
+        return blogPostRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    
+    public BlogPostDTO getPostDTOById(Integer id) {
+        BlogPost post = getPostById(id);
+        return convertToDTO(post);
+    }
+
+    public List<BlogPostDTO> getPostsDTOByAuthorId(Integer authorId) {
+        return blogPostRepository.findByAuthorId(authorId)
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private BlogPostDTO convertToDTO(BlogPost post) {
+        BlogPostDTO dto = new BlogPostDTO();
+        dto.setId(post.getId());
+        dto.setTitle(post.getTitle());
+        dto.setContent(post.getContent());
+        dto.setSummary(post.getSummary());
+        dto.setTags(post.getTags());
+        dto.setCategoryId(post.getCategoryId());
+        dto.setCreatedAt(post.getCreatedAt());
+        dto.setUpdatedAt(post.getUpdatedAt());
+        
+        if (post.getAuthor() != null) {
+            dto.setAuthorId(post.getAuthor().getUserId());
+            dto.setAuthorName(post.getAuthor().getFullName());
+            dto.setAuthorRole("School Nurse"); // Since only nurses can post now
+            dto.setAuthorTitle("Healthcare Professional");
+        }
+        
+        return dto;
     }
 }

@@ -1,11 +1,12 @@
 import React, { useContext, useState } from 'react'; // Added useState
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import DarkModeToggle from './DarkModeToggle';
+import ThemeToggle from './shared/ThemeToggle';
 import AppMenu from './AppMenu'; // Import the new AppMenu component
-import { IconButton, Badge } from '@mui/material'; // For menu button
+import { IconButton } from '@mui/material'; // For menu button. Removed Badge as NotificationBell handles it.
 import MenuIcon from '@mui/icons-material/Menu'; // Standard menu icon
-import NotificationsIcon from '@mui/icons-material/Notifications'; // Example for a notification icon
+// import NotificationsIcon from '@mui/icons-material/Notifications'; // Removed, NotificationBell handles its own icon
+import NotificationBell from './NotificationBell'; // Import NotificationBell
 
 const Header = () => {
   const { currentUser, logout, isAuthenticated } = useContext(AuthContext);
@@ -16,6 +17,7 @@ const Header = () => {
   console.log('Header render - Authentication state:', {
     isAuthenticated: isAuthenticated(),
     currentUser,
+    token: localStorage.getItem('token'),
     userRoles: currentUser?.roles,
     hasStudentRole: currentUser?.roles?.includes('ROLE_STUDENT'),
     hasParentRole: currentUser?.roles?.includes('ROLE_PARENT')
@@ -33,6 +35,7 @@ const Header = () => {
     e.preventDefault();
     logout();
     navigate('/');
+    handleCloseMenu(); // Close menu after logout
   };
 
   return (
@@ -40,19 +43,15 @@ const Header = () => {
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
           <i className="fas fa-heartbeat text-2xl mr-2 animate-pulse"></i>
-          <Link to="/" className="text-2xl font-bold hover:text-gray-200">School Health Management System</Link>
+          <Link to="/" className="text-2xl font-bold hover:text-gray-200">FPT Junior High School Health Management System</Link>
         </div>
         <nav className="flex space-x-2 items-center">
-          <DarkModeToggle />
+          <ThemeToggle />
           
           {isAuthenticated() ? (
             <>
-              {/* Notification Icon - Example */}
-              <IconButton color="inherit" onClick={() => navigate('/parent/notifications')} sx={{ mr: 1}}>
-                <Badge badgeContent={currentUser?.notificationCount || 0} color="error"> {/* Assuming notificationCount is available */}
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
+              {/* Integrate NotificationBell */}
+              <NotificationBell />
 
               {/* User Menu Button */}
               <IconButton
@@ -68,20 +67,10 @@ const Header = () => {
               <AppMenu isOpen={menuOpen} closeMenu={handleCloseMenu} />
             </>
           ) : (
-            <>
-              <Link to="/" className="nav-link px-3 py-2 rounded flex items-center">
-                <i className="fas fa-home mr-1"></i> Home
-              </Link>
-              <Link to="/#docs" className="nav-link px-3 py-2 rounded flex items-center">
-                <i className="fas fa-file-medical mr-1"></i> Health Docs
-              </Link>
-              <Link to="/#blog" className="nav-link px-3 py-2 rounded flex items-center">
-                <i className="fas fa-blog mr-1"></i> Blog
-              </Link>
-              <Link to="/login" className="nav-link px-3 py-2 rounded flex items-center">
-                <i className="fas fa-sign-in-alt mr-1"></i> Login
-              </Link>
-            </>
+            // Guest users - minimal header with just login link
+            <Link to="/login" className="nav-link px-4 py-2 bg-white text-blue-600 rounded hover:bg-gray-100 flex items-center font-medium">
+              <i className="fas fa-sign-in-alt mr-2"></i> Login
+            </Link>
           )}
         </nav>
       </div>

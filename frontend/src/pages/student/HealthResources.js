@@ -295,13 +295,11 @@ const HealthResources = () => {
 
   const handleDownload = (resource) => {
     // Implement download functionality
-    console.log('Downloading resource:', resource.title);
-  };
+    };
 
   const handleShare = (resource) => {
     // Implement share functionality
-    console.log('Sharing resource:', resource.title);
-  };
+    };
 
   const getCategoryInfo = (categoryId) => {
     return data.categories.find(cat => cat.id === categoryId);

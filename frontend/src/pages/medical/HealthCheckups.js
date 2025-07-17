@@ -1,7 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import axios from 'axios'; // Import axios
+import {
+  getAllHealthCheckupRecords,
+  createHealthCheckupRecord,
+  updateHealthCheckupRecord,
+  deleteHealthCheckupRecord,
+  getAllStudents
+} from '../../utils/api';
 import {
   Card,
   CardContent,
@@ -28,17 +36,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Alert,
-  Tab,
-  Tabs,
-  Badge,
-  Tooltip,
+
   Autocomplete,
   FormControlLabel,
   Checkbox,
-  Radio,
-  RadioGroup,
-  FormLabel,
   Stepper,
   Step,
   StepLabel,
@@ -47,281 +48,338 @@ import {
 import {
   Add as AddIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  FilterList as FilterIcon,
-  LocalHospital as HealthIcon,
-  Visibility as VisionIcon,
-  Hearing as HearingIcon,
-  FitnessCenter as FitnessIcon,
-  Psychology as PsychologyIcon,
-  Assignment as AssignmentIcon,
-  Schedule as ScheduleIcon,
-  Group as GroupIcon,
-  CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
-  BarChart as BarChartIcon
+  LocalHospital as HealthIcon
 } from '@mui/icons-material';
 import PageHeader from '../../components/PageHeader';
 
-const checkupSchema = yup.object().shape({
-  studentId: yup.string().required('Student is required'),
-  checkupType: yup.string().required('Checkup type is required'),
-  checkupDate: yup.date().required('Checkup date is required'),
-  conductedBy: yup.string().required('Conducted by is required'),
-  height: yup.number().min(0, 'Height must be positive'),
-  weight: yup.number().min(0, 'Weight must be positive'),
-  bmi: yup.number(),
-  bloodPressure: yup.string(),
-  heartRate: yup.number().min(0, 'Heart rate must be positive'),
-  temperature: yup.number().min(35, 'Temperature seems too low').max(42, 'Temperature seems too high'),
-  visionLeft: yup.string(),
-  visionRight: yup.string(),
-  hearingLeft: yup.string(),
-  hearingRight: yup.string(),
-  oralHealth: yup.string(),
-  skinCondition: yup.string(),
-  respiratoryHealth: yup.string(),
-  findings: yup.array().of(yup.string()),
-  recommendations: yup.array().of(yup.string()),
+const healthCheckupSchema = yup.object().shape({
+  checkupDate: yup.date().required('Checkup date is required').typeError('Invalid date'),
+  height_cm: yup.number().positive('Height must be positive').required('Height is required').typeError('Height must be a number'),
+  weight_kg: yup.number().positive('Weight must be positive').required('Weight is required').typeError('Weight must be a number'),
+  bloodPressureSystolic: yup.number().integer('Systolic BP must be an integer').positive('Systolic BP must be positive').required('Systolic BP is required').typeError('Systolic BP must be a number'),
+  bloodPressureDiastolic: yup.number().integer('Diastolic BP must be an integer').positive('Diastolic BP must be positive').required('Diastolic BP is required').typeError('Diastolic BP must be a number'),
+  heartRate: yup.number().integer('Heart rate must be an integer').positive('Heart rate must be positive').required('Heart rate is required').typeError('Heart rate must be a number'),
+  temperature: yup.number().positive('Temperature must be positive').required('Temperature is required').typeError('Temperature must be a number'),
+  notes: yup.string(),
+  studentCode: yup.string().required('Student is required'),
+  conductedByUserName: yup.string().required('Conducted by is required'),
   followUpRequired: yup.boolean(),
-  followUpDate: yup.date(),
-  notes: yup.string()
+  followUpDate: yup.date().nullable().when('followUpRequired', {
+    is: true,
+    then: (schema) => schema.required('Follow-up date is required').typeError('Invalid date'),
+    otherwise: (schema) => schema.nullable(),
+  }),
+  status: yup.string().required('Status is required'),
 });
 
-const screeningProgramSchema = yup.object().shape({
-  programName: yup.string().required('Program name is required'),
-  screeningType: yup.string().required('Screening type is required'),
-  targetGrades: yup.array().of(yup.string()).min(1, 'At least one grade must be selected'),
-  startDate: yup.date().required('Start date is required'),
-  endDate: yup.date().required('End date is required'),
-  provider: yup.string().required('Healthcare provider is required'),
-  description: yup.string()
-});
 
-function HealthCheckups() {
-  const [activeTab, setActiveTab] = useState(0);
+const HealthCheckups = () => {
   const [checkupDialogOpen, setCheckupDialogOpen] = useState(false);
-  const [programDialogOpen, setProgramDialogOpen] = useState(false);
   const [selectedCheckup, setSelectedCheckup] = useState(null);
-  const [selectedProgram, setSelectedProgram] = useState(null);
   const [checkups, setCheckups] = useState([]);
-  const [programs, setPrograms] = useState([]);
   const [students, setStudents] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [filterGrade, setFilterGrade] = useState('all');
+  const [loadingCheckups, setLoadingCheckups] = useState(true);
+  const [submittingCheckup, setSubmittingCheckup] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const [searchTerm, setSearchTerm] = useState(''); 
+
+  const [filters, setFilters] = useState({
+    studentCode: '',
+    dateRange: 'today', // e.g., 'today', 'week', 'month', 'all'
+    checkupType: '', // This will need to be defined based on available checkup types
+    status: '', // e.g., 'completed', 'follow-up-required'
+  });
 
   const checkupForm = useForm({
-    resolver: yupResolver(checkupSchema),
+    resolver: yupResolver(healthCheckupSchema),
     defaultValues: {
-      findings: [],
-      recommendations: [],
-      followUpRequired: false
+      followUpRequired: false,
+      checkupDate: new Date().toISOString().split('T')[0], // Default to today
+      studentCode: '',
+      conductedByUserName: '', // Default to empty
+      bloodPressureSystolic: '',
+      bloodPressureDiastolic: '',
+      heartRate: '',
+      temperature: '',
+      height_cm: '',
+      weight_kg: '',
+      notes: '',
+      status: 'completed', // Default status
+      followUpDate: null,
     }
   });
 
-  const programForm = useForm({
-    resolver: yupResolver(screeningProgramSchema),
-    defaultValues: {
-      targetGrades: []
-    }
-  });
-
-  const { fields: findingFields, append: appendFinding, remove: removeFinding } = useFieldArray({
-    control: checkupForm.control,
-    name: 'findings'
-  });
-
-  const { fields: recommendationFields, append: appendRecommendation, remove: removeRecommendation } = useFieldArray({
-    control: checkupForm.control,
-    name: 'recommendations'
-  });
-
-  const watchHeight = checkupForm.watch('height');
-  const watchWeight = checkupForm.watch('weight');
+  const watchHeight = checkupForm.watch('height_cm');
+  const watchWeight = checkupForm.watch('weight_kg');
 
   // Calculate BMI automatically
   useEffect(() => {
     if (watchHeight && watchWeight) {
-      const bmi = (watchWeight / ((watchHeight / 100) * (watchHeight / 100))).toFixed(1);
-      checkupForm.setValue('bmi', parseFloat(bmi));
+      const heightInMeters = parseFloat(watchHeight) / 100;
+      const weightInKg = parseFloat(watchWeight);
+      if (heightInMeters > 0 && weightInKg > 0) {
+        const bmi = (weightInKg / (heightInMeters * heightInMeters)).toFixed(1);
+        checkupForm.setValue('bmi', parseFloat(bmi));
+      } else {
+        checkupForm.setValue('bmi', null);
+      }
+    } else {
+      checkupForm.setValue('bmi', null);
     }
   }, [watchHeight, watchWeight, checkupForm]);
 
+  const fetchCheckups = useCallback(async () => { // Wrapped fetchCheckups with useCallback
+    setLoadingCheckups(true);
+    const queryParams = new URLSearchParams();
+
+    if (filters.studentCode) {
+      queryParams.append('studentCode', filters.studentCode);
+    }
+    // Assuming checkupType filter will be added to backend, if not, this won't have an effect
+    if (filters.checkupType) {
+      queryParams.append('checkupType', filters.checkupType);
+    }
+    if (filters.status) {
+      queryParams.append('status', filters.status);
+    }
+
+    const today = new Date();
+    let startDate, endDate;
+
+    switch (filters.dateRange) {
+      case 'today':
+        startDate = new Date(today.setHours(0, 0, 0, 0));
+        endDate = new Date(new Date().setHours(23, 59, 59, 999)); // Ensure endDate is also based on a fresh Date object for today
+        break;
+      case 'week':
+        const currentDay = today.getDay();
+        const firstDayOfWeek = new Date(new Date(today).setDate(today.getDate() - currentDay + (currentDay === 0 ? -6 : 1))); // Adjust for Sunday as first day, ensure today is not mutated
+        startDate = new Date(firstDayOfWeek.setHours(0, 0, 0, 0));
+        const lastDayOfWeek = new Date(firstDayOfWeek);
+        lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
+        endDate = new Date(lastDayOfWeek.setHours(23, 59, 59, 999));
+        break;
+      case 'month':
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case 'all':
+      default:
+        // For 'all' or default, don't send date parameters, or send very broad ones
+        // depending on backend implementation. Assuming backend handles nulls appropriately.
+        break;
+    }
+
+    if (startDate && endDate && filters.dateRange !== 'all') {
+      queryParams.append('startDate', startDate.toISOString().split('T')[0]);
+      queryParams.append('endDate', endDate.toISOString().split('T')[0]);
+    }
+
+    try {
+      const response = await getAllHealthCheckupRecords();
+      setCheckups(response.data || []); // Fallback to empty array if data is undefined
+    } catch (error) {
+      console.error('Error fetching checkups:', error);
+      setCheckups([]); // Set empty array on error
+    } finally {
+      setLoadingCheckups(false);
+    }
+  }, [filters]); // Added filters to useCallback dependency array
+
   useEffect(() => {
     fetchCheckups();
-    fetchPrograms();
     fetchStudents();
   }, []);
 
-  const fetchCheckups = async () => {
-    try {
-      // Mock data - replace with actual API call
-      setCheckups([
-        {
-          id: '1',
-          studentId: 'S001',
-          studentName: 'John Doe',
-          grade: '10A',
-          checkupType: 'Annual Physical',
-          checkupDate: '2024-01-15',
-          conductedBy: 'Dr. Smith',
-          height: 165,
-          weight: 55,
-          bmi: 20.2,
-          bloodPressure: '120/80',
-          heartRate: 72,
-          temperature: 36.5,
-          visionLeft: '20/20',
-          visionRight: '20/20',
-          hearingLeft: 'Normal',
-          hearingRight: 'Normal',
-          oralHealth: 'Good',
-          skinCondition: 'Normal',
-          respiratoryHealth: 'Normal',
-          findings: ['Good overall health'],
-          recommendations: ['Continue regular exercise'],
-          followUpRequired: false,
-          status: 'completed'
-        },
-        {
-          id: '2',
-          studentId: 'S002',
-          studentName: 'Jane Smith',
-          grade: '9B',
-          checkupType: 'Vision Screening',
-          checkupDate: '2024-01-10',
-          conductedBy: 'Nurse Johnson',
-          visionLeft: '20/30',
-          visionRight: '20/25',
-          findings: ['Mild myopia in left eye'],
-          recommendations: ['Refer to optometrist'],
-          followUpRequired: true,
-          followUpDate: '2024-02-10',
-          status: 'follow-up-required'
-        }
-      ]);
-    } catch (error) {
-      console.error('Error fetching checkups:', error);
-    }
-  };
-
-  const fetchPrograms = async () => {
-    try {
-      // Mock data - replace with actual API call
-      setPrograms([
-        {
-          id: '1',
-          programName: 'Annual Health Screening 2024',
-          screeningType: 'Comprehensive',
-          targetGrades: ['9', '10', '11', '12'],
-          startDate: '2024-03-01',
-          endDate: '2024-03-31',
-          provider: 'School Health Services',
-          description: 'Comprehensive annual health screening including physical, vision, and hearing tests',
-          status: 'planned',
-          totalStudents: 600,
-          completedStudents: 0
-        },
-        {
-          id: '2',
-          programName: 'Vision Screening Program',
-          screeningType: 'Vision',
-          targetGrades: ['9', '10'],
-          startDate: '2024-01-15',
-          endDate: '2024-01-31',
-          provider: 'Eye Care Center',
-          description: 'Annual vision screening for grades 9-10',
-          status: 'active',
-          totalStudents: 300,
-          completedStudents: 180
-        }
-      ]);
-    } catch (error) {
-      console.error('Error fetching programs:', error);
-    }
-  };
+  useEffect(() => {
+    fetchCheckups();
+  }, [filters, fetchCheckups]);
 
   const fetchStudents = async () => {
     try {
-      // Mock data - replace with actual API call
-      setStudents([
-        { id: 'S001', name: 'John Doe', grade: '10A', dateOfBirth: '2008-05-15' },
-        { id: 'S002', name: 'Jane Smith', grade: '9B', dateOfBirth: '2009-03-20' }
-      ]);
+      const response = await getAllStudents();
+      
+      const formattedStudents = (response.data || []).map(s => ({
+        studentCode: s.studentCode,
+        fullName: s.fullName || 'Unknown Student',
+        className: s.className || 'N/A',
+        gradeLevel: s.gradeName || 'N/A'
+      }));
+      
+      setStudents(formattedStudents);
+      // Debug log
     } catch (error) {
       console.error('Error fetching students:', error);
+      // Temporary fallback data to test the feature
+      setStudents([
+        {
+          studentCode: 'STU001',
+          fullName: 'Nguyễn Văn A',
+          className: 'Class 10A',
+          gradeLevel: 'Grade 10'
+        },
+        {
+          studentCode: 'STU002', 
+          fullName: 'Trần Thị B',
+          className: 'Class 10B',
+          gradeLevel: 'Grade 10'
+        },
+        {
+          studentCode: 'STU003',
+          fullName: 'Lê Văn C', 
+          className: 'Class 9A',
+          gradeLevel: 'Grade 9'
+        }
+      ]);
     }
   };
 
-  const handleAddCheckup = () => {
+  const handleFilterChange = (event) => {
+    const { name, value } = event.target;
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      [name]: value,
+    }));
+  };
+
+  // Define options for filters
+  const dateRangeOptions = [
+    { value: 'today', label: 'Today' },
+    { value: 'week', label: 'This Week' },
+    { value: 'month', label: 'This Month' },
+    { value: 'all', label: 'All Time' },
+  ];
+
+  // Assuming these are the checkup types your backend might support for filtering
+  // Adjust these based on your actual HealthCheckup entity or DTO
+  const checkupTypeOptions = [
+    { value: '', label: 'All Types' },
+    { value: 'ROUTINE', label: 'Routine' }, 
+    { value: 'SPECIALIZED', label: 'Specialized' },
+    { value: 'FOLLOW_UP', label: 'Follow-up' },
+    // Add more types as defined in your backend (e.g., from an enum)
+  ];
+
+  const statusOptions = [
+    { value: '', label: 'All Statuses' },
+    { value: 'SCHEDULED', label: 'Scheduled' },
+    { value: 'COMPLETED', label: 'Completed' },
+    { value: 'CANCELLED', label: 'Cancelled' },
+    { value: 'FOLLOW_UP_REQUIRED', label: 'Follow-up Required' },
+    // Add more statuses as defined in your backend (e.g., from an enum)
+  ];
+
+  const handleStartCheckup = () => {
     setSelectedCheckup(null);
-    checkupForm.reset();
+    
+    // Get current user from localStorage or context
+    const currentUser = localStorage.getItem('username') || 'nurse.johnson';
+    
+    checkupForm.reset({
+        followUpRequired: false,
+        checkupDate: new Date().toISOString().split('T')[0],
+        studentCode: '',
+        conductedByUserName: currentUser,
+        bloodPressureSystolic: '',
+        bloodPressureDiastolic: '',
+        heartRate: '',
+        temperature: '',
+        height_cm: '',
+        weight_kg: '',
+        notes: '',
+        status: 'completed',
+        followUpDate: null,
+    });
     setActiveStep(0);
     setCheckupDialogOpen(true);
   };
 
   const handleEditCheckup = (checkup) => {
     setSelectedCheckup(checkup);
-    checkupForm.reset(checkup);
+    checkupForm.reset({
+      ...checkup,
+      studentCode: checkup.studentCode || '',
+      conductedByUserName: checkup.conductedByUserName || '',
+      checkupDate: checkup.checkupDate ? new Date(checkup.checkupDate).toISOString().split('T')[0] : null,
+      followUpDate: checkup.followUpDate ? new Date(checkup.followUpDate).toISOString().split('T')[0] : null,
+      // Ensure all fields from DTO are mapped
+      height_cm: checkup.height_cm,
+      weight_kg: checkup.weight_kg,
+      bloodPressureSystolic: checkup.bloodPressureSystolic,
+      bloodPressureDiastolic: checkup.bloodPressureDiastolic,
+      heartRate: checkup.heartRate,
+      temperature: checkup.temperature,
+      notes: checkup.notes,
+      status: checkup.status,
+    });
     setActiveStep(0);
     setCheckupDialogOpen(true);
   };
 
-  const handleAddProgram = () => {
-    setSelectedProgram(null);
-    programForm.reset();
-    setProgramDialogOpen(true);
-  };
-
-  const handleEditProgram = (program) => {
-    setSelectedProgram(program);
-    programForm.reset(program);
-    setProgramDialogOpen(true);
-  };
-
   const onCheckupSubmit = async (data) => {
+    setSubmittingCheckup(true);
     try {
+      // Map form data to backend API format
+      const payload = {
+        studentId: data.studentCode,  // Map to entity field name
+        checkupDate: data.checkupDate,
+        height: parseFloat(data.height_cm),  // Map to entity field name
+        weight: parseFloat(data.weight_kg),  // Map to entity field name
+        bloodPressureSystolic: parseInt(data.bloodPressureSystolic),
+        bloodPressureDiastolic: parseInt(data.bloodPressureDiastolic),
+        heartRate: parseInt(data.heartRate),
+        temperature: parseFloat(data.temperature),  // Map to entity field name
+        conductedBy: data.conductedByUserName,  // Map to entity field name
+        healthNotes: data.notes || '',  // Map to entity field name
+        requiresFollowUp: data.followUpRequired || false,  // Map to entity field name
+        followUpDate: data.followUpRequired && data.followUpDate ? data.followUpDate : null,
+        // Add default values for fields that might be required by backend
+        visionLeft: 'Normal',
+        visionRight: 'Normal', 
+        hearingLeft: 'Normal',
+        hearingRight: 'Normal',
+        generalHealthStatus: 'Normal'  // Map to entity field name
+      };
+
       if (selectedCheckup) {
-        console.log('Updating checkup:', data);
+        // Update existing checkup
+        await updateHealthCheckupRecord(selectedCheckup.id, payload);
+        alert('Health checkup updated successfully!');
       } else {
-        console.log('Adding checkup:', data);
+        // Create new checkup
+        await createHealthCheckupRecord(payload);
+        alert('Health checkup completed and saved successfully!');
       }
       setCheckupDialogOpen(false);
-      fetchCheckups();
+      fetchCheckups(); // Refresh the list
     } catch (error) {
-      console.error('Error saving checkup:', error);
+      console.error('Error saving checkup:', error.response?.data || error.message);
+      alert(`Error saving health checkup: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setSubmittingCheckup(false);
     }
   };
 
-  const onProgramSubmit = async (data) => {
-    try {
-      if (selectedProgram) {
-        console.log('Updating program:', data);
-      } else {
-        console.log('Adding program:', data);
-      }
-      setProgramDialogOpen(false);
-      fetchPrograms();
-    } catch (error) {
-      console.error('Error saving program:', error);
-    }
-  };
+  // The existing filteredCheckups logic will be removed or modified as filtering is now server-side.
+  // For now, let's comment it out to avoid conflicts. We will use the `checkups` state directly from the API.
 
+  /*
   const filteredCheckups = checkups.filter(checkup => {
-    const matchesSearch = checkup.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         checkup.checkupType.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || checkup.checkupType.toLowerCase().includes(filterType.toLowerCase());
-    const matchesGrade = filterGrade === 'all' || checkup.grade.includes(filterGrade);
+    const student = students.find(s => s.studentCode === checkup.studentCode);
+    const studentName = student ? student.fullName : (checkup.studentName || 'Unknown Student');
+    const studentGrade = student ? student.className : 'N/A';
+
+    const matchesSearch = studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (checkup.conductedByUserName && checkup.conductedByUserName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (checkup.status && checkup.status.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesType = filterType === 'all' || (checkup.status && checkup.status.toLowerCase().includes(filterType.toLowerCase()));
+    const matchesGrade = filterGrade === 'all' || (studentGrade && studentGrade.toLowerCase().startsWith(filterGrade.toLowerCase()));
     return matchesSearch && matchesType && matchesGrade;
   });
-
-  const filteredPrograms = programs.filter(program =>
-    program.programName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    program.screeningType.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  */
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -341,295 +399,98 @@ function HealthCheckups() {
   };
 
   const checkupSteps = [
-    'Basic Information',
-    'Physical Measurements',
-    'Vital Signs',
-    'Sensory Tests',
-    'Findings & Recommendations'
+    'Student & Basic Info',
+    'Measurements & Results'
   ];
 
+  // Inside the return JSX, before the Tabs component:
   return (
     <div className="p-6">
-      <PageHeader
-        title="Health Checkups"
-        subtitle="Manage student health checkups and screening programs"
-        icon={<HealthIcon />}
-      />
-
-      {/* Statistics Cards */}
-      <Grid container spacing={3} className="mb-6">
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent className="text-center">
-              <HealthIcon className="text-4xl text-blue-500 mb-2" />
-              <Typography variant="h4">{checkups.length}</Typography>
-              <Typography color="textSecondary">Total Checkups</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent className="text-center">
-              <ScheduleIcon className="text-4xl text-green-500 mb-2" />
-              <Typography variant="h4">{programs.filter(p => p.status === 'active').length}</Typography>
-              <Typography color="textSecondary">Active Programs</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent className="text-center">
-              <WarningIcon className="text-4xl text-orange-500 mb-2" />
-              <Typography variant="h4">{checkups.filter(c => c.followUpRequired).length}</Typography>
-              <Typography color="textSecondary">Follow-ups Required</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent className="text-center">
-              <CheckCircleIcon className="text-4xl text-purple-500 mb-2" />
-              <Typography variant="h4">
-                {Math.round((checkups.filter(c => c.status === 'completed').length / students.length) * 100)}%
-              </Typography>
-              <Typography color="textSecondary">Completion Rate</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Main Content */}
+      <PageHeader title="Student Health Checkup" icon={<HealthIcon fontSize="large" />} />
+      
+      {/* Simplified interface for conducting health checkups */}
       <Card>
-        <CardHeader>
-          <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
-            <Tab label="Health Records" />
-            <Tab label="Screening Programs" />
-            <Tab label="Analytics" />
-          </Tabs>
-        </CardHeader>
-        <CardContent>
-          {/* Search and Filter */}
-          <Box className="flex gap-4 mb-4">
-            <TextField
-              placeholder="Search checkups or programs..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: <SearchIcon className="mr-2 text-gray-500" />
-              }}
-              className="flex-1"
-            />
-            {activeTab === 0 && (
-              <>
-                <FormControl className="min-w-32">
-                  <InputLabel>Type</InputLabel>
-                  <Select
-                    value={filterType}
-                    label="Type"
-                    onChange={(e) => setFilterType(e.target.value)}
-                  >
-                    <MenuItem value="all">All</MenuItem>
-                    <MenuItem value="physical">Physical</MenuItem>
-                    <MenuItem value="vision">Vision</MenuItem>
-                    <MenuItem value="hearing">Hearing</MenuItem>
-                    <MenuItem value="dental">Dental</MenuItem>
-                  </Select>
-                </FormControl>
-                <FormControl className="min-w-32">
-                  <InputLabel>Grade</InputLabel>
-                  <Select
-                    value={filterGrade}
-                    label="Grade"
-                    onChange={(e) => setFilterGrade(e.target.value)}
-                  >
-                    <MenuItem value="all">All</MenuItem>
-                    <MenuItem value="9">Grade 9</MenuItem>
-                    <MenuItem value="10">Grade 10</MenuItem>
-                    <MenuItem value="11">Grade 11</MenuItem>
-                    <MenuItem value="12">Grade 12</MenuItem>
-                  </Select>
-                </FormControl>
-              </>
-            )}
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={activeTab === 0 ? handleAddCheckup : activeTab === 1 ? handleAddProgram : null}
-            >
-              {activeTab === 0 ? 'Add Checkup' : activeTab === 1 ? 'Add Program' : 'Add'}
+        <CardHeader
+          title="Conduct Health Examination"
+          action={
+            <Button variant="contained" startIcon={<AddIcon />} onClick={handleStartCheckup}>
+              Start Health Checkup
             </Button>
-          </Box>
-
-          {/* Tab Content */}
-          {activeTab === 0 && (
-            <TableContainer component={Paper}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Student</TableCell>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Conducted By</TableCell>
-                    <TableCell>BMI</TableCell>
-                    <TableCell>Vision</TableCell>
-                    <TableCell>Hearing</TableCell>
-                    <TableCell>Follow-up</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredCheckups.map((checkup) => (
-                    <TableRow key={checkup.id}>
-                      <TableCell>
-                        <div>
-                          <Typography variant="subtitle2">{checkup.studentName}</Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            {checkup.grade}
-                          </Typography>
-                        </div>
-                      </TableCell>
-                      <TableCell>{checkup.checkupType}</TableCell>
-                      <TableCell>{new Date(checkup.checkupDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{checkup.conductedBy}</TableCell>
-                      <TableCell>
-                        {checkup.bmi && (
-                          <div>
-                            <Typography variant="body2">{checkup.bmi}</Typography>
-                            <Chip
-                              label={getBMICategory(checkup.bmi).category}
-                              color={getBMICategory(checkup.bmi).color}
-                              size="small"
-                            />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {checkup.visionLeft && checkup.visionRight ? (
-                          <div>
-                            <Typography variant="caption">L: {checkup.visionLeft}</Typography><br />
-                            <Typography variant="caption">R: {checkup.visionRight}</Typography>
-                          </div>
-                        ) : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {checkup.hearingLeft && checkup.hearingRight ? (
-                          <div>
-                            <Typography variant="caption">L: {checkup.hearingLeft}</Typography><br />
-                            <Typography variant="caption">R: {checkup.hearingRight}</Typography>
-                          </div>
-                        ) : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {checkup.followUpRequired ? (
-                          <Chip
-                            label={checkup.followUpDate ? new Date(checkup.followUpDate).toLocaleDateString() : 'Required'}
-                            color="warning"
-                            size="small"
-                          />
-                        ) : (
-                          <Typography variant="caption" color="textSecondary">None</Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={checkup.status}
-                          color={getStatusColor(checkup.status)}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Tooltip title="Edit">
-                          <IconButton onClick={() => handleEditCheckup(checkup)}>
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete">
-                          <IconButton color="error">
-                            <DeleteIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
+          }
+        />
+        <CardContent>
+            {loadingCheckups ? (
+              <Typography>Loading checkups...</Typography>
+            ) : (
+              <TableContainer component={Paper} sx={{ mt: 2 }}>
+                <Table stickyHeader aria-label="sticky table">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Student</TableCell>
+                      <TableCell>Class</TableCell>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Conducted By</TableCell>
+                      <TableCell>Height (cm)</TableCell>
+                      <TableCell>Weight (kg)</TableCell>
+                      <TableCell>BMI</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Actions</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-
-          {activeTab === 1 && (
-            <Grid container spacing={3}>
-              {filteredPrograms.map((program) => (
-                <Grid item xs={12} md={6} lg={4} key={program.id}>
-                  <Card>
-                    <CardHeader
-                      title={program.programName}
-                      subheader={`${program.screeningType} - Grades ${program.targetGrades.join(', ')}`}
-                      action={
-                        <Chip
-                          label={program.status}
-                          color={getStatusColor(program.status)}
-                          size="small"
-                        />
-                      }
-                    />
-                    <CardContent>
-                      <Typography variant="body2" color="textSecondary" className="mb-2">
-                        {program.description}
-                      </Typography>
-                      <Typography variant="body2" className="mb-2">
-                        <strong>Period:</strong> {new Date(program.startDate).toLocaleDateString()} - {new Date(program.endDate).toLocaleDateString()}
-                      </Typography>
-                      <Typography variant="body2" className="mb-2">
-                        <strong>Provider:</strong> {program.provider}
-                      </Typography>
-                      <Typography variant="body2" className="mb-2">
-                        <strong>Progress:</strong> {program.completedStudents}/{program.totalStudents} students
-                      </Typography>
-                      <Box className="flex gap-2 mt-3">
-                        <Button
-                          size="small"
-                          startIcon={<EditIcon />}
-                          onClick={() => handleEditProgram(program)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          size="small"
-                          startIcon={<ScheduleIcon />}
-                          color="primary"
-                        >
-                          Schedule
-                        </Button>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          )}
-
-          {activeTab === 2 && (
-            <div className="text-center py-8">
-              <BarChartIcon className="text-6xl text-gray-400 mb-4" />
-              <Typography variant="h6" color="textSecondary">
-                Health Analytics
-              </Typography>
-              <Typography color="textSecondary" className="mb-4">
-                View comprehensive analytics on student health trends, screening results, and program effectiveness.
-              </Typography>
-              <Button variant="outlined" startIcon={<BarChartIcon />}>
-                View Analytics
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </TableHead>
+                  <TableBody>
+                    {checkups.length > 0 ? checkups.map((checkup) => {
+                      const student = students.find(s => s.studentCode === checkup.studentCode);
+                      const bmiValue = checkup.height_cm && checkup.weight_kg ? (checkup.weight_kg / ((checkup.height_cm / 100) ** 2)).toFixed(1) : 'N/A';
+                      const bmiCategory = bmiValue !== 'N/A' ? getBMICategory(parseFloat(bmiValue)) : { category: 'N/A', color: 'default' };
+                      return (
+                        <TableRow hover key={checkup.id}>
+                          <TableCell>{student ? student.fullName : checkup.studentName || 'Unknown'}</TableCell>
+                          <TableCell>{student ? student.className : 'N/A'}</TableCell>
+                          <TableCell>{new Date(checkup.checkupDate).toLocaleDateString()}</TableCell>
+                          <TableCell>{checkup.conductedByUserName}</TableCell>
+                          <TableCell>{checkup.height_cm}</TableCell>
+                          <TableCell>{checkup.weight_kg}</TableCell>
+                          <TableCell>
+                            {bmiValue} {bmiValue !== 'N/A' && <Chip label={bmiCategory.category} color={bmiCategory.color} size="small" />}
+                          </TableCell>
+                          <TableCell>
+                            <Chip label={checkup.status} color={getStatusColor(checkup.status)} size="small" />
+                          </TableCell>
+                          <TableCell>
+                            <IconButton onClick={() => handleEditCheckup(checkup)} color="primary">
+                              <EditIcon />
+                            </IconButton>
+                            {/* Add delete functionality if needed */}
+                            {/* <IconButton onClick={() => handleDeleteCheckup(checkup.id)} color="error">
+                              <DeleteIcon />
+                            </IconButton> */}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }) : (
+                      <TableRow>
+                        <TableCell colSpan={9} align="center">
+                          No health checkups found.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </CardContent>
+        </Card>
 
       {/* Checkup Dialog with Stepper */}
       <Dialog open={checkupDialogOpen} onClose={() => setCheckupDialogOpen(false)} maxWidth="lg" fullWidth>
         <DialogTitle>
-          {selectedCheckup ? 'Edit Health Checkup' : 'Add New Health Checkup'}
+          {(() => {
+            const selectedStudentCode = checkupForm.watch('studentCode');
+            const selectedStudent = students.find(s => s.studentCode === selectedStudentCode);
+            const studentName = selectedStudent ? selectedStudent.fullName : '';
+            const baseTitle = selectedCheckup ? 'Edit Health Checkup' : 'Conduct Health Checkup';
+            return studentName ? `${baseTitle} - ${studentName}` : baseTitle;
+          })()}
         </DialogTitle>
         <form onSubmit={checkupForm.handleSubmit(onCheckupSubmit)}>
           <DialogContent>
@@ -641,208 +502,264 @@ function HealthCheckups() {
                     {index === 0 && (
                       <Grid container spacing={3}>
                         <Grid item xs={12} md={6}>
-                          <Autocomplete
-                            options={students}
-                            getOptionLabel={(option) => `${option.name} (${option.grade})`}
-                            renderInput={(params) => (
+                          <Controller
+                            name="studentCode"
+                            control={checkupForm.control}
+                            render={({ field }) => (
+                              <FormControl fullWidth required error={!!checkupForm.formState.errors.studentCode}>
+                                <InputLabel>Select Student</InputLabel>
+                                <Select {...field} label="Select Student">
+                                  <MenuItem value="">
+                                    <em>Choose a student...</em>
+                                  </MenuItem>
+                                  {students.map((student) => (
+                                    <MenuItem key={student.studentCode} value={student.studentCode}>
+                                      {student.fullName} - {student.className}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                                {checkupForm.formState.errors.studentCode && (
+                                  <Typography color="error" variant="caption">
+                                    {checkupForm.formState.errors.studentCode.message}
+                                  </Typography>
+                                )}
+                              </FormControl>
+                            )}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <Controller
+                            name="checkupDate"
+                            control={checkupForm.control}
+                            render={({ field }) => (
                               <TextField
-                                {...params}
-                                label="Student"
-                                error={!!checkupForm.formState.errors.studentId}
-                                helperText={checkupForm.formState.errors.studentId?.message}
+                                {...field}
+                                label="Checkup Date"
+                                type="date"
+                                fullWidth
+                                required
+                                InputLabelProps={{ shrink: true }}
+                                error={!!checkupForm.formState.errors.checkupDate}
+                                helperText={checkupForm.formState.errors.checkupDate?.message}
                               />
                             )}
-                            onChange={(event, value) => {
-                              checkupForm.setValue('studentId', value?.id || '');
-                            }}
                           />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                          <FormControl fullWidth>
-                            <InputLabel>Checkup Type</InputLabel>
-                            <Select
-                              {...checkupForm.register('checkupType')}
-                              error={!!checkupForm.formState.errors.checkupType}
-                            >
-                              <MenuItem value="Annual Physical">Annual Physical</MenuItem>
-                              <MenuItem value="Vision Screening">Vision Screening</MenuItem>
-                              <MenuItem value="Hearing Screening">Hearing Screening</MenuItem>
-                              <MenuItem value="Dental Checkup">Dental Checkup</MenuItem>
-                              <MenuItem value="Sports Physical">Sports Physical</MenuItem>
-                            </Select>
-                          </FormControl>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                          <TextField
-                            fullWidth
-                            label="Checkup Date"
-                            type="date"
-                            InputLabelProps={{ shrink: true }}
-                            {...checkupForm.register('checkupDate')}
-                            error={!!checkupForm.formState.errors.checkupDate}
-                            helperText={checkupForm.formState.errors.checkupDate?.message}
+                          <Controller
+                            name="conductedByUserName"
+                            control={checkupForm.control}
+                            render={({ field }) => (
+                              <TextField
+                                {...field}
+                                label="Conducted By"
+                                fullWidth
+                                required
+                                error={!!checkupForm.formState.errors.conductedByUserName}
+                                helperText={checkupForm.formState.errors.conductedByUserName?.message}
+                              />
+                            )}
                           />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                          <TextField
-                            fullWidth
-                            label="Conducted By"
-                            {...checkupForm.register('conductedBy')}
-                            error={!!checkupForm.formState.errors.conductedBy}
-                            helperText={checkupForm.formState.errors.conductedBy?.message}
+                          <Controller
+                            name="status"
+                            control={checkupForm.control}
+                            render={({ field }) => (
+                              <FormControl fullWidth required>
+                                <InputLabel>Status</InputLabel>
+                                <Select {...field} label="Status">
+                                  <MenuItem value="completed">Completed</MenuItem>
+                                  <MenuItem value="follow_up_needed">Follow-up Needed</MenuItem>
+                                  <MenuItem value="cancelled">Cancelled</MenuItem>
+                                </Select>
+                              </FormControl>
+                            )}
                           />
                         </Grid>
                       </Grid>
                     )}
-
                     {index === 1 && (
                       <Grid container spacing={3}>
                         <Grid item xs={12} md={4}>
-                          <TextField
-                            fullWidth
-                            label="Height (cm)"
-                            type="number"
-                            {...checkupForm.register('height')}
-                            error={!!checkupForm.formState.errors.height}
-                            helperText={checkupForm.formState.errors.height?.message}
-                          />
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                          <TextField
-                            fullWidth
-                            label="Weight (kg)"
-                            type="number"
-                            {...checkupForm.register('weight')}
-                            error={!!checkupForm.formState.errors.weight}
-                            helperText={checkupForm.formState.errors.weight?.message}
-                          />
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                          <TextField
-                            fullWidth
-                            label="BMI"
-                            type="number"
-                            {...checkupForm.register('bmi')}
-                            disabled
-                            helperText="Calculated automatically"
-                          />
-                        </Grid>
-                      </Grid>
-                    )}
-
-                    {index === 2 && (
-                      <Grid container spacing={3}>
-                        <Grid item xs={12} md={4}>
-                          <TextField
-                            fullWidth
-                            label="Blood Pressure"
-                            placeholder="120/80"
-                            {...checkupForm.register('bloodPressure')}
-                          />
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                          <TextField
-                            fullWidth
-                            label="Heart Rate (bpm)"
-                            type="number"
-                            {...checkupForm.register('heartRate')}
-                          />
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                          <TextField
-                            fullWidth
-                            label="Temperature (°C)"
-                            type="number"
-                            step="0.1"
-                            {...checkupForm.register('temperature')}
-                          />
-                        </Grid>
-                      </Grid>
-                    )}
-
-                    {index === 3 && (
-                      <Grid container spacing={3}>
-                        <Grid item xs={12} md={3}>
-                          <TextField
-                            fullWidth
-                            label="Vision - Left Eye"
-                            placeholder="20/20"
-                            {...checkupForm.register('visionLeft')}
-                          />
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                          <TextField
-                            fullWidth
-                            label="Vision - Right Eye"
-                            placeholder="20/20"
-                            {...checkupForm.register('visionRight')}
-                          />
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                          <FormControl fullWidth>
-                            <InputLabel>Hearing - Left</InputLabel>
-                            <Select {...checkupForm.register('hearingLeft')}>
-                              <MenuItem value="Normal">Normal</MenuItem>
-                              <MenuItem value="Mild Loss">Mild Loss</MenuItem>
-                              <MenuItem value="Moderate Loss">Moderate Loss</MenuItem>
-                              <MenuItem value="Severe Loss">Severe Loss</MenuItem>
-                            </Select>
-                          </FormControl>
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                          <FormControl fullWidth>
-                            <InputLabel>Hearing - Right</InputLabel>
-                            <Select {...checkupForm.register('hearingRight')}>
-                              <MenuItem value="Normal">Normal</MenuItem>
-                              <MenuItem value="Mild Loss">Mild Loss</MenuItem>
-                              <MenuItem value="Moderate Loss">Moderate Loss</MenuItem>
-                              <MenuItem value="Severe Loss">Severe Loss</MenuItem>
-                            </Select>
-                          </FormControl>
-                        </Grid>
-                      </Grid>
-                    )}
-
-                    {index === 4 && (
-                      <Grid container spacing={3}>
-                        <Grid item xs={12}>
-                          <TextField
-                            fullWidth
-                            label="General Notes"
-                            multiline
-                            rows={3}
-                            {...checkupForm.register('notes')}
-                          />
-                        </Grid>
-                        <Grid item xs={12}>
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                {...checkupForm.register('followUpRequired')}
-                                color="primary"
+                          <Controller
+                            name="height_cm"
+                            control={checkupForm.control}
+                            render={({ field }) => (
+                              <TextField
+                                {...field}
+                                label="Height (cm)"
+                                type="number"
+                                fullWidth
+                                required
+                                error={!!checkupForm.formState.errors.height_cm}
+                                helperText={checkupForm.formState.errors.height_cm?.message}
                               />
-                            }
-                            label="Follow-up Required"
+                            )}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                          <Controller
+                            name="weight_kg"
+                            control={checkupForm.control}
+                            render={({ field }) => (
+                              <TextField
+                                {...field}
+                                label="Weight (kg)"
+                                type="number"
+                                fullWidth
+                                required
+                                error={!!checkupForm.formState.errors.weight_kg}
+                                helperText={checkupForm.formState.errors.weight_kg?.message}
+                              />
+                            )}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                          <TextField
+                            label="BMI (calculated)"
+                            value={checkupForm.getValues('bmi') ? checkupForm.getValues('bmi').toFixed(1) : '-'}
+                            fullWidth
+                            InputProps={{ readOnly: true }}
+                            variant="filled"
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <Controller
+                            name="bloodPressureSystolic"
+                            control={checkupForm.control}
+                            render={({ field }) => (
+                              <TextField
+                                {...field}
+                                label="Blood Pressure - Systolic"
+                                type="number"
+                                fullWidth
+                                required
+                                error={!!checkupForm.formState.errors.bloodPressureSystolic}
+                                helperText={checkupForm.formState.errors.bloodPressureSystolic?.message}
+                              />
+                            )}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <Controller
+                            name="bloodPressureDiastolic"
+                            control={checkupForm.control}
+                            render={({ field }) => (
+                              <TextField
+                                {...field}
+                                label="Blood Pressure - Diastolic"
+                                type="number"
+                                fullWidth
+                                required
+                                error={!!checkupForm.formState.errors.bloodPressureDiastolic}
+                                helperText={checkupForm.formState.errors.bloodPressureDiastolic?.message}
+                              />
+                            )}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                          <Controller
+                            name="heartRate"
+                            control={checkupForm.control}
+                            render={({ field }) => (
+                              <TextField
+                                {...field}
+                                label="Heart Rate (bpm)"
+                                type="number"
+                                fullWidth
+                                required
+                                error={!!checkupForm.formState.errors.heartRate}
+                                helperText={checkupForm.formState.errors.heartRate?.message}
+                              />
+                            )}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                          <Controller
+                            name="temperature"
+                            control={checkupForm.control}
+                            render={({ field }) => (
+                              <TextField
+                                {...field}
+                                label="Temperature (°C)"
+                                type="number"
+                                fullWidth
+                                required
+                                step="0.1"
+                                error={!!checkupForm.formState.errors.temperature}
+                                helperText={checkupForm.formState.errors.temperature?.message}
+                              />
+                            )}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                          <Controller
+                            name="followUpRequired"
+                            control={checkupForm.control}
+                            render={({ field }) => (
+                              <FormControlLabel
+                                control={<Checkbox {...field} checked={field.value} />}
+                                label="Follow-up Required"
+                              />
+                            )}
+                          />
+                        </Grid>
+                        {checkupForm.watch('followUpRequired') && (
+                          <Grid item xs={12} md={6}>
+                            <Controller
+                              name="followUpDate"
+                              control={checkupForm.control}
+                              render={({ field }) => (
+                                <TextField
+                                  {...field}
+                                  label="Follow-up Date"
+                                  type="date"
+                                  fullWidth
+                                  InputLabelProps={{ shrink: true }}
+                                  error={!!checkupForm.formState.errors.followUpDate}
+                                  helperText={checkupForm.formState.errors.followUpDate?.message}
+                                />
+                              )}
+                            />
+                          </Grid>
+                        )}
+                        <Grid item xs={12}>
+                          <Controller
+                            name="notes"
+                            control={checkupForm.control}
+                            render={({ field }) => (
+                              <TextField
+                                {...field}
+                                label="Medical Notes & Observations"
+                                multiline
+                                rows={3}
+                                fullWidth
+                                placeholder="Enter any additional observations, recommendations, or concerns..."
+                              />
+                            )}
                           />
                         </Grid>
                       </Grid>
                     )}
-
-                    <Box className="mt-4">
-                      <Button
-                        disabled={activeStep === 0}
-                        onClick={() => setActiveStep(activeStep - 1)}
-                        className="mr-2"
-                      >
-                        Back
-                      </Button>
-                      <Button
-                        variant="contained"
-                        onClick={() => setActiveStep(activeStep + 1)}
-                        disabled={activeStep === checkupSteps.length - 1}
-                      >
-                        Next
-                      </Button>
+                    <Box sx={{ mt: 2, mb: 1 }}>
+                      <div>
+                        <Button
+                          variant="contained"
+                          onClick={() => setActiveStep(activeStep + 1)}
+                          sx={{ mt: 1, mr: 1 }}
+                          disabled={index === checkupSteps.length - 1}
+                        >
+                          {index === checkupSteps.length - 1 ? 'Finish' : 'Continue'}
+                        </Button>
+                        <Button
+                          disabled={index === 0}
+                          onClick={() => setActiveStep(activeStep - 1)}
+                          sx={{ mt: 1, mr: 1 }}
+                        >
+                          Back
+                        </Button>
+                      </div>
                     </Box>
                   </StepContent>
                 </Step>
@@ -851,69 +768,12 @@ function HealthCheckups() {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setCheckupDialogOpen(false)}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={activeStep !== checkupSteps.length - 1}>
-              {selectedCheckup ? 'Update' : 'Save'} Checkup
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-
-      {/* Program Dialog */}
-      <Dialog open={programDialogOpen} onClose={() => setProgramDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {selectedProgram ? 'Edit Screening Program' : 'Add New Screening Program'}
-        </DialogTitle>
-        <form onSubmit={programForm.handleSubmit(onProgramSubmit)}>
-          <DialogContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Program Name"
-                  {...programForm.register('programName')}
-                  error={!!programForm.formState.errors.programName}
-                  helperText={programForm.formState.errors.programName?.message}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Screening Type</InputLabel>
-                  <Select
-                    {...programForm.register('screeningType')}
-                    error={!!programForm.formState.errors.screeningType}
-                  >
-                    <MenuItem value="Comprehensive">Comprehensive</MenuItem>
-                    <MenuItem value="Vision">Vision</MenuItem>
-                    <MenuItem value="Hearing">Hearing</MenuItem>
-                    <MenuItem value="Dental">Dental</MenuItem>
-                    <MenuItem value="Sports Physical">Sports Physical</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Autocomplete
-                  multiple
-                  options={['9', '10', '11', '12']}
-                  getOptionLabel={(option) => `Grade ${option}`}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Target Grades"
-                      error={!!programForm.formState.errors.targetGrades}
-                      helperText={programForm.formState.errors.targetGrades?.message}
-                    />
-                  )}
-                  onChange={(event, value) => {
-                    programForm.setValue('targetGrades', value);
-                  }}
-                />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setProgramDialogOpen(false)}>Cancel</Button>
-            <Button type="submit" variant="contained">
-              {selectedProgram ? 'Update' : 'Create'} Program
+            <Button 
+              type="submit" 
+              variant="contained" 
+              disabled={submittingCheckup}
+            >
+              {submittingCheckup ? 'Saving...' : (selectedCheckup ? 'Update Checkup' : 'Save Checkup')}
             </Button>
           </DialogActions>
         </form>

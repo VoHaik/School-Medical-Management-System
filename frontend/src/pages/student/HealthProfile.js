@@ -7,27 +7,18 @@ import {
   Tabs,
   Tab,
   Button,
-  TextField,
   Grid,
-  Paper,
   Avatar,
   Chip,
   List,
   ListItem,
   ListItemText,
   ListItemIcon,
-  Divider,
   Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  LinearProgress,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton,
-  Tooltip
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -38,23 +29,20 @@ import {
   Vaccines as VaccineIcon,
   Height as HeightIcon,
   Monitor as VitalsIcon,
-  ExpandMore as ExpandMoreIcon,
   Edit as EditIcon,
   Print as PrintIcon,
-  Share as ShareIcon,
   Warning as EmergencyIcon,
   Phone as PhoneIcon,
   Email as EmailIcon,
   Home as HomeIcon,
   School as SchoolIcon,
-  CalendarToday as CalendarIcon
 } from '@mui/icons-material';
 
 // Mock student data
 const studentData = {
   id: 1,
   name: 'Emma Johnson',
-  studentId: 'STU2024001',
+  studentCode: 'STU2024001', // Changed from studentId
   grade: '5',
   dateOfBirth: '2014-03-15',
   age: 10,
@@ -82,9 +70,9 @@ const studentData = {
   ],
   address: {
     street: '123 Oak Street',
-    city: 'Springfield',
-    state: 'IL',
-    zipCode: '62701'
+    city: 'Hanoi',
+    state: 'Vietnam',
+    zipCode: '10000'
   },
   classInfo: {
     teacher: 'Mrs. Smith',
@@ -236,7 +224,7 @@ const HealthProfile = () => {
               <Grid container spacing={2}>
                 <Grid item>
                   <Typography variant="body2" color="textSecondary">
-                    <strong>Student ID:</strong> {studentData.studentId}
+                    <strong>Student Code:</strong> {studentData.studentCode} {/* Changed from studentId */}
                   </Typography>
                 </Grid>
                 <Grid item>

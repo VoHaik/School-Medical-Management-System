@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDateTime;
 
@@ -15,25 +16,28 @@ import java.time.LocalDateTime;
 public class Consultation {    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "consultation_id")
-    private Integer id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
     @ManyToOne
-    @JoinColumn(name = "checkup_id")
-    private HealthCheckup checkup;
+    @JoinColumn(name = "student_checkup_id") // Updated column name for clarity
+    private HealthCheckup healthCheckup; // Changed from StudentHealthCheckup to HealthCheckup
 
     @Column(name = "consultation_date", nullable = false)
     private LocalDateTime consultationDate;
 
+    @Nationalized
     @Column(length = 100)
     private String location;
 
-    @Column(columnDefinition = "TEXT")
+    @Nationalized
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
-    @Column(columnDefinition = "TEXT")
+    @Nationalized
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     private String result;
 }

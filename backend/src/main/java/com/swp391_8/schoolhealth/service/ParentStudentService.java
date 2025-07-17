@@ -2,10 +2,12 @@ package com.swp391_8.schoolhealth.service;
 
 import com.swp391_8.schoolhealth.model.Student;
 import com.swp391_8.schoolhealth.model.User;
+import com.swp391_8.schoolhealth.model.Parent;
 import com.swp391_8.schoolhealth.model.ParentStudentRelationship;
 import com.swp391_8.schoolhealth.repository.StudentRepository;
 import com.swp391_8.schoolhealth.repository.ParentStudentRelationshipRepository;
 import com.swp391_8.schoolhealth.repository.UserRepository;
+import com.swp391_8.schoolhealth.repository.ParentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,9 @@ public class ParentStudentService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private ParentRepository parentRepository;
 
     @Transactional
     public Student createStudentForParent(Map<String, Object> studentData, User parentUser) {
@@ -57,14 +62,38 @@ public class ParentStudentService {
         // Generate a unique student code
         if (!studentData.containsKey("studentCode") || 
             ((String) studentData.get("studentCode")).isEmpty()) {
-            String studentCode = "STU" + System.currentTimeMillis();
+            // Consider a more robust unique code generation strategy if needed
+            String studentCode = "STU" + System.currentTimeMillis() + "_" + parentUser.getId(); 
             student.setStudentCode(studentCode);
         } else {
-            student.setStudentCode((String) studentData.get("studentCode"));
+            String providedStudentCode = (String) studentData.get("studentCode");
+            // Optional: Check if studentCode already exists to prevent duplicates if it's user-provided
+            if (studentRepository.findByStudentCode(providedStudentCode).isPresent()) {
+                throw new RuntimeException("Student with code " + providedStudentCode + " already exists.");
+            }
+            student.setStudentCode(providedStudentCode);
         }
 
         // Save the student
         Student savedStudent = studentRepository.save(student);
+
+        // Find or create Parent record for the User
+        // The Parent entity no longer has a direct User field.
+        // We find the Parent by the user_code which is now stored in Parent's parent_code.
+        Optional<Parent> parentOptional = parentRepository.findByParentCode(parentUser.getUserCode());
+        Parent parent;
+        
+        if (parentOptional.isPresent()) {
+            parent = parentOptional.get();
+        } else {
+            // Create new Parent record if it doesn't exist
+            parent = new Parent();
+            // parent.setUser(parentUser); // Removed: Parent no longer directly holds User
+            parent.setParentCode(parentUser.getUserCode()); // User's user_code is Parent's parent_code
+            // Set other Parent-specific fields if any, e.g., from parentUser or studentData if applicable
+            // parent.setFullName(parentUser.getFullName()); // Example if Parent has a fullName field
+            parent = parentRepository.save(parent);
+        }
 
         // Create parent-student relationship
         String relationshipType = "Parent"; // Default relationship type
@@ -73,7 +102,7 @@ public class ParentStudentService {
         }
 
         ParentStudentRelationship relationship = new ParentStudentRelationship(
-            parentUser, savedStudent, relationshipType
+            parent, savedStudent, relationshipType
         );
         parentStudentRelationshipRepository.save(relationship);
 
@@ -81,30 +110,37 @@ public class ParentStudentService {
     }
 
     @Transactional
-    public Student updateStudentForParent(Integer studentId, Map<String, Object> studentData, Integer parentUserId) {
+    public Student updateStudentForParent(Student studentToUpdate, Map<String, Object> studentData, Integer parentUserId) {
+        // Find the user by ID first to get their user_code
+        Optional<User> userOptional = userRepository.findById(parentUserId);
+        if (!userOptional.isPresent()) {
+            throw new RuntimeException("User not found for ID: " + parentUserId);
+        }
+        User parentUser = userOptional.get();
+        String parentCode = parentUser.getUserCode();
+
+        // Find the parent by parentCode (which is the user's user_code)
+        Optional<Parent> parentOptional = parentRepository.findByParentCode(parentCode);
+        if (!parentOptional.isPresent()) {
+            throw new RuntimeException("Parent record not found for user code: " + parentCode);
+        }
+        // Parent parent = parentOptional.get(); // Not strictly needed if only parentCode is used below
+        
         // Verify that the parent has permission to update this student
-        if (!parentStudentRelationshipRepository.existsByParentUserIdAndStudentStudentId(parentUserId, studentId)) {
-            throw new RuntimeException("Parent does not have permission to update this student");
+        if (!parentStudentRelationshipRepository.existsByParentParentCodeAndStudentStudentCode(parentCode, studentToUpdate.getStudentCode())) {
+            throw new RuntimeException("Parent does not have permission to update this student or student code is invalid.");
         }
-
-        // Get the existing student
-        Optional<Student> studentOptional = studentRepository.findById(studentId);
-        if (!studentOptional.isPresent()) {
-            throw new RuntimeException("Student not found with id: " + studentId);
-        }
-
-        Student student = studentOptional.get();
 
         // Update the student information
         if (studentData.containsKey("fullName")) {
-            student.setFullName((String) studentData.get("fullName"));
+            studentToUpdate.setFullName((String) studentData.get("fullName"));
         }
         
         if (studentData.containsKey("dateOfBirth")) {
             String dateOfBirthStr = (String) studentData.get("dateOfBirth");
             if (dateOfBirthStr != null && !dateOfBirthStr.isEmpty()) {
                 try {
-                    student.setDateOfBirth(java.time.LocalDate.parse(dateOfBirthStr));
+                    studentToUpdate.setDateOfBirth(java.time.LocalDate.parse(dateOfBirthStr));
                 } catch (Exception e) {
                     throw new RuntimeException("Invalid date format for dateOfBirth");
                 }
@@ -112,39 +148,71 @@ public class ParentStudentService {
         }
         
         if (studentData.containsKey("gender")) {
-            student.setGender((String) studentData.get("gender"));
+            studentToUpdate.setGender((String) studentData.get("gender"));
         }
         
         if (studentData.containsKey("className")) {
-            student.setClassName((String) studentData.get("className"));
+            studentToUpdate.setClassName((String) studentData.get("className"));
         }
 
-        return studentRepository.save(student);
+        return studentRepository.save(studentToUpdate);
     }
 
-    public boolean isParentOfStudent(Integer parentUserId, Integer studentId) {
-        return parentStudentRelationshipRepository.existsByParentUserIdAndStudentStudentId(parentUserId, studentId);
-    }
+    public boolean isParentOfStudent(Integer parentUserId, String studentCode) {
+        // Find the user by ID first to get their user_code
+        Optional<User> userOptional = userRepository.findById(parentUserId);
+        if (!userOptional.isPresent()) {
+            return false;
+        }
+        User parentUser = userOptional.get();
+        String parentCode = parentUser.getUserCode();
 
-    public ParentStudentRelationship createParentStudentRelationship(Integer parentUserId, Integer studentId, String relationshipType) {
-        Optional<User> parentOptional = userRepository.findById(parentUserId);
-        Optional<Student> studentOptional = studentRepository.findById(studentId);
-
+        Optional<Parent> parentOptional = parentRepository.findByParentCode(parentCode);
         if (!parentOptional.isPresent()) {
-            throw new RuntimeException("Parent user not found with id: " + parentUserId);
+            return false;
         }
+        
+        return parentStudentRelationshipRepository.existsByParentParentCodeAndStudentStudentCode(
+            parentOptional.get().getParentCode(), studentCode);
+    }
+
+    public ParentStudentRelationship createParentStudentRelationship(Integer parentUserId, String studentCode, String relationshipType) {
+        Optional<User> userOptional = userRepository.findById(parentUserId);
+        Optional<Student> studentOptional = studentRepository.findByStudentCode(studentCode);
+
+        if (!userOptional.isPresent()) {
+            throw new RuntimeException("User not found with id: " + parentUserId);
+        }
+        User parentUser = userOptional.get();
 
         if (!studentOptional.isPresent()) {
-            throw new RuntimeException("Student not found with id: " + studentId);
+            throw new RuntimeException("Student not found with code: " + studentCode);
+        }
+        
+        // Find or create Parent record using user_code as parent_code
+        Optional<Parent> parentOptional = parentRepository.findByParentCode(parentUser.getUserCode());
+        Parent parent;
+        
+        if (parentOptional.isPresent()) {
+            parent = parentOptional.get();
+        } else {
+            // Create new Parent record
+            parent = new Parent();
+            // parent.setUser(parentUser); // Removed
+            parent.setParentCode(parentUser.getUserCode());
+            // Set other Parent-specific fields if any
+            // parent.setFullName(parentUser.getFullName()); // Example
+            parent = parentRepository.save(parent);
         }
 
         // Check if relationship already exists
-        if (parentStudentRelationshipRepository.existsByParentUserIdAndStudentStudentId(parentUserId, studentId)) {
+        if (parentStudentRelationshipRepository.existsByParentParentCodeAndStudentStudentCode(
+                parent.getParentCode(), studentCode)) {
             throw new RuntimeException("Parent-student relationship already exists");
         }
 
         ParentStudentRelationship relationship = new ParentStudentRelationship(
-            parentOptional.get(), 
+            parent, 
             studentOptional.get(), 
             relationshipType
         );

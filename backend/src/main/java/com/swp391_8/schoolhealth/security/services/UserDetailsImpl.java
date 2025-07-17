@@ -15,6 +15,8 @@ public class UserDetailsImpl implements UserDetails {
     private String username;
     private String email;
     private String fullName;
+    private String phoneNumber;
+    private String userCode;
 
     @JsonIgnore
     private String password;
@@ -23,27 +25,29 @@ public class UserDetailsImpl implements UserDetails {
 
     private boolean isActive;
 
-    public UserDetailsImpl(Integer id, String username, String email, String fullName, String password,
-                           Collection<? extends GrantedAuthority> authorities, boolean isActive) {
+    public UserDetailsImpl(Integer id, String username, String email, String fullName, String phoneNumber, String password,
+                           Collection<? extends GrantedAuthority> authorities, boolean isActive, String userCode) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.fullName = fullName;
+        this.phoneNumber = phoneNumber;
         this.password = password;
         this.authorities = authorities;
         this.isActive = isActive;
-    }    public static UserDetailsImpl build(User user) {
-        // Create authorities based on the user\'s role
+        this.userCode = userCode;
+    }
+
+    public static UserDetailsImpl build(User user) {
+        // Create authorities based on the user's role
         List<GrantedAuthority> authorities = new ArrayList<>();
         
         // Add authority from the role field (ManyToOne relationship)
-        if (user.getRole() != null && user.getRole().getName() != null) {
-            String roleName = user.getRole().getName().toUpperCase();
-            if (roleName.startsWith("ROLE_")) {
-                authorities.add(new SimpleGrantedAuthority(roleName));
-            } else {
-                authorities.add(new SimpleGrantedAuthority("ROLE_" + roleName));
-            }
+        if (user.getRole() != null && user.getRole().getRoleName() != null) {
+            String roleName = user.getRole().getRoleName();
+            // Add both with and without ROLE_ prefix for compatibility
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + roleName.toUpperCase()));
+            authorities.add(new SimpleGrantedAuthority(roleName));
         }
 
         return new UserDetailsImpl(
@@ -51,26 +55,40 @@ public class UserDetailsImpl implements UserDetails {
                 user.getUsername(),
                 user.getEmail(),
                 user.getFullName(),
+                user.getPhoneNumber(),
                 user.getPassword(),
                 authorities,
-                user.getIsActive());
+                user.getIsActive(),
+                user.getUserCode());
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
-    }    public Integer getId() {
+    }
+
+    public Integer getId() {
         return id;
     }
 
     public String getEmail() {
         return email;
-    }    public String getFullName() {
+    }
+
+    public String getFullName() {
         return fullName;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
     }
 
     public boolean getIsActive() {
         return isActive;
+    }
+
+    public String getUserCode() {
+        return userCode;
     }
 
     @Override

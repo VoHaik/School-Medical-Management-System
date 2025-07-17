@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "Users")
@@ -20,25 +22,29 @@ public class User {
     @Column(name = "user_id")
     private Integer userId;
 
-    @Nationalized
     @Column(name = "username", nullable = false, unique = true, length = 50)
+    @Nationalized
     private String username;
 
-    @Nationalized
     @Column(name = "password", nullable = false, length = 255)
+    @Nationalized
     private String password;
 
+    @Column(name = "user_code", nullable = false, unique = true, length = 50)
     @Nationalized
+    private String userCode;
+
+    @Column(name = "full_name", length = 100) // Added fullName field
+    @Nationalized
+    private String fullName;
+
     @Column(name = "email", length = 100)
+    @Nationalized
     private String email;
 
+    @Column(name = "phone_number", length = 20) // Added phoneNumber field
     @Nationalized
-    @Column(name = "phone_number", length = 20)
     private String phoneNumber;
-
-    @Nationalized
-    @Column(name = "full_name", nullable = false, length = 100)
-    private String fullName;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
@@ -75,9 +81,6 @@ public class User {
     public Integer getId() { return userId; }
     public void setId(Integer id) { this.userId = id; }
     
-    public String getPhone() { return phoneNumber; }
-    public void setPhone(String phone) { this.phoneNumber = phone; }
-    
     // Explicit getters/setters to fix compilation issues
     public Integer getUserId() { return userId; }
     public void setUserId(Integer userId) { this.userId = userId; }
@@ -90,12 +93,9 @@ public class User {
     
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-    
-    public String getPhoneNumber() { return phoneNumber; }
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
-    
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
+
+    public String getPhoneNumber() { return phoneNumber; } // Added getter
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; } // Added setter
     
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
@@ -114,4 +114,18 @@ public class User {
     
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
+    
+    public String getUserCode() { return userCode; }
+    public void setUserCode(String userCode) { this.userCode = userCode; }
+
+    public String getFullName() { return fullName; } // Added getter
+    public void setFullName(String fullName) { this.fullName = fullName; } // Added setter
+
+    public Set<Role> getRoles() {
+        Set<Role> roles = new HashSet<>();
+        if (this.role != null) {
+            roles.add(this.role);
+        }
+        return roles;
+    }
 }

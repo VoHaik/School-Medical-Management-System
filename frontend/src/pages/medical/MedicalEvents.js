@@ -5,7 +5,7 @@ import * as yup from 'yup';
 import axios from 'axios';
 
 const schema = yup.object().shape({
-  studentId: yup.string().required('Student selection is required'),
+  studentCode: yup.string().required('Student selection is required'),
   eventType: yup.string().required('Event type is required'),
   severity: yup.string().required('Severity is required'),
   symptoms: yup.array().min(1, 'At least one symptom is required'),
@@ -15,10 +15,11 @@ const schema = yup.object().shape({
   parentNotified: yup.boolean(),
   referredTo: yup.string(),
   followUpRequired: yup.boolean(),
-  followUpDate: yup.date().when('followUpRequired', {
-    is: true,
-    then: yup.date().required('Follow-up date is required')
-  })
+  followUpDate: yup.date().nullable().when('followUpRequired', {
+    is: (val) => val === true, // Corrected condition for .when
+    then: (schema) => schema.required('Follow-up date is required').typeError('Invalid date'), // Corrected usage of then
+  }),
+  status: yup.string().required('Status is required') // Added status field
 });
 
 const MedicalEvents = () => {
@@ -32,31 +33,98 @@ const MedicalEvents = () => {
     dateRange: 'today',
     severity: '',
     eventType: '',
-    status: ''
+    status: '',
+    studentCode: ''
   });
+
+  const handleFilterChange = (filterName, value) => {
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      [filterName]: value
+    }));
+  };
 
   const { control, handleSubmit, reset, watch, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
       symptoms: [],
       parentNotified: false,
-      followUpRequired: false
+      followUpRequired: false,
+      studentCode: '',
+      eventType: '',
+      severity: '',
+      description: '',
+      actionTaken: '',
+      medicationGiven: '',
+      referredTo: '',
+      followUpDate: null, // Ensure it's null by default
+      status: 'active' // Added default status
     }
   });
 
   const watchFollowUpRequired = watch('followUpRequired');
 
+  // useEffect to fetch students on component mount
+  useEffect(() => {
+    fetchStudents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array means this runs once on mount
+
+  // useEffect to fetch medical events when filters change or on initial load (due to initial filters state)
   useEffect(() => {
     fetchMedicalEvents();
-    fetchStudents();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   const fetchMedicalEvents = async () => {
+    setLoading(true); // Set loading to true when fetching starts
     try {
       const token = localStorage.getItem('token');
+
+      const queryParams = { }; // Initialize as an empty object
+
+      if (filters.severity) queryParams.severity = filters.severity;
+      if (filters.eventType) queryParams.eventType = filters.eventType;
+      if (filters.status) queryParams.status = filters.status;
+      if (filters.studentCode) queryParams.studentCode = filters.studentCode;
+
+      const today = new Date();
+      let startDate, endDate;
+
+      switch (filters.dateRange) {
+        case 'today':
+          startDate = today;
+          endDate = today;
+          break;
+        case 'week':
+          const currentDay = today.getDay();
+          const firstDayOfWeek = new Date(today);
+          firstDayOfWeek.setDate(today.getDate() - (currentDay === 0 ? 6 : currentDay - 1));
+          startDate = firstDayOfWeek;
+          
+          endDate = new Date(startDate);
+          endDate.setDate(startDate.getDate() + 6);          break;
+        case 'month':
+          startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+          endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);          break;
+        case 'all':
+        default:
+          break;
+      }
+
+      const formatDateToYYYYMMDD = (date) => {
+        if (!date) return null;
+        return date.toISOString().split('T')[0];
+      };
+
+      if (startDate && filters.dateRange !== 'all') queryParams.startDate = formatDateToYYYYMMDD(startDate);
+      if (endDate && filters.dateRange !== 'all') queryParams.endDate = formatDateToYYYYMMDD(endDate);
+      
+      // queryParams are already filtered by only adding them if they have a value
+
       const response = await axios.get('/api/medical-events', {
         headers: { Authorization: `Bearer ${token}` },
-        params: filters
+        params: queryParams
       });
       setEvents(response.data);
     } catch (error) {
@@ -106,6 +174,22 @@ const MedicalEvents = () => {
     }
   };
 
+  const handleDeleteEvent = async (eventId) => {
+    if (window.confirm('Are you sure you want to delete this medical event?')) {
+      try {
+        const token = localStorage.getItem('token');
+        await axios.delete(`/api/medical-events/${eventId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        alert('Medical event deleted successfully!');
+        fetchMedicalEvents(); // Refresh the list
+      } catch (error) {
+        console.error('Error deleting medical event:', error);
+        alert('Error deleting medical event. Please try again.');
+      }
+    }
+  };
+
   const handleSymptomChange = (symptom, checked, field) => {
     const currentSymptoms = field.value || [];
     if (checked) {
@@ -117,10 +201,16 @@ const MedicalEvents = () => {
 
   const editEvent = (event) => {
     setSelectedEvent(event);
-    Object.keys(event).forEach(key => {
-      if (schema.fields[key]) {
-        reset({ ...event });
-      }
+    reset({
+      ...event, 
+      studentCode: event.studentCode || '', // DTO directly provides studentCode
+      // Ensure date fields are correctly formatted if necessary
+      eventDate: event.eventDate ? new Date(event.eventDate).toISOString().split('T')[0] : null, // Added for consistency if needed by a date picker for eventDate
+      followUpDate: event.followUpDate ? new Date(event.followUpDate).toISOString().split('T')[0] : null,
+      // Ensure symptoms is an array
+      symptoms: Array.isArray(event.symptoms) ? event.symptoms : [],
+      // status will be spread from event if present, or use existing if not in event for some reason
+      status: event.status || 'active', 
     });
     setShowForm(true);
   };
@@ -179,12 +269,27 @@ const MedicalEvents = () => {
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow mb-6 p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4"> {/* Changed to md:grid-cols-5 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Student</label>
+              <select
+                value={filters.studentCode}
+                onChange={(e) => handleFilterChange('studentCode', e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md"
+              >
+                <option value="">All Students</option>
+                {students.map(student => (
+                  <option key={student.studentCode} value={student.studentCode}>
+                    {student.fullName} ({student.studentCode})
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
               <select
                 value={filters.dateRange}
-                onChange={(e) => setFilters({ ...filters, dateRange: e.target.value })}
+                onChange={(e) => handleFilterChange('dateRange', e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
               >
                 <option value="today">Today</option>
@@ -197,7 +302,7 @@ const MedicalEvents = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Event Type</label>
               <select
                 value={filters.eventType}
-                onChange={(e) => setFilters({ ...filters, eventType: e.target.value })}
+                onChange={(e) => handleFilterChange('eventType', e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
               >
                 <option value="">All Types</option>
@@ -207,13 +312,17 @@ const MedicalEvents = () => {
                 <option value="emergency">Emergency</option>
                 <option value="medication">Medication Related</option>
                 <option value="outbreak">Disease Outbreak</option>
+                <option value="fall">Fall</option>
+                <option value="fever">Fever</option>
+                <option value="allergic_reaction">Allergic Reaction</option>
+                <option value="other">Other</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Severity</label>
               <select
                 value={filters.severity}
-                onChange={(e) => setFilters({ ...filters, severity: e.target.value })}
+                onChange={(e) => handleFilterChange('severity', e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
               >
                 <option value="">All Severities</option>
@@ -227,7 +336,7 @@ const MedicalEvents = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
               <select
                 value={filters.status}
-                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
               >
                 <option value="">All Statuses</option>
@@ -265,7 +374,7 @@ const MedicalEvents = () => {
                     Student *
                   </label>
                   <Controller
-                    name="studentId"
+                    name="studentCode"
                     control={control}
                     render={({ field }) => (
                       <select
@@ -274,15 +383,16 @@ const MedicalEvents = () => {
                       >
                         <option value="">Select student</option>
                         {students.map(student => (
-                          <option key={student.id} value={student.id}>
-                            {student.fullName} - {student.className}
+                          // Assuming student object has studentCode, fullName, className
+                          <option key={student.studentCode} value={student.studentCode}>
+                            {student.fullName} - {student.className} ({student.studentCode})
                           </option>
                         ))}
                       </select>
                     )}
                   />
-                  {errors.studentId && (
-                    <p className="text-red-600 text-sm mt-1">{errors.studentId.message}</p>
+                  {errors.studentCode && (
+                    <p className="text-red-600 text-sm mt-1">{errors.studentCode.message}</p>
                   )}
                 </div>
 
@@ -342,6 +452,32 @@ const MedicalEvents = () => {
                   )}
                 </div>
               </div>
+
+              {/* Status Field - ADDED */}
+              <div className="mt-6 mb-6"> {/* Added mb-6 for spacing */}
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status *
+                </label>
+                <Controller
+                  name="status"
+                  control={control}
+                  render={({ field }) => (
+                    <select
+                      {...field}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                      <option value="active">Active</option>
+                      <option value="resolved">Resolved</option>
+                      <option value="follow_up">Follow-up Required</option>
+                      <option value="referred">Referred</option>
+                    </select>
+                  )}
+                />
+                {errors.status && (
+                  <p className="text-red-600 text-sm mt-1">{errors.status.message}</p>
+                )}
+              </div>
+
 
               {/* Symptoms */}
               <div>
@@ -585,19 +721,19 @@ const MedicalEvents = () => {
                     <tr key={event.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          {event.student?.fullName}
+                          {event.studentCode} {/* Display student code */}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {event.student?.className}
-                        </div>
+                        {/* Student's full name and class are not directly in event DTO */}
+                        {/* To display them, you might need to find the student in the `students` array */}
+                        {/* Example: students.find(s => s.studentCode === event.studentCode)?.fullName */}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900 capitalize">
                           {event.eventType?.replace('_', ' ')}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {event.symptoms?.slice(0, 2).join(', ')}
-                          {event.symptoms?.length > 2 && '...'}
+                          {Array.isArray(event.symptoms) ? event.symptoms.slice(0, 2).join(', ') : ''}
+                          {Array.isArray(event.symptoms) && event.symptoms.length > 2 && '...'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -611,8 +747,9 @@ const MedicalEvents = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(event.createdAt).toLocaleDateString()}<br />
-                        {new Date(event.createdAt).toLocaleTimeString()}
+                        {event.eventDate ? new Date(event.eventDate).toLocaleDateString() : 'N/A'}
+                        <br />
+                        {event.eventDate ? new Date(event.eventDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
@@ -621,11 +758,11 @@ const MedicalEvents = () => {
                         >
                           Edit
                         </button>
-                        <button className="text-blue-600 hover:text-blue-900 mr-4">
-                          View Details
-                        </button>
-                        <button className="text-green-600 hover:text-green-900">
-                          Print Report
+                        <button
+                          onClick={() => handleDeleteEvent(event.id)}
+                          className="text-red-600 hover:text-red-900 mr-4"
+                        >
+                          Delete
                         </button>
                       </td>
                     </tr>
@@ -640,4 +777,4 @@ const MedicalEvents = () => {
   );
 };
 
-export default MedicalEvents;
+export default MedicalEvents; // Ensure component is exported

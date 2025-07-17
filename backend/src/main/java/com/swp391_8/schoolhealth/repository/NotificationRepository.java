@@ -7,14 +7,14 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface NotificationRepository extends JpaRepository<Notification, Long> {
-    // Custom query to find notifications by parent user ID
-    // This assumes that Notification entity has a 'user' field which is a User entity,
-    // and User entity has a 'userId' field.
-    // Adjust the query based on your actual Notification entity structure and relationships.
-    // For example, if Notification is directly linked to a Parent entity which then links to User:
-    // List<Notification> findByParentUserId(Long userId);
-    // Or if Notification has a direct userId field for the recipient:
-    List<Notification> findByUser_UserIdAndIsReadFalseOrderByCreatedAtDesc(Long userId); // Example: find unread for a user
-    List<Notification> findByUser_UserIdOrderByCreatedAtDesc(Long userId); // Example: find all for a user
+public interface NotificationRepository extends JpaRepository<Notification, Integer> {
+    // Find notifications for a specific user, ordered by creation date descending
+    List<Notification> findByUser_UserIdOrderByCreatedAtDesc(Integer userId);
+
+    // Find unread notifications for a specific user, ordered by creation date descending
+    List<Notification> findByUser_UserIdAndIsReadFalseOrderByCreatedAtDesc(Integer userId);
+
+    // If you need to find notifications by student, you can add:
+    // List<Notification> findByStudent_StudentIdOrderByCreatedAtDesc(Integer studentId);
+    // List<Notification> findByStudent_StudentCodeOrderByCreatedAtDesc(String studentCode);
 }

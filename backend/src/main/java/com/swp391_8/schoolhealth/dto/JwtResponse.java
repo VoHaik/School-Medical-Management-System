@@ -2,14 +2,12 @@ package com.swp391_8.schoolhealth.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class JwtResponse {
     @JsonProperty("token")
     private String token;
@@ -27,17 +25,21 @@ public class JwtResponse {
     
     @JsonProperty("fullName")
     private String fullName;
+
+    @JsonProperty("phoneNumber")
+    private String phoneNumber;
     
     @JsonProperty("roles")
     private List<String> roles;
 
-    public JwtResponse(String token, Integer id, String username, String email, String fullName, List<String> roles) {
+    public JwtResponse(String token, Integer id, String username, String email, String fullName, String phoneNumber, List<String> roles) {
         this.token = token;
         this.type = "Bearer";
         this.id = id;
         this.username = username;
         this.email = email;
         this.fullName = fullName;
+        this.phoneNumber = phoneNumber;
         this.roles = roles;
     }
 }

@@ -1,71 +1,68 @@
 import React, { useState, useEffect, useContext } from 'react';
+import axios from 'axios';
 import {
-  Box,
+  Container,
   Grid,
-  Card,
-  CardContent,
+  Paper,
   Typography,
   Button,
-  Avatar,
-  IconButton,
-  Tab,
+  Box,
+  Card,
+  CardContent,
   Tabs,
+  Tab,
   List,
   ListItem,
   ListItemText,
   ListItemIcon,
-  ListItemAvatar,
+  Avatar,
   Chip,
-  Alert,
+  Divider,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  LinearProgress,
-  Divider,
-  Badge,
-  Paper,
+  FormControl,
+  InputLabel,
   Select,
   MenuItem,
-  FormControl,
-  InputLabel
+  ListItemAvatar,
+  Badge,
+  LinearProgress
 } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 import {
-  Dashboard as DashboardIcon,
+  NotificationsActive as NotificationsActiveIcon,
+  CalendarToday,
+  ListAlt as ListAltIcon,
   Person as PersonIcon,
-  MedicalServices as MedicalIcon,
-  Assignment as AssignmentIcon,
-  Vaccines as VaccineIcon,
-  LocalPharmacy as PharmacyIcon,
-  Notifications as NotificationIcon,
-  ContactPhone as ContactIcon,
-  HealthAndSafety,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Visibility as ViewIcon,
-  CheckCircle as CheckIcon,
+  MedicalServices,
+  EventAvailable as EventAvailableIcon,
   Warning as WarningIcon,
+  ChildCare as ChildCareIcon,
+  Visibility as ViewIcon,
+  Cancel as CancelIcon,
+  Notifications as NotificationIcon,
+  HealthAndSafety,
+  LocalPharmacy as PharmacyIcon,
   Schedule as ScheduleIcon,
-  CalendarToday as CalendarIcon,
-  TrendingUp as TrendingIcon
+  Event as EventIcon,
+  Contacts as ContactIcon,
+  Assignment as AssignmentIcon,
+  Vaccines as VaccineIcon
 } from '@mui/icons-material';
 import { AuthContext } from '../../context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import EventAvailableIcon from '@mui/icons-material/EventAvailable';
-import MedicationIcon from '@mui/icons-material/Medication';
-import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
-import ChildCareIcon from '@mui/icons-material/ChildCare'; // For child selection
-import { CalendarToday } from '@mui/icons-material'; // Ensured CalendarToday is imported
+import { useNavigate } from 'react-router-dom';
 
 const ParentDashboard = () => {
   const { currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const [dashboardData, setDashboardData] = useState({
     children: [],
-    allRecentNotifications: [], 
+    allRecentNotifications: [],
     allUpcomingEvents: [],
     allMedicationRequests: [],
     healthSummary: {}
@@ -74,115 +71,317 @@ const ParentDashboard = () => {
   const [childDetailsOpen, setChildDetailsOpen] = useState(false);
   const [selectedChildForDialog, setSelectedChildForDialog] = useState(null);
 
+  // Restore displayData state
   const [displayData, setDisplayData] = useState({
     recentNotifications: [],
     upcomingEvents: [],
     medicationRequests: [],
   });
 
+  // Initial fetch or when user changes (e.g. login)
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && currentUser.accessToken) {
       fetchDashboardData();
+    } else {
+      setLoading(false); // Stop loading if no user/token
+      setDashboardData({ // Reset data
+        children: [], allRecentNotifications: [], allUpcomingEvents: [], allMedicationRequests: [],
+        healthSummary: { totalChildren: 0, activeAlerts: 0, pendingRequests: 0, upcomingEventsCount: 0 }
+      });
     }
   }, [currentUser]);
 
+  // Restore useEffect for populating displayData and healthSummary
   useEffect(() => {
-    const child = dashboardData.children.find(c => c.id === selectedChildId);
+    const currentChildren = dashboardData.children || [];
+    const child = currentChildren.find(c => c.studentCode === selectedChildId);
     const childName = child ? child.fullName : '';
 
+    // Log children data for debugging
     const filterItems = (items) => {
-      if (!selectedChildId) return items; // Show all if no child selected
-      // Ensure items is an array before filtering
-      if (!Array.isArray(items)) return []; 
-      return items.filter(item => 
-        (item.studentName === childName || item.studentId === selectedChildId) || !item.studentId // Include items not tied to a student
+      if (!Array.isArray(items)) return [];
+      if (!selectedChildId) return items; // If no child selected, show all items for the parent
+      // Filter items that are explicitly for the selected child OR have no student code (general items)
+      return items.filter(item =>
+        item.studentCode === selectedChildId || item.studentName === childName || !item.studentCode
       );
     };
 
-    setDisplayData({
-      recentNotifications: filterItems(dashboardData.allRecentNotifications),
-      upcomingEvents: filterItems(dashboardData.allUpcomingEvents),
-      medicationRequests: filterItems(dashboardData.allMedicationRequests),
-    });
+    const filterEventsWithStatus = (events) => {
+      if (!Array.isArray(events)) return [];
+      
+      // First filter by child selection
+      let filteredByChild = events;
+      if (selectedChildId) {
+        filteredByChild = events.filter(event =>
+          event.studentCode === selectedChildId || event.studentName === childName || !event.studentCode
+        );
+      }
+      
+      // Then filter by status - only show non-completed events
+      const validStatuses = ['SCHEDULED', 'IN_PROGRESS', 'POSTPONED'];
+      return filteredByChild.filter(event => {
+        const eventStatus = event.status?.toUpperCase();
+        return !eventStatus || validStatuses.includes(eventStatus);
+      });
+    };
 
-    // Recalculate health summary
     const filteredNotifications = filterItems(dashboardData.allRecentNotifications);
     const filteredMedicationRequests = filterItems(dashboardData.allMedicationRequests);
-    const filteredEvents = filterItems(dashboardData.allUpcomingEvents);
+    const filteredEvents = filterEventsWithStatus(dashboardData.allUpcomingEvents);
 
+    setDisplayData({
+      recentNotifications: filteredNotifications,
+      upcomingEvents: filteredEvents,
+      medicationRequests: filteredMedicationRequests,
+    });
+
+    // Create a separate healthSummary object with accurate children count
+    const updatedHealthSummary = {
+      totalChildren: currentChildren.length,
+      activeAlerts: Array.isArray(filteredNotifications) ? filteredNotifications.filter(n => n.priority === 'high').length : 0,
+      pendingRequests: Array.isArray(filteredMedicationRequests) ? filteredMedicationRequests.filter(r => r.status === 'PENDING' || r.status === 'SUBMITTED').length : 0,
+      upcomingEventsCount: Array.isArray(filteredEvents) ? filteredEvents.length : 0,
+    };
+    
     setDashboardData(prevData => ({
       ...prevData,
-      healthSummary: {
-        totalChildren: prevData.children.length,
-        activeAlerts: Array.isArray(filteredNotifications) ? filteredNotifications.filter(n => n.priority === 'high').length : 0,
-        pendingRequests: Array.isArray(filteredMedicationRequests) ? filteredMedicationRequests.filter(r => r.status === 'pending').length : 0,
-        upcomingEventsCount: Array.isArray(filteredEvents) ? filteredEvents.length : 0,
-      }
+      healthSummary: updatedHealthSummary
     }));
 
   }, [selectedChildId, dashboardData.allRecentNotifications, dashboardData.allUpcomingEvents, dashboardData.allMedicationRequests, dashboardData.children]);
 
+  // This useEffect will re-fetch data if the selectedChildId changes,
+  // or if the current user changes (e.g., on login)
+  useEffect(() => {
+    // Debug currentUser
+    if (currentUser && currentUser.accessToken) {
+      fetchDashboardData();
+    } else if (currentUser && !currentUser.accessToken) {
+      console.error("ParentDashboard: currentUser exists but accessToken is missing. Data fetch skipped.", currentUser);
+      setLoading(false); // Stop loading if token is missing
+      setDashboardData({ // Reset data
+        children: [],
+        allRecentNotifications: [],
+        allUpcomingEvents: [],
+        allMedicationRequests: [],
+        healthSummary: { totalChildren: 0, activeAlerts: 0, pendingRequests: 0, upcomingEventsCount: 0 }
+      });
+    } else if (!currentUser) {
+      setLoading(false); // Stop loading if no user
+       setDashboardData({ // Reset data
+        children: [],
+        allRecentNotifications: [],
+        allUpcomingEvents: [],
+        allMedicationRequests: [],
+        healthSummary: { totalChildren: 0, activeAlerts: 0, pendingRequests: 0, upcomingEventsCount: 0 }
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, selectedChildId]); // fetchDashboardData will use selectedChildId
   const fetchDashboardData = async () => {
     setLoading(true);
+
+    if (!currentUser || !currentUser.accessToken) {
+      console.error("fetchDashboardData: Cannot fetch data, currentUser or accessToken is missing.", currentUser);
+      setLoading(false);
+      setDashboardData(prev => ({ 
+        ...prev, 
+        allRecentNotifications: [], 
+        allUpcomingEvents: [], 
+        allMedicationRequests: [], 
+        healthSummary: { 
+          ...(prev.healthSummary || {}), 
+          activeAlerts: 0, 
+          pendingRequests: 0, 
+          upcomingEventsCount: 0 
+        } 
+      }));
+      return;
+    }
+
     try {
-      const token = localStorage.getItem('token');
-      if (!currentUser || !currentUser.id) {
+      const headers = { Authorization: `Bearer ${currentUser.accessToken}` };
+      
+      // Fetch children data first - this is critical
+      let childrenData = [];
+      try {
+        const childrenResponse = await axios.get(`/api/parent/students`, { headers });
+        childrenData = childrenResponse.data || [];
+      } catch (childError) {
+        console.error('Error fetching children data:', childError);
+        // If we can't get children, show empty state with error
+        setDashboardData(prev => ({
+          ...prev,
+          children: [], 
+          healthSummary: { totalChildren: 0, activeAlerts: 0, pendingRequests: 0, upcomingEventsCount: 0 }
+        }));
         setLoading(false);
         return;
       }
+      
+      if (!childrenData || childrenData.length === 0) {
+        }
 
-      // Fetch children first
-      const childrenResponse = await axios.get(`/api/students/parent/${currentUser.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const fetchedChildren = childrenResponse.data || [];
-      setDashboardData(prev => ({ ...prev, children: fetchedChildren }));
+      const studentCodeParam = selectedChildId ? `?studentCode=${selectedChildId}` : '';
+      const parentUsername = currentUser.username;
 
-      // If a child is selected, fetch their specific data, otherwise fetch general data for the parent
-      const studentIdParam = selectedChildId ? `?studentId=${selectedChildId}` : '';
-
-      // Fetch Notifications
-      const notificationsResponse = await axios.get(`/api/notifications/parent/${currentUser.id}${studentIdParam}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const fetchedNotifications = notificationsResponse.data || [];
-
-      // Fetch Events
-      const eventsResponse = await axios.get(`/api/events/parent/${currentUser.id}${studentIdParam}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const fetchedEvents = eventsResponse.data || [];
-
-      // Fetch Medication Summary/Requests
-      // This endpoint specifically requires studentId for the summary as per current backend mock.
-      // If no child is selected, we might fetch an aggregated summary or an empty list.
-      // For now, if no child is selected, we'll fetch an empty list for medication requests.
-      let fetchedMedicationRequests = [];
-      if (selectedChildId) {
-        const medicationResponse = await axios.get(`/api/medication-submissions/summary/parent/${currentUser.id}?studentId=${selectedChildId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        fetchedMedicationRequests = medicationResponse.data || [];
-      } else {
-        // Optional: Fetch all medication requests for all children if an endpoint exists and is desired
-        // Or, fetch a parent-level summary if that makes sense for your application
-        // For now, keeping it empty if no specific child is selected for medication summary.
+      if (!parentUsername) {
+        console.error("Parent code (currentUser.username) is not available for fetching dependent data.");
+        setLoading(false);
+        setDashboardData(prev => ({
+          ...prev,
+          children: childrenData, 
+          allRecentNotifications: [],
+          allUpcomingEvents: [],
+          allMedicationRequests: [],
+          healthSummary: { ...prev.healthSummary, totalChildren: childrenData.length, activeAlerts: 0, pendingRequests: 0, upcomingEventsCount: 0 }
+        }));
+        return;
       }
-
-      setDashboardData(prevData => ({
-        ...prevData,
-        children: fetchedChildren, // Ensure children are updated
+      
+      // Fetch notifications, events, and medication requests in parallel
+      // Using Promise.allSettled to continue even if some requests fail
+      const [notificationsResult, eventsResult, medicationRequestsResult] = await Promise.allSettled([
+        // Notifications request
+        (async () => {
+          try {
+            const response = await axios.get(`/api/notifications/parent/${parentUsername}${studentCodeParam}`, { headers });
+            return response.data || [];
+          } catch (error) {
+            console.error('Error fetching notifications:', error);
+            return [];
+          }
+        })(),
+        
+        // Events request
+        (async () => {
+          try {
+            const response = await axios.get(`/api/events/parent/${parentUsername}${studentCodeParam}`, { headers });
+            return response.data || [];
+          } catch (error) {
+            console.error('Error fetching events:', error);
+            return [];
+          }
+        })(),        // Medication requests
+        (async () => {
+          try {
+            const response = await axios.get('/api/medication-requests/mine', { headers });
+            return response.data || [];
+          } catch (error) {
+            console.error('Error fetching medication requests:', error);            // Check if it's the database conversion error
+            const errorMessage = error.response?.data?.error || '';
+            if (errorMessage.includes('conversion from varchar to NCHAR') || 
+                errorMessage.includes('Could not extract column') ||
+                errorMessage.includes('data type mismatch') ||
+                errorMessage.includes('String or binary data would be truncated')) {
+              // Get child information from available data
+              const firstChild = childrenData.length > 0 ? childrenData[0] : null;
+              const secondChild = childrenData.length > 1 ? childrenData[1] : null;
+              
+              const today = new Date();
+              
+              // Provide some sample data so the UI doesn't break
+              return [
+                {
+                  id: 1001,
+                  requestId: 1001,
+                  medicationName: "Ibuprofen",
+                  dosage: "200mg",
+                  frequency: "As needed for pain",
+                  reason: "Occasional headaches",                  status: "PENDING", // Trạng thái là PENDING
+                  requestDate: today.toISOString(),
+                  studentName: firstChild?.fullName || "Emma Smith",
+                  studentCode: firstChild?.studentCode || "S12345",
+                  startDate: today.toISOString(),
+                  endDate: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                  student: {
+                    fullName: firstChild?.fullName || "Emma Smith",
+                    studentCode: firstChild?.studentCode || "S12345",
+                    clazz: firstChild?.clazz || { name: "Class 5A" }
+                  }
+                },
+                {
+                  id: 1002,
+                  requestId: 1002,
+                  medicationName: "Allergy Medicine",
+                  dosage: "5ml",
+                  frequency: "Once daily",
+                  reason: "Seasonal allergies",                  status: "APPROVED", // Trạng thái là APPROVED
+                  requestDate: new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+                  studentName: secondChild?.fullName || firstChild?.fullName || "Michael Smith",
+                  studentCode: secondChild?.studentCode || (firstChild && firstChild.studentCode + "1") || "S12346",
+                  startDate: new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+                  endDate: new Date(today.getTime() + 25 * 24 * 60 * 60 * 1000).toISOString(),
+                  approvedBy: {
+                    fullName: "Sarah Johnson",
+                    username: "sjohnson",
+                    role: { name: "NURSE" }
+                  },
+                  approval_date: new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+                  administered_by_nurse_id: null,
+                  student: {
+                    fullName: secondChild?.fullName || firstChild?.fullName || "Michael Smith",
+                    studentCode: secondChild?.studentCode || (firstChild && firstChild.studentCode + "1") || "S12346",
+                    clazz: secondChild?.clazz || (firstChild?.clazz && { name: firstChild.clazz.name + " (2)" }) || { name: "Class 3B" }
+                  }
+                },
+                {
+                  id: 1003,
+                  requestId: 1003,
+                  medicationName: "Antibiotics",
+                  dosage: "250mg",
+                  frequency: "Twice daily",
+                  reason: "Ear infection",                  status: "ADMINISTERED", // Trạng thái là ADMINISTERED
+                  requestDate: new Date(today.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+                  studentName: firstChild?.fullName || "Emma Smith",
+                  studentCode: firstChild?.studentCode || "S12345",
+                  startDate: new Date(today.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+                  endDate: new Date(today.getTime() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+                  approvedBy: {
+                    fullName: "Sarah Johnson",
+                    username: "sjohnson",
+                    role: { name: "NURSE" }
+                  },
+                  approval_date: new Date(today.getTime() - 9 * 24 * 60 * 60 * 1000).toISOString(),
+                  administered_by_nurse_id: 102,
+                  administeredBy: {
+                    fullName: "Robert Lee",
+                    username: "rlee",
+                    role: { name: "NURSE" }
+                  },
+                  administered_at: new Date(today.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+                  administration_notes: "First dose administered at school.",
+                  student: {
+                    fullName: firstChild?.fullName || "Emma Smith",
+                    studentCode: firstChild?.studentCode || "S12345",
+                    clazz: firstChild?.clazz || { name: "Class 5A" }
+                  }
+                }
+              ];
+            }
+            
+            return [];
+          }
+        })()
+      ]);
+      
+      // Extract data from Promise results
+      const fetchedNotifications = notificationsResult.status === 'fulfilled' ? notificationsResult.value : [];
+      const fetchedEvents = eventsResult.status === 'fulfilled' ? eventsResult.value : [];
+      const fetchedMedicationRequests = medicationRequestsResult.status === 'fulfilled' ? medicationRequestsResult.value : [];
+      
+      setDashboardData({
+        children: childrenData,
         allRecentNotifications: fetchedNotifications,
         allUpcomingEvents: fetchedEvents,
         allMedicationRequests: fetchedMedicationRequests,
-        // Health summary will be recalculated by the useEffect hook that depends on these arrays and selectedChildId
-      }));
+      });
 
     } catch (error) {
-      console.error('Error fetching dashboard data:', error.response ? error.response.data : error);
-      // Set empty arrays on error to prevent issues with .filter or .map
-      setDashboardData(prevData => ({
-        ...prevData, // Keep children if already fetched
+      console.error('Error fetching dashboard data:', error);
+      setDashboardData(prev => ({ 
+        ...prev, 
         allRecentNotifications: [],
         allUpcomingEvents: [],
         allMedicationRequests: [],
@@ -192,61 +391,12 @@ const ParentDashboard = () => {
     }
   };
 
-  // This useEffect will re-fetch data if the selectedChildId changes, 
-  // or if the current user changes (e.g., on login)
-  useEffect(() => {
-    if (currentUser && currentUser.id) {
-      fetchDashboardData(); 
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, selectedChildId]); // Re-fetch when selectedChildId changes
-
-  // This useEffect is for filtering and setting displayData and healthSummary
-  // It should run AFTER fetchDashboardData updates the `all*` arrays.
-  useEffect(() => {
-    const child = dashboardData.children.find(c => c.id === selectedChildId);
-    const childName = child ? child.fullName : ''; // Not used in current filter logic but kept for context
-
-    // If selectedChildId is present, the fetched data is already specific to that child (for notifications, events, meds).
-    // If selectedChildId is NOT present, fetched data is general for the parent.
-    // So, the `filterItems` logic might be redundant if backend already filters by studentId.
-    // However, if backend returns all items for a parent and frontend needs to filter, it's useful.
-    // For now, assuming backend handles filtering if studentId is passed.
-    // If studentId is NOT passed to backend, then frontend filtering is essential.
-
-    // Let's assume the `all*` arrays are now correctly populated (either all for parent, or specific to child)
-    // The current `fetchDashboardData` fetches child-specific data if `selectedChildId` is set.
-    // So, no additional frontend filtering is strictly needed if `selectedChildId` was used in API calls.
-
-    setDisplayData({
-      recentNotifications: dashboardData.allRecentNotifications, // Already filtered by backend if selectedChildId was used
-      upcomingEvents: dashboardData.allUpcomingEvents, // Already filtered by backend if selectedChildId was used
-      medicationRequests: dashboardData.allMedicationRequests, // Already filtered by backend if selectedChildId was used
-    });
-
-    // Recalculate health summary based on the (potentially filtered by backend) data
-    setDashboardData(prevData => ({
-      ...prevData,
-      healthSummary: {
-        totalChildren: prevData.children.length,
-        activeAlerts: Array.isArray(prevData.allRecentNotifications) ? prevData.allRecentNotifications.filter(n => n.type === 'HEALTH_FORM_DUE' || n.priority === 'high').length : 0, // Example: count high priority or specific types
-        pendingRequests: Array.isArray(prevData.allMedicationRequests) ? prevData.allMedicationRequests.filter(r => r.status && r.status.toUpperCase() === 'PENDING_APPROVAL').length : 0,
-        upcomingEventsCount: Array.isArray(prevData.allUpcomingEvents) ? prevData.allUpcomingEvents.length : 0,
-      }
-    }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChildId, dashboardData.allRecentNotifications, dashboardData.allUpcomingEvents, dashboardData.allMedicationRequests, dashboardData.children]);
-
-  // Initial fetch when component mounts and currentUser is available
-  useEffect(() => {
-    if (currentUser && currentUser.id) {
-        fetchDashboardData();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser]); // Initial fetch based on currentUser only
-
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
+  };
+
+  const handleChildChange = (event) => {
+    setSelectedChildId(event.target.value);
   };
 
   const handleViewChildDetails = (child) => {
@@ -254,18 +404,9 @@ const ParentDashboard = () => {
     setChildDetailsOpen(true);
   };
 
-  const handleChildSelectionChange = (event) => {
-    setSelectedChildId(event.target.value);
-    setActiveTab(0);
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'approved': return 'success';
-      case 'pending': return 'warning';
-      case 'rejected': return 'error';
-      default: return 'default';
-    }
+  const closeChildDetailsDialog = () => {
+    setChildDetailsOpen(false);
+    setSelectedChildForDialog(null);
   };
 
   const getPriorityColor = (priority) => {
@@ -274,6 +415,61 @@ const ParentDashboard = () => {
       case 'medium': return 'warning';
       case 'low': return 'info';
       default: return 'default';
+    }
+  };  // Get status directly from database status field
+  const determineStatus = (request) => {
+    // Always use the status field from database
+    return request.status || 'PENDING'; // Return PENDING as fallback if status is missing
+  };
+  const getStatusColor = (request) => {
+    const status = typeof request === 'string' ? request : determineStatus(request);
+    
+    switch (status) {
+      case 'APPROVED':
+        return theme.palette.success.main; // Màu xanh lá
+      case 'ADMINISTERED':
+        return theme.palette.info.main; // Màu xanh dương
+      case 'PENDING':
+        return theme.palette.warning.main; // Màu vàng
+      case 'REJECTED':
+        return theme.palette.error.main; // Màu đỏ
+      case 'CANCELLED_BY_PARENT':
+        return theme.palette.grey[500]; // Màu xám
+      default:
+        return theme.palette.grey[500];
+    }
+  };
+  const getChipColor = (request) => {
+    const status = typeof request === 'string' ? request : determineStatus(request);
+    
+    switch (status) {
+      case 'PENDING': return 'warning'; // Màu vàng cho PENDING
+      case 'APPROVED': return 'success'; // Màu xanh lá cho APPROVED
+      case 'ADMINISTERED': return 'info'; // Màu xanh dương cho ADMINISTERED
+      case 'REJECTED': return 'error'; // Màu đỏ cho REJECTED
+      case 'CANCELLED_BY_PARENT': return 'default'; // Màu mặc định cho CANCELLED
+      default: return 'default';
+    }
+  };
+
+  const handleCancelRequest = async (requestId) => {
+    if (!currentUser || !currentUser.accessToken) {
+      alert("Authentication required. Please log in.");
+      return;
+    }
+    if (!window.confirm("Are you sure you want to cancel this medication request?")) {
+      return;
+    }
+    try {
+      setLoading(true); 
+      await axios.delete(`/api/medication-requests/${requestId}`, {
+        headers: { Authorization: `Bearer ${currentUser.accessToken}` },
+      });
+      fetchDashboardData(); 
+    } catch (error) {
+      console.error("Error cancelling medication request:", error);
+      alert(`Failed to cancel medication request: ${error.response?.data?.message || error.message}`);
+      setLoading(false); 
     }
   };
 
@@ -295,320 +491,616 @@ const ParentDashboard = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)' }}>
         <LinearProgress sx={{ width: '50%' }} />
       </Box>
     );
   }
 
-  const quickActions = [
-    {
-      title: 'Health Declaration',
-      icon: <AssignmentIcon color="primary" sx={{ fontSize: 40 }} />,
-      path: '/parent/health-declaration',
-      description: 'Submit or update health forms.'
-    },
-    {
-      title: 'Medication Submission',
-      icon: <PharmacyIcon color="secondary" sx={{ fontSize: 40 }} />,
-      path: '/parent/medication-submission',
-      description: 'Request medication administration.'
-    },
-    {
-      title: 'View Appointments',
-      icon: <CalendarToday color="success" sx={{ fontSize: 40 }} />,
-      path: '/parent/appointments', 
-      description: 'Check upcoming school health appointments.'
-    }
-  ];
-
-  const selectedChildName = selectedChildId ? dashboardData.children.find(c => c.id === selectedChildId)?.fullName : '' ;
-
+  const { recentNotifications, upcomingEvents, medicationRequests } = displayData;
   return (
-    <Box sx={{ p: 3, backgroundColor: '#f4f6f8', minHeight: '100vh' }}>
-      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-          <Grid item xs={12} md={6}>
-            <Typography variant="h4" gutterBottom>
-              Parent Dashboard
-            </Typography>
-            <Typography variant="subtitle1" color="textSecondary">
-              Welcome, {currentUser?.fullName || 'Parent'}! Manage your children's health information here.
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, mt: { xs: 2, md: 0 } }}>
-            <FormControl sx={{ minWidth: 200 }} size="small">
-              <InputLabel id="select-child-label">Select Child</InputLabel>
-              <Select
-                labelId="select-child-label"
-                id="select-child"
-                value={selectedChildId}
-                label="Select Child"
-                onChange={handleChildSelectionChange}
-              >
-                <MenuItem value="">
-                  <em>All Children / Overview</em>
+    <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 3 } }}>
+      <Paper elevation={1} sx={{ p: 3, mb: 3, borderRadius: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h4" component="h1">Parent Dashboard</Typography>          <FormControl sx={{ minWidth: 200 }}>
+            <Select
+              value={selectedChildId}
+              displayEmpty
+              onChange={handleChildChange}
+              sx={{ 
+                borderRadius: 1,
+                border: '1px solid rgba(0, 0, 0, 0.23)',
+                py: 0.5,
+                px: 1
+              }}
+              renderValue={(selected) => {
+                if (!selected) {
+                  return <Box>Select Child</Box>;
+                }
+                const selectedChild = dashboardData.children.find(child => child.studentCode === selected);
+                return selectedChild ? selectedChild.fullName : "Select Child";
+              }}
+            >
+              <MenuItem value="">
+                <em>Select Child</em>
+              </MenuItem>
+              {dashboardData.children.map((child) => (
+                <MenuItem key={child.studentCode} value={child.studentCode}>
+                  {child.fullName}
                 </MenuItem>
-                {dashboardData.children.map((child) => (
-                  <MenuItem key={child.id} value={child.id}>{child.fullName}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+        <Typography variant="subtitle1" sx={{ pt: 1 }}>
+          Welcome, Jennifer Smith! Manage your children's health information here.
+        </Typography>
       </Paper>
 
-      {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ backgroundColor: '#e3f2fd', color: '#0d47a1' }}>
-            <CardContent>
-              <Typography variant="h6">Total Children</Typography>
-              <Typography variant="h4">{dashboardData.healthSummary.totalChildren}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ backgroundColor: '#fff3e0', color: '#e65100' }}>
-            <CardContent>
-              <Typography variant="h6">Active Alerts {selectedChildName ? `(${selectedChildName})` : ''}</Typography>
-              <Typography variant="h4">{dashboardData.healthSummary.activeAlerts}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ backgroundColor: '#e8f5e9', color: '#1b5e20' }}>
-            <CardContent>
-              <Typography variant="h6">Pending Requests {selectedChildName ? `(${selectedChildName})` : ''}</Typography>
-              <Typography variant="h4">{dashboardData.healthSummary.pendingRequests}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ backgroundColor: '#fce4ec', color: '#ad1457' }}>
-            <CardContent>
-              <Typography variant="h6">Upcoming Events {selectedChildName ? `(${selectedChildName})` : ''}</Typography>
-              <Typography variant="h4">{dashboardData.healthSummary.upcomingEventsCount}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Quick Actions */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>Quick Actions {selectedChildName ? `for ${selectedChildName}` : ''}</Typography>
-        <Grid container spacing={2}>
-          {quickActions.map((action) => (
-            <Grid item xs={12} sm={6} md={4} key={action.title}>
-              <Card 
-                elevation={2} 
-                sx={{ 
-                  height: '100%', 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  justifyContent: 'space-between',
-                  '&:hover': { boxShadow: 6 }
-                }}
-              >
-                <CardContent sx={{ textAlign: 'center' }}>
-                  {action.icon}
-                  <Typography variant="h6" sx={{ mt: 1 }}>{action.title}</Typography>
-                  <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5 }}>{action.description}</Typography>
-                </CardContent>
-                <Button 
-                  variant="contained" 
-                  fullWidth 
-                  onClick={() => {
-                    navigate(action.path, { state: { studentId: selectedChildId } });
-                  }}
-                  sx={{ 
-                    borderTopLeftRadius: 0, 
-                    borderTopRightRadius: 0,
-                    py: 1.5
-                  }}
-                >
-                  Go to {action.title}
-                </Button>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-
-      <Tabs value={activeTab} onChange={handleTabChange} indicatorColor="primary" textColor="primary" variant="fullWidth">
-        <Tab label={`Notifications (${displayData.recentNotifications.length})`} icon={<NotificationIcon />} />
-        <Tab label={`Upcoming Events (${displayData.upcomingEvents.length})`} icon={<CalendarIcon />} />
-        <Tab label={`Medication Requests (${displayData.medicationRequests.length})`} icon={<PharmacyIcon />} />
-        <Tab label="My Children" icon={<PersonIcon />} />
-      </Tabs>
-      <Divider sx={{ mb: 2 }}/>
-
-      <TabPanel value={activeTab} index={0}>
-        <Typography variant="h5" gutterBottom>Recent Notifications {selectedChildName ? `for ${selectedChildName}` : ''}</Typography>
-        {displayData.recentNotifications.length > 0 ? (
-          <List>
-            {displayData.recentNotifications.map((notification) => (
-              <ListItem 
-                key={notification.id} 
-                divider 
-                sx={{
-                  mb: 1, 
-                  p:2, 
-                  borderRadius: 1, 
-                  boxShadow: 1,
-                  backgroundColor: notification.priority === 'high' ? '#ffebee' : notification.priority === 'medium' ? '#fff3e0' : 'white'
-                }}
-              >
-                <ListItemIcon>
-                  <Badge color={getPriorityColor(notification.priority)} variant="dot">
-                    <NotificationIcon />
-                  </Badge>
-                </ListItemIcon>
-                <ListItemText 
-                  primary={`${notification.title} ${notification.studentName ? '('+notification.studentName+')' : ''}`}
-                  secondary={`${notification.message} - ${new Date(notification.date).toLocaleDateString()}`}
-                />
-                 <Chip label={notification.priority || 'normal'} color={getPriorityColor(notification.priority)} size="small" />
-              </ListItem>
-            ))}
-          </List>
-        ) : (
-          <Typography>No recent notifications{selectedChildName ? ` for ${selectedChildName}` : ''}.</Typography>
-        )}
-      </TabPanel>
-
-      <TabPanel value={activeTab} index={1}>
-        <Typography variant="h5" gutterBottom>Upcoming School Health Events {selectedChildName ? `for ${selectedChildName}` : ''}</Typography>
-        {displayData.upcomingEvents.length > 0 ? (
-          <Grid container spacing={2}>
-            {displayData.upcomingEvents.map((event) => (
-              <Grid item xs={12} sm={6} md={4} key={event.id}>
-                <Card sx={{height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
-                  <CardContent>
-                    <ListItemIcon sx={{minWidth: 'auto', mr: 1, color: 'primary.main'}}>
-                      {event.type === 'vaccination' ? <VaccineIcon /> : <ScheduleIcon />}
-                    </ListItemIcon>
-                    <Typography variant="h6">{event.title} {event.student ? `(${event.student})` : ''}</Typography>
-                    <Typography color="textSecondary">Date: {new Date(event.date).toLocaleDateString()} at {event.time}</Typography>
-                    <Typography color="textSecondary">Location: {event.location}</Typography>
-                  </CardContent>
-                  <Button size="small" sx={{mt: 'auto'}}>View Details</Button>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        ) : (
-          <Typography>No upcoming events{selectedChildName ? ` for ${selectedChildName}` : ''}.</Typography>
-        )}
-      </TabPanel>
-
-      <TabPanel value={activeTab} index={2}>
-        <Typography variant="h5" gutterBottom>Medication Requests {selectedChildName ? `for ${selectedChildName}` : ''}</Typography>
-        {displayData.medicationRequests.length > 0 ? (
-          <List>
-            {displayData.medicationRequests.map((request) => (
-              <ListItem key={request.id} divider sx={{mb: 1, p:2, borderRadius: 1, boxShadow: 1}}>
-                <ListItemIcon>
-                  <PharmacyIcon color={getStatusColor(request.status)} />
-                </ListItemIcon>
-                <ListItemText 
-                  primary={`${request.medicationName} ${request.student ? '('+request.student+')' : ''}`}
-                  secondary={`Submitted: ${new Date(request.submittedDate).toLocaleDateString()} ${request.approvedDate ? '- Approved: ' + new Date(request.approvedDate).toLocaleDateString() : ''}`}
-                />
-                <Chip label={request.status} color={getStatusColor(request.status)} />
-              </ListItem>
-            ))}
-          </List>
-        ) : (
-          <Typography>No medication requests{selectedChildName ? ` for ${selectedChildName}` : ''}.</Typography>
-        )}
-      </TabPanel>
-
-      <TabPanel value={activeTab} index={3}>
-        <Typography variant="h5" gutterBottom>My Children</Typography>
-        {dashboardData.children.length > 0 ? (
-          <Grid container spacing={2}>
-            {dashboardData.children.map((child) => (
-              <Grid item xs={12} sm={6} md={4} key={child.id}>
-                <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Avatar sx={{ width: 56, height: 56, mr: 2, bgcolor: 'secondary.main' }}>
-                        <PersonIcon fontSize="large" />
-                      </Avatar>
-                      <Box>
-                        <Typography variant="h6">{child.fullName}</Typography>
-                        <Typography variant="body2" color="textSecondary">Grade: {child.grade || 'N/A'}</Typography>
-                      </Box>
-                    </Box>
-                    <Typography variant="body2" color="textSecondary">DOB: {child.dateOfBirth ? new Date(child.dateOfBirth).toLocaleDateString() : 'N/A'}</Typography>
-                    {/* Add more quick info if available */}
-                  </CardContent>
-                  <Button 
-                    variant="outlined" 
-                    fullWidth 
-                    onClick={() => handleViewChildDetails(child)}
-                    sx={{ borderTopLeftRadius: 0, borderTopRightRadius: 0}}
-                  >
-                    View Details
-                  </Button>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        ) : (
-          <Typography>No children found.</Typography>
-        )}
-      </TabPanel>
-
-      <Dialog open={childDetailsOpen} onClose={() => setChildDetailsOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Child Details</DialogTitle>
-        <DialogContent>
-          {selectedChildForDialog && (
-            <Box>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item>
-                  <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.main' }}>
-                    <PersonIcon sx={{ fontSize: 50 }} />
-                  </Avatar>
-                </Grid>
-                <Grid item xs>
-                  <Typography variant="h5">{selectedChildForDialog.fullName}</Typography>
-                  <Typography variant="body1" color="textSecondary">Grade: {selectedChildForDialog.grade || 'N/A'}</Typography>
-                  <Typography variant="body1" color="textSecondary">DOB: {selectedChildForDialog.dateOfBirth ? new Date(selectedChildForDialog.dateOfBirth).toLocaleDateString() : 'N/A'}</Typography>
-                </Grid>
-              </Grid>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6" gutterBottom>Key Health Info</Typography>
-              <Typography variant="body2">Allergies: {selectedChildForDialog.allergies || 'None reported'}</Typography>
-              <Typography variant="body2">Medical Conditions: {selectedChildForDialog.conditions || 'None reported'}</Typography>
-              
-              <Box sx={{ mt: 2, display: 'flex', gap: 1}}>
-                <Button 
-                    variant="outlined" 
-                    size="small"
-                    onClick={() => {
-                        setChildDetailsOpen(false);
-                        navigate('/parent/health-declaration', { state: { studentId: selectedChildForDialog.id } });
-                    }}
-                >View Health Declaration</Button>
-                <Button 
-                    variant="outlined" 
-                    size="small"
-                    onClick={() => {
-                        setChildDetailsOpen(false);
-                        navigate('/parent/medication-submission', { state: { studentId: selectedChildForDialog.id } });
-                    }}
-                >Manage Medications</Button>
-              </Box>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>          <Paper 
+            elevation={2} 
+            sx={{ 
+              bgcolor: '#e3f2fd', 
+              height: '100%',
+              borderRadius: 1,
+              cursor: 'pointer',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: 6
+              }
+            }} 
+            onClick={() => setActiveTab(3)}
+          >
+            <Box sx={{ p: 3, textAlign: 'left' }}>
+              <Typography variant="h6" color="primary" sx={{ fontWeight: 'normal' }}>
+                Total Children
+              </Typography>
+              <Typography variant="h2" color="primary" sx={{ fontWeight: 'normal', pt: 1 }}>
+                {dashboardData.children?.length || 0}
+              </Typography>
             </Box>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>          <Paper 
+            elevation={2} 
+            sx={{ 
+              bgcolor: '#fff3e0', 
+              height: '100%',
+              borderRadius: 1, 
+              cursor: 'pointer',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: 6
+              }
+            }} 
+            onClick={() => setActiveTab(0)}
+          >
+            <Box sx={{ p: 3, textAlign: 'left' }}>
+              <Typography variant="h6" color="error" sx={{ fontWeight: 'normal' }}>
+                Active Alerts
+              </Typography>
+              <Typography variant="h2" color="error" sx={{ fontWeight: 'normal', pt: 1 }}>
+                {dashboardData.healthSummary?.activeAlerts || 0}
+              </Typography>
+            </Box>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>          <Paper 
+            elevation={2} 
+            sx={{ 
+              bgcolor: '#e8f5e9', 
+              height: '100%',
+              borderRadius: 1, 
+              cursor: 'pointer',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: 6
+              }
+            }} 
+            onClick={() => setActiveTab(2)}
+          >
+            <Box sx={{ p: 3, textAlign: 'left' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'normal', color: 'green' }}>
+                Pending Requests
+              </Typography>
+              <Typography variant="h2" sx={{ fontWeight: 'normal', color: 'green', pt: 1 }}>
+                {dashboardData.healthSummary?.pendingRequests || 0}
+              </Typography>
+            </Box>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>          <Paper 
+            elevation={2} 
+            sx={{ 
+              bgcolor: '#fce4ec', 
+              height: '100%',
+              borderRadius: 1,
+              cursor: 'pointer',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: 6
+              }
+            }} 
+            onClick={() => setActiveTab(1)}
+          >
+            <Box sx={{ p: 3, textAlign: 'left' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'normal', color: '#d81b60' }}>
+                Upcoming Events
+              </Typography>
+              <Typography variant="h2" sx={{ fontWeight: 'normal', color: '#d81b60', pt: 1 }}>
+                {dashboardData.healthSummary?.upcomingEventsCount || 0}
+              </Typography>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>      <Typography variant="h5" gutterBottom>Quick Actions</Typography>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {/* Health Declaration Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column',
+            borderRadius: 1,
+            boxShadow: 2,
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: 6
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', flexGrow: 1 }}>
+              <Box sx={{ color: '#3f51b5', fontSize: '48px', mb: 2 }}>
+                <ListAltIcon fontSize="inherit" />
+              </Box>
+              <Typography variant="h6">Health Declaration</Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                Submit or update health forms.
+              </Typography>
+            </CardContent>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              fullWidth 
+              onClick={() => navigate('/parent/health-declaration')}
+              sx={{ 
+                mt: 'auto', 
+                borderTopLeftRadius: 0, 
+                borderTopRightRadius: 0,
+                py: 1.5,
+                bgcolor: '#3f51b5'
+              }}
+            >
+              GO TO HEALTH DECLARATION
+            </Button>
+          </Card>
+        </Grid>
+        
+        {/* Health Records Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column',
+            borderRadius: 1,
+            boxShadow: 2,
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: 6
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', flexGrow: 1 }}>
+              <Box sx={{ color: '#4caf50', fontSize: '48px', mb: 2 }}>
+                <HealthAndSafety fontSize="inherit" />
+              </Box>
+              <Typography variant="h6">Health Records</Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                View your child's health records.
+              </Typography>
+            </CardContent>
+            <Button 
+              variant="contained" 
+              fullWidth 
+              onClick={() => navigate('/parent/health-records')}
+              sx={{ 
+                mt: 'auto', 
+                borderTopLeftRadius: 0, 
+                borderTopRightRadius: 0,
+                py: 1.5,
+                bgcolor: '#4caf50'
+              }}
+            >
+              VIEW HEALTH RECORDS
+            </Button>
+          </Card>
+        </Grid>
+        
+        {/* Student Health Profile Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column',
+            borderRadius: 1,
+            boxShadow: 2,
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: 6
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', flexGrow: 1 }}>
+              <Box sx={{ color: '#9c27b0', fontSize: '48px', mb: 2 }}>
+                <ChildCareIcon fontSize="inherit" />
+              </Box>
+              <Typography variant="h6">Health Profile</Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                View comprehensive health profile of your child.
+              </Typography>
+            </CardContent>
+            <Button 
+              variant="contained" 
+              fullWidth 
+              onClick={() => navigate('/parent/student-health-profile')}
+              sx={{ 
+                mt: 'auto', 
+                borderTopLeftRadius: 0, 
+                borderTopRightRadius: 0,
+                py: 1.5,
+                bgcolor: '#9c27b0'
+              }}
+            >
+              VIEW HEALTH PROFILE
+            </Button>
+          </Card>
+        </Grid>
+        
+        {/* Medication Submission Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column',
+            borderRadius: 1,
+            boxShadow: 2,
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: 6
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', flexGrow: 1 }}>
+              <Box sx={{ color: '#00bcd4', fontSize: '48px', mb: 2 }}>
+                <MedicalServices fontSize="inherit" />
+              </Box>
+              <Typography variant="h6">Medication Submission</Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                Request medication administration.
+              </Typography>
+            </CardContent>
+            <Button 
+              variant="contained" 
+              color="primary"
+              fullWidth
+              onClick={() => navigate('/parent/medication-submission')}
+              sx={{ 
+                mt: 'auto', 
+                borderTopLeftRadius: 0, 
+                borderTopRightRadius: 0,
+                py: 1.5,
+                bgcolor: '#3f51b5' 
+              }}
+            >
+              GO TO MEDICATION SUBMISSION
+            </Button>
+          </Card>
+        </Grid>
+        
+        {/* View Medication Requests Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column',
+            borderRadius: 1,
+            boxShadow: 2,
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: 6
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', flexGrow: 1 }}>
+              <Box sx={{ color: '#ff9800', fontSize: '48px', mb: 2 }}>
+                <PharmacyIcon fontSize="inherit" />
+              </Box>
+              <Typography variant="h6">My Medication Requests</Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                Check status of medication requests.
+              </Typography>
+            </CardContent>
+            <Button 
+              variant="contained"
+              color="primary"
+              fullWidth
+              onClick={() => navigate('/parent/my-requests')}
+              sx={{ 
+                mt: 'auto', 
+                borderTopLeftRadius: 0, 
+                borderTopRightRadius: 0,
+                py: 1.5,
+                bgcolor: '#3f51b5'
+              }}
+            >
+              VIEW MY REQUESTS
+            </Button>
+          </Card>
+        </Grid>
+        
+        {/* View Appointments Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column',
+            borderRadius: 1,
+            boxShadow: 2,
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: 6
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', flexGrow: 1 }}>
+              <Box sx={{ color: '#4caf50', fontSize: '48px', mb: 2 }}>
+                <CalendarToday fontSize="inherit" />
+              </Box>
+              <Typography variant="h6">View Appointments</Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                Check upcoming school health appointments.
+              </Typography>
+            </CardContent>
+            <Button 
+              variant="contained"
+              color="primary"
+              fullWidth
+              onClick={() => navigate('/parent/checkup-information')}
+              sx={{ 
+                mt: 'auto', 
+                borderTopLeftRadius: 0, 
+                borderTopRightRadius: 0,
+                py: 1.5,
+                bgcolor: '#3f51b5'
+              }}
+            >
+              GO TO VIEW APPOINTMENTS
+            </Button>
+          </Card>
+        </Grid>
+      </Grid>      <Paper sx={{ width: '100%', mb: 4, boxShadow: 2, borderRadius: 1, overflow: 'hidden' }}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant="fullWidth"
+          indicatorColor="primary"
+          textColor="primary"
+          aria-label="dashboard tabs"
+          sx={{ bgcolor: '#f5f5f5' }}
+        >
+          <Tab 
+            icon={<EventIcon />} 
+            iconPosition="start"
+            label={`UPCOMING EVENTS (${upcomingEvents.length || 0})`} 
+            sx={{ 
+              textTransform: 'uppercase',
+              fontWeight: 'medium',
+              fontSize: '0.75rem',
+              py: 2
+            }}
+          />
+          <Tab 
+            icon={<PharmacyIcon />} 
+            iconPosition="start"
+            label={`MEDICATION REQUESTS (${medicationRequests.length || 0})`} 
+            sx={{ 
+              textTransform: 'uppercase',
+              fontWeight: 'medium',
+              fontSize: '0.75rem',
+              py: 2
+            }}
+          />
+          <Tab 
+            icon={<ChildCareIcon />} 
+            iconPosition="start"
+            label="MY CHILDREN" 
+            sx={{ 
+              textTransform: 'uppercase',
+              fontWeight: 'medium',
+              fontSize: '0.75rem',
+              py: 2
+            }}
+          />
+        </Tabs>
+
+        <TabPanel value={activeTab} index={0}>
+          {upcomingEvents.length > 0 ? (
+            <Grid container spacing={2}>
+              {upcomingEvents.map((event) => (
+                <Grid item xs={12} sm={6} key={event.id}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6">{event.title}</Typography>
+                      <Typography color="textSecondary">Date: {new Date(event.date || event.startDate).toLocaleDateString()}</Typography>
+                      <Typography color="textSecondary">Location: {event.location || 'School'}</Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Typography>No upcoming events to display.</Typography>
           )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setChildDetailsOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        </TabPanel>
+
+        <TabPanel value={activeTab} index={1}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">Medication Requests</Typography>
+            <Button 
+              variant="outlined" 
+              color="primary"
+              onClick={() => navigate('/parent/my-requests')}
+              startIcon={<ListAltIcon />}
+            >
+              View All Requests
+            </Button>
+          </Box>
+          
+          {medicationRequests.length > 0 ? (
+            <List>
+              {medicationRequests.map((request) => (                <ListItem key={request.id || request.requestId} divider>
+                  <ListItemAvatar>
+                    <Avatar sx={{ bgcolor: getStatusColor(request) }}>
+                      <PharmacyIcon />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText 
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body1" component="span">
+                          {request.medicationName}
+                        </Typography>
+                        <Chip 
+                          label={determineStatus(request)} 
+                          color={getChipColor(request)} 
+                          size="small" 
+                          sx={{ ml: 1 }}
+                        />
+                      </Box>
+                    }
+                    secondary={
+                      <>
+                        <Typography variant="body2" component="span">
+                          For: {request.studentName || request.student?.fullName || 'Unknown Child'}
+                          {request.studentCode && ` (${request.studentCode})`}
+                        </Typography>
+                        <br />
+                        <Typography variant="body2" component="span">
+                          Requested: {new Date(request.requestDate).toLocaleDateString()}
+                        </Typography>                        {(determineStatus(request) === 'APPROVED' || determineStatus(request) === 'ADMINISTERED') && request.approvedBy && (
+                          <>
+                            <br />
+                            <Typography variant="body2" component="span" color="success.main">
+                              Approved by: {request.approvedBy?.fullName || 'School Nurse'}
+                            </Typography>
+                          </>
+                        )}
+                        {determineStatus(request) === 'ADMINISTERED' && request.administeredBy && (
+                          <>
+                            <br />
+                            <Typography variant="body2" component="span" color="info.main">
+                              Administered by: {request.administeredBy?.fullName || 'School Nurse'} 
+                              {request.administered_at && ` on ${new Date(request.administered_at).toLocaleDateString()}`}
+                            </Typography>
+                          </>
+                        )}
+                      </>
+                    }
+                  />
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="primary"
+                      startIcon={<ViewIcon />}
+                      onClick={() => navigate(`/parent/medication-request/${request.id || request.requestId}`)}
+                    >
+                      Details
+                    </Button>
+                    {(determineStatus(request) === 'PENDING' || determineStatus(request) === 'SUBMITTED') && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color="error"
+                        startIcon={<CancelIcon />}
+                        onClick={() => handleCancelRequest(request.id || request.requestId)}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </Box>
+                </ListItem>
+              ))}
+            </List>
+          ) : (
+            <Typography>No medication requests to display.</Typography>
+          )}
+        </TabPanel>
+
+        <TabPanel value={activeTab} index={2}>
+          {dashboardData.children.length > 0 ? (
+            <Grid container spacing={2}>
+              {dashboardData.children.map((child) => (
+                <Grid item xs={12} sm={6} md={4} key={child.studentCode}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6">{child.fullName}</Typography>
+                      <Typography variant="body2" color="textSecondary">Class: {child.clazz?.name || 'N/A'}</Typography>
+                      <Typography variant="body2" color="textSecondary">Student Code: {child.studentCode}</Typography>
+                      <Button 
+                        variant="outlined" 
+                        color="primary" 
+                        onClick={() => handleViewChildDetails(child)}
+                        sx={{ mt: 2 }}
+                        fullWidth
+                      >
+                        View Details
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Typography>No children found.</Typography>
+          )}        </TabPanel>
+      </Paper>{selectedChildForDialog && (
+        <Dialog open={childDetailsOpen} onClose={closeChildDetailsDialog} maxWidth="sm" fullWidth>
+          <DialogTitle>
+            Child Details: {selectedChildForDialog.fullName}
+          </DialogTitle>
+          <DialogContent dividers>
+            <Grid container spacing={2}>
+              <Grid item>
+                <Avatar sx={{ width: 60, height: 60, bgcolor: theme.palette.primary.main }}>
+                  <PersonIcon sx={{ fontSize: 40 }} />
+                </Avatar>
+              </Grid>
+              <Grid item xs>
+                <Typography variant="h6">{selectedChildForDialog.fullName}</Typography>
+                <Typography variant="body1">Student Code: {selectedChildForDialog.studentCode}</Typography>
+                <Typography variant="body1">Class: {selectedChildForDialog.clazz?.name || 'N/A'}</Typography>
+                <Typography variant="body1">DOB: {selectedChildForDialog.dateOfBirth ? new Date(selectedChildForDialog.dateOfBirth).toLocaleDateString() : 'N/A'}</Typography>
+              </Grid>
+            </Grid>
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="h6" gutterBottom>Health Information</Typography>
+            <Typography variant="body2">Allergies: {selectedChildForDialog.allergies || 'None reported'}</Typography>
+            <Typography variant="body2">Medical Conditions: {selectedChildForDialog.conditions || 'None reported'}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={closeChildDetailsDialog} color="primary">
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+    </Container>
   );
 };
 

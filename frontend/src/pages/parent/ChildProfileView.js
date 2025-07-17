@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -15,23 +15,18 @@ import {
   ListItemIcon,
   Divider,
   Alert,
-  Paper,
   Tab,
   Tabs,
   LinearProgress,
   IconButton
 } from '@mui/material';
 import {
-  Person as PersonIcon,
   MedicalServices as MedicalIcon,
   Vaccines as VaccineIcon,
   LocalPharmacy as PharmacyIcon,
   ContactPhone as ContactIcon,
   Edit as EditIcon,
   ArrowBack as ArrowBackIcon,
-  HealthAndSafety as HealthIcon,
-  School as SchoolIcon,
-  CalendarToday as CalendarIcon,
   Assignment as AssignmentIcon
 } from '@mui/icons-material';
 import { AuthContext } from '../../context/AuthContext';
@@ -66,13 +61,7 @@ const ChildProfileView = () => {
   const [vaccinationRecords, setVaccinationRecords] = useState([]);
   const [medicationRequests, setMedicationRequests] = useState([]);
 
-  useEffect(() => {
-    if (childId && currentUser) {
-      fetchChildData();
-    }
-  }, [childId, currentUser]);
-
-  const fetchChildData = async () => {
+  const fetchChildData = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       
@@ -89,7 +78,7 @@ const ChildProfileView = () => {
         dateOfBirth: '2015-03-15',
         gender: 'Male',
         className: 'Grade 3A',
-        school: 'Springfield Elementary',
+        school: 'FPT Junior High School',
         bloodType: 'O+',
         allergies: ['Peanuts', 'Shellfish'],
         medicalConditions: ['Asthma'],
@@ -178,7 +167,13 @@ const ChildProfileView = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [childId]);
+
+  useEffect(() => {
+    if (childId && currentUser) {
+      fetchChildData();
+    }
+  }, [childId, currentUser, fetchChildData]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -262,7 +257,7 @@ const ChildProfileView = () => {
             <Grid item xs={12} md={9}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="text.secondary">Student ID</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">Student Code</Typography>
                   <Typography variant="body1" sx={{ mb: 2 }}>{childData.studentId}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>

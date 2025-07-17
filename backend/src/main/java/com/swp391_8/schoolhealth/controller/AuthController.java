@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"}, maxAge = 3600, allowCredentials = "true")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -52,15 +52,20 @@ public class AuthController {
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
             List<String> roles = userDetails.getAuthorities().stream()
                     .map(item -> item.getAuthority())
-                    .collect(Collectors.toList());            return ResponseEntity.ok()
+                    .collect(Collectors.toList());
+
+            // Ensure all parameters are correctly passed to JwtResponse constructor
+            return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new JwtResponse(
-                            jwt,
-                            userDetails.getId(),
-                            userDetails.getUsername(),
-                            userDetails.getEmail(),
-                            userDetails.getFullName(),
-                            roles));
+                            jwt, 
+                            userDetails.getId(), 
+                            userDetails.getUsername(), 
+                            userDetails.getEmail(), 
+                            userDetails.getFullName(), 
+                            userDetails.getPhoneNumber(), 
+                            roles
+                    ));
         } catch (org.springframework.security.authentication.BadCredentialsException e) {
             return ResponseEntity
                     .status(401)
@@ -84,6 +89,15 @@ public class AuthController {
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signupRequest) {
         logger.info("Processing registration request for user: {}", signupRequest.getUsername());
         try {
+            // Prevent self-registration for STUDENT role
+            // signupRequest.getRole() returns UserService.UserRole enum type
+            if (signupRequest.getRole() != null && signupRequest.getRole() == UserService.UserRole.Student) {
+                logger.warn("Registration failed: Attempt to self-register as a STUDENT ('{}')", signupRequest.getUsername());
+                return ResponseEntity
+                        .badRequest()
+                        .body(new MessageResponse("Error: Student accounts cannot be registered through this form. Please contact an administrator.", false));
+            }
+
             // Check if username is already taken
             if (userService.existsByUsername(signupRequest.getUsername())) {
                 logger.warn("Registration failed: Username '{}' is already taken", signupRequest.getUsername());
@@ -115,7 +129,16 @@ public class AuthController {
                     signupRequest.getFullName(),
                     signupRequest.getEmail(),
                     signupRequest.getPhone(),
-                    signupRequest.getRole()
+                    signupRequest.getGender(),
+                    signupRequest.getRelationship(),
+                    signupRequest.getRole(),
+                    // Nurse-specific fields: professionalId, specialization, qualification
+                    null, // professionalId - assuming not provided in general signup
+                    null, // specialization - assuming not provided
+                    null, // qualification - assuming not provided
+                    // Parent-specific fields: address, emergencyContact
+                    null, // address - assuming not provided in general signup or handle if SignupRequest is updated
+                    null  // emergencyContact - assuming not provided or handle if SignupRequest is updated
             );
 
             logger.info("User '{}' registered successfully with role: {}", user.getUsername(), user.getRole());
@@ -148,14 +171,51 @@ public class AuthController {
                     .body(new MessageResponse("Error: User not authenticated", false));
         }
 
+        List<String> roles = userDetails.getAuthorities().stream()
+                        .map(item -> item.getAuthority())
+                        .collect(Collectors.toList());
+
         return ResponseEntity.ok(new JwtResponse(
                 null, // No need to return a new token
                 userDetails.getId(),
                 userDetails.getUsername(),
                 userDetails.getEmail(),
                 userDetails.getFullName(),
-                userDetails.getAuthorities().stream()
-                        .map(item -> item.getAuthority())
-                        .collect(Collectors.toList())));
+                userDetails.getPhoneNumber(), // Added missing phoneNumber
+                roles
+        ));
+    }
+
+    @GetMapping("/user/profile")
+    public ResponseEntity<?> getUserProfile() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity
+                    .status(401)
+                    .body(new MessageResponse("Error: User not authenticated", false));
+        }
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        
+        if (userDetails == null) {
+            return ResponseEntity
+                    .status(401)
+                    .body(new MessageResponse("Error: User not authenticated", false));
+        }
+
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(item -> item.getAuthority())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(new JwtResponse(
+                null, // No token in profile response
+                userDetails.getId(),
+                userDetails.getUsername(),
+                userDetails.getEmail(),
+                userDetails.getFullName(),
+                userDetails.getPhoneNumber(),
+                roles
+        ));
     }
 }

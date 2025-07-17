@@ -230,8 +230,7 @@ const VaccinationRecord = () => {
 
   const handleDownloadRecord = () => {
     // Implement download functionality
-    console.log('Downloading vaccination record...');
-  };
+    };
 
   const handlePrintRecord = () => {
     window.print();
@@ -239,8 +238,7 @@ const VaccinationRecord = () => {
 
   const handleShareRecord = () => {
     // Implement share functionality
-    console.log('Sharing vaccination record...');
-  };
+    };
 
   return (
     <Box className="p-6 bg-gray-50 min-h-screen">

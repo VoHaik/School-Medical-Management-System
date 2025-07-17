@@ -7,7 +7,8 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface HealthCheckupRepository extends JpaRepository<HealthCheckup, Integer> {
-    List<HealthCheckup> findByStudentStudentIdOrderByCheckupDateDesc(Integer studentId);
-    // Add any other custom query methods if needed
+public interface HealthCheckupRepository extends JpaRepository<HealthCheckup, Long> {
+    List<HealthCheckup> findByStudentId(String studentId);
+    List<HealthCheckup> findByEventId(Long eventId);
+    List<HealthCheckup> findByStatus(String status);
 }

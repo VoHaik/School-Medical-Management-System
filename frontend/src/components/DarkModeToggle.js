@@ -1,25 +1,9 @@
-import React, { useContext } from 'react';
-import { ThemeContext } from '../context/ThemeContext';
-import IconButton from '@mui/material/IconButton';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
-import Tooltip from '@mui/material/Tooltip';
+// Dark mode functionality removed
+import React from 'react';
 
 const DarkModeToggle = () => {
-  const { darkMode, toggleDarkMode } = useContext(ThemeContext);
-
-  return (
-    <Tooltip title={darkMode ? "Switch to light mode" : "Switch to dark mode"}>
-      <IconButton
-        onClick={toggleDarkMode}
-        color="inherit"
-        aria-label="toggle dark mode"
-        className="dark-mode-toggle"
-      >
-        {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-      </IconButton>
-    </Tooltip>
-  );
+  // Component disabled - dark mode removed from project
+  return null;
 };
 
 export default DarkModeToggle;

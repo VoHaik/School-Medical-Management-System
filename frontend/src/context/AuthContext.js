@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 
 // Create the auth context
@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
 
       if (token && userJson) {
         try {
-          const user = JSON.parse(userJson);
+          // const user = JSON.parse(userJson); // User from localStorage might be stale
 
           // Create an axios instance with the token
           const instance = axios.create({
@@ -36,25 +36,25 @@ export const AuthProvider = ({ children }) => {
               username,
               email,
               fullName,
-              roles
+              roles,
+              accessToken: token // Include the token in the currentUser object
             };
-            console.log('Token validation successful, user data:', updatedUser);
-            localStorage.setItem('user', JSON.stringify(updatedUser));
+            // localStorage.setItem('user', JSON.stringify(updatedUser)); // Store updated user (with token)
             setCurrentUser(updatedUser);
           } catch (error) {
             console.error('Token validation failed:', error);
             // If the request fails with 401, the token is invalid or expired
             if (error.response && error.response.status === 401) {
-              console.log('Token expired or invalid, clearing storage');
-              localStorage.removeItem('token');
+              // localStorage.removeItem('token');
               localStorage.removeItem('user');
               setCurrentUser(null);
             }
           }
         } catch (error) {
-          console.error('Error parsing user data:', error);
+          console.error('Error processing stored user data during token validation:', error);
           localStorage.removeItem('token');
           localStorage.removeItem('user');
+          setCurrentUser(null); // Clear user if there's an error
         }
       }
 
@@ -84,14 +84,14 @@ export const AuthProvider = ({ children }) => {
         username: userName,
         email,
         fullName,
-        roles
+        roles,
+        accessToken: token // Include the token in the currentUser object
       };
 
-      console.log('Login successful, user data:', user);
-      localStorage.setItem('user', JSON.stringify(user));
+      // localStorage.setItem('user', JSON.stringify(user)); // Store user (with token)
       setCurrentUser(user);
 
-      return { success: true, user: user }; // MODIFIED: return user object
+      return { success: true, user }; // MODIFIED: return user object
     } catch (error) {
       setError(error.response?.data?.message || 'Login failed. Please check your credentials.');
       return { 
@@ -148,13 +148,42 @@ export const AuthProvider = ({ children }) => {
   // Get authenticated axios instance
   const getAuthAxios = () => {
     const token = localStorage.getItem('token');
-
+    // Also try to get token from user object as a fallback
+    let userToken = null;
+    const userJson = localStorage.getItem('user');
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        userToken = user?.accessToken || user?.token;
+        } catch (e) {
+        console.error('[getAuthAxios] Error parsing user JSON:', e);
+      }
+    }
+    
+    // Use the most reliable token source
+    const finalToken = token || userToken;
     const instance = axios.create({
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': finalToken ? `Bearer ${finalToken}` : undefined
       }
     });
+    
+    // Log headers for debugging
+    // Add request interceptor for dynamic token check
+    instance.interceptors.request.use(
+      config => {
+        // Check token again at request time (in case it was updated)
+        const currentToken = localStorage.getItem('token');
+        if (currentToken && (!config.headers.Authorization || config.headers.Authorization !== `Bearer ${currentToken}`)) {
+          config.headers.Authorization = `Bearer ${currentToken}`;
+        }
+        return config;
+      },
+      error => {
+        return Promise.reject(error);
+      }
+    );
 
     // Add response interceptor to handle 401 errors
     instance.interceptors.response.use(
@@ -162,7 +191,7 @@ export const AuthProvider = ({ children }) => {
       error => {
         if (error.response && error.response.status === 401) {
           logout();
-          window.location.href = '/login';
+          window.location.href = '/login?error=session_expired';
         }
         return Promise.reject(error);
       }
@@ -182,10 +211,18 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     getAuthAxios,
   };
-
   return (
     <AuthContext.Provider value={value}>
       {!loading && children}
     </AuthContext.Provider>
   );
+};
+
+// Custom hook to use the AuthContext
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

@@ -9,8 +9,12 @@ import org.slf4j.LoggerFactory;
 
 import com.swp391_8.schoolhealth.model.Role;
 import com.swp391_8.schoolhealth.model.User;
+import com.swp391_8.schoolhealth.model.Nurse;
+import com.swp391_8.schoolhealth.model.Parent;
 import com.swp391_8.schoolhealth.repository.RoleRepository;
 import com.swp391_8.schoolhealth.repository.UserRepository;
+import com.swp391_8.schoolhealth.repository.NurseRepository;
+import com.swp391_8.schoolhealth.repository.ParentRepository;
 
 import jakarta.transaction.Transactional;
 import java.util.Optional;
@@ -29,6 +33,12 @@ public class UserAccountInitializer implements CommandLineRunner {
     
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private NurseRepository nurseRepository;
+
+    @Autowired
+    private ParentRepository parentRepository;
     
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -41,7 +51,6 @@ public class UserAccountInitializer implements CommandLineRunner {
         // Create roles if they don't exist
         createRoleIfNotExists("Admin", "System administrator with full access");
         createRoleIfNotExists("SchoolNurse", "Medical staff with access to health records");
-        createRoleIfNotExists("Manager", "School management personnel");
         createRoleIfNotExists("Parent", "Parent or guardian of students");
         createRoleIfNotExists("Student", "Student account");
         
@@ -52,30 +61,21 @@ public class UserAccountInitializer implements CommandLineRunner {
         Role nurseRole = roleRepository.findByRoleName("SchoolNurse")
                 .orElseThrow(() -> new RuntimeException("SchoolNurse role not found"));
                 
-        Role managerRole = roleRepository.findByRoleName("Manager")
-                .orElseThrow(() -> new RuntimeException("Manager role not found"));
-                
         Role parentRole = roleRepository.findByRoleName("Parent")
                 .orElseThrow(() -> new RuntimeException("Parent role not found"));
-          // Create user accounts with the password "Password123" (plain text for testing)
-        String password = "Password123"; // Plain text password for testing
-        // Note: In production, use: passwordEncoder.encode("Password123");
+        
+        String password = "Password123"; 
         
         // Create admin account
-        createUserIfNotExists("admin.user", password, "admin@schoolhealth.edu", "555-100-1000", 
-                "Admin User", adminRole);
+        createUserIfNotExists("admin.user", "ADM001", password, "admin@schoolhealth.edu", adminRole, "Admin User", "555-100-1000", "N/A");
         
         // Create nurse account
-        createUserIfNotExists("nurse.johnson", password, "nurse.johnson@schoolhealth.edu", "555-200-2000", 
-                "Sarah Johnson", nurseRole);
-        
-        // Create manager account
-        createUserIfNotExists("manager.davis", password, "manager.davis@schoolhealth.edu", "555-300-3000", 
-                "Michael Davis", managerRole);
+        // User code for Nurse will be their nurse_code
+        createUserIfNotExists("nurse.johnson", "NUR001", password, "nurse.johnson@schoolhealth.edu", nurseRole, "Sarah Johnson", "555-200-2000", "Female");
         
         // Create parent account
-        createUserIfNotExists("parent.smith", password, "parent.smith@email.com", "555-400-4000", 
-                "Jennifer Smith", parentRole);
+        // User code for Parent will be their parent_code
+        createUserIfNotExists("parent.smith", "PAR001", password, "parent.smith@email.com", parentRole, "Jennifer Smith", "555-400-4000", "Female");
                 
         logger.info("User account initialization completed");
     }
@@ -90,21 +90,66 @@ public class UserAccountInitializer implements CommandLineRunner {
         }
     }
     
-    private void createUserIfNotExists(String username, String password, String email, String phoneNumber, 
-                                    String fullName, Role role) {
-        if (!userRepository.existsByUsername(username)) {
+    private void createUserIfNotExists(String username, String userCode, String password, String email, Role role, 
+                                    String fullName, String phoneNumber, String gender) {
+        if (!userRepository.existsByUsername(username) && !userRepository.existsByUserCode(userCode)) {
             User user = new User();
+            user.setUserCode(userCode); 
             user.setUsername(username);
-            user.setPassword(password);
+            user.setPassword(passwordEncoder.encode(password)); 
             user.setEmail(email);
+            user.setFullName(fullName); 
             user.setPhoneNumber(phoneNumber);
-            user.setFullName(fullName);
+            // Gender is not a field on the User model directly, but passed for Nurse/Parent. 
+            // If User needs gender, it should be added to the User model.
             user.setRole(role);
+            user.setIsActive(true); 
             
-            userRepository.save(user);
-            logger.info("Created user account: {}", username);
+            User savedUser = userRepository.save(user); // Save User first
+            logger.info("Created user account: {} with user_code: {}", username, savedUser.getUserCode());
+
+            // If role is SchoolNurse, create and save Nurse entity
+            if (role.getRoleName().equals("SchoolNurse")) {
+                if (nurseRepository.findByNurseCode(savedUser.getUserCode()).isPresent()) {
+                    logger.warn("Nurse profile with code {} already exists. Skipping creation.", savedUser.getUserCode());
+                    return;
+                }
+                Nurse nurse = new Nurse();
+                nurse.setNurseCode(savedUser.getUserCode()); // Use User's userCode as Nurse's nurseCode
+                nurse.setFullName(fullName); 
+                nurse.setPhoneNumber(phoneNumber); 
+                nurse.setGender(gender); 
+                // nurse.setUser(savedUser); // This line is removed
+                // Professional ID might be required, set a default or make it nullable for initialization
+                nurse.setProfessionalId("NUR-PID-" + System.currentTimeMillis() % 10000); // Example Professional ID
+                nurseRepository.save(nurse);
+                logger.info("Created Nurse profile for user: {} with nurse_code: {}", username, nurse.getNurseCode());
+            }
+
+            // If role is Parent, create and save Parent entity
+            if (role.getRoleName().equals("Parent")) {
+                if (parentRepository.findByParentCode(savedUser.getUserCode()).isPresent()) {
+                    logger.warn("Parent profile with code {} already exists. Skipping creation.", savedUser.getUserCode());
+                    return;
+                }
+                Parent parent = new Parent();
+                parent.setParentCode(savedUser.getUserCode()); // Use User's userCode as Parent's parentCode
+                parent.setFullName(fullName); 
+                parent.setPhoneNumber(phoneNumber); 
+                parent.setGender(gender); 
+                // parent.setUser(savedUser); // This line is removed
+                parent.setAddress("Default Address"); // Example default value
+                parent.setEmergencyContact(phoneNumber); // Example, using phone number as emergency contact
+                parent.setRelationshipWithStudent("Parent"); // Example default value
+                parentRepository.save(parent);
+                logger.info("Created Parent profile for user: {} with parent_code: {}", username, parent.getParentCode());
+            }
         } else {
-            logger.info("User already exists: {}", username);
+            if (userRepository.existsByUsername(username)) {
+                logger.info("User with username '{}' already exists.", username);
+            } else {
+                logger.info("User with user_code '{}' already exists.", userCode);
+            }
         }
     }
 }

@@ -3,10 +3,10 @@ package com.swp391_8.schoolhealth.service.impl;
 import com.swp391_8.schoolhealth.dto.ConsultationDTO;
 import com.swp391_8.schoolhealth.model.Consultation;
 import com.swp391_8.schoolhealth.model.Student;
-import com.swp391_8.schoolhealth.model.HealthCheckup; // Assuming HealthCheckup model exists
+import com.swp391_8.schoolhealth.model.HealthCheckup;
 import com.swp391_8.schoolhealth.repository.ConsultationRepository;
-import com.swp391_8.schoolhealth.repository.StudentRepository; // Assuming StudentRepository exists
-import com.swp391_8.schoolhealth.repository.HealthCheckupRepository; // Assuming HealthCheckupRepository exists
+import com.swp391_8.schoolhealth.repository.StudentRepository;
+import com.swp391_8.schoolhealth.repository.HealthCheckupRepository;
 import com.swp391_8.schoolhealth.service.ConsultationService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ public class ConsultationServiceImpl implements ConsultationService {
     private StudentRepository studentRepository;
 
     @Autowired
-    private HealthCheckupRepository healthCheckupRepository; // Optional: if linking to checkups
+    private HealthCheckupRepository healthCheckupRepository;
 
     @Override
     public ConsultationDTO findById(Integer id) {
@@ -35,8 +35,8 @@ public class ConsultationServiceImpl implements ConsultationService {
     }
 
     @Override
-    public List<ConsultationDTO> findByStudentId(Integer studentId) {
-        return consultationRepository.findByStudentStudentIdOrderByConsultationDateDesc(studentId).stream()
+    public List<ConsultationDTO> findByStudentCode(String studentCode) {
+        return consultationRepository.findByStudentStudentCodeOrderByConsultationDateDesc(studentCode).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -53,17 +53,16 @@ public class ConsultationServiceImpl implements ConsultationService {
         Consultation existingConsultation = consultationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Consultation not found with id: " + id));
 
-        // Update fields from DTO
-        Student student = studentRepository.findById(dto.getStudentId())
-                .orElseThrow(() -> new EntityNotFoundException("Student not found with id: " + dto.getStudentId()));
+        Student student = studentRepository.findByStudentCode(dto.getStudentCode())
+                .orElseThrow(() -> new EntityNotFoundException("Student not found with code: " + dto.getStudentCode()));
         existingConsultation.setStudent(student);
 
         if (dto.getCheckupId() != null) {
             HealthCheckup checkup = healthCheckupRepository.findById(dto.getCheckupId())
                     .orElseThrow(() -> new EntityNotFoundException("HealthCheckup not found with id: " + dto.getCheckupId()));
-            existingConsultation.setCheckup(checkup);
+            existingConsultation.setHealthCheckup(checkup);
         } else {
-            existingConsultation.setCheckup(null);
+            existingConsultation.setHealthCheckup(null);
         }
 
         existingConsultation.setConsultationDate(dto.getConsultationDate());
@@ -87,11 +86,11 @@ public class ConsultationServiceImpl implements ConsultationService {
         ConsultationDTO dto = new ConsultationDTO();
         dto.setId(consultation.getId());
         if (consultation.getStudent() != null) {
-            dto.setStudentId(consultation.getStudent().getStudentId());
-            dto.setStudentName(consultation.getStudent().getFirstName() + " " + consultation.getStudent().getLastName()); // Example: full name
+            dto.setStudentCode(consultation.getStudent().getStudentCode());
+            dto.setStudentName(consultation.getStudent().getFullName()); // Use getFullName from Student
         }
-        if (consultation.getCheckup() != null) {
-            dto.setCheckupId(consultation.getCheckup().getCheckupId());
+        if (consultation.getHealthCheckup() != null) {
+            dto.setCheckupId(consultation.getHealthCheckup().getCheckupId());
         }
         dto.setConsultationDate(consultation.getConsultationDate());
         dto.setLocation(consultation.getLocation());
@@ -102,18 +101,21 @@ public class ConsultationServiceImpl implements ConsultationService {
 
     private Consultation convertToEntity(ConsultationDTO dto) {
         Consultation consultation = new Consultation();
-        // ID is not set for new entities, or it's set for updates via existingConsultation
+        // Note: ID is not set here as it's typically generated on save for new entities
+        // or should be present if updating (handled in updateConsultation)
 
-        Student student = studentRepository.findById(dto.getStudentId())
-                .orElseThrow(() -> new EntityNotFoundException("Student not found with id: " + dto.getStudentId()));
-        consultation.setStudent(student);
+        if (dto.getStudentCode() != null) {
+            Student student = studentRepository.findByStudentCode(dto.getStudentCode())
+                    .orElseThrow(() -> new EntityNotFoundException("Student not found with code: " + dto.getStudentCode()));
+            consultation.setStudent(student);
+        }
 
         if (dto.getCheckupId() != null) {
             HealthCheckup checkup = healthCheckupRepository.findById(dto.getCheckupId())
                     .orElseThrow(() -> new EntityNotFoundException("HealthCheckup not found with id: " + dto.getCheckupId()));
-            consultation.setCheckup(checkup);
+            consultation.setHealthCheckup(checkup);
         }
-        // For creation, other fields are set directly
+
         consultation.setConsultationDate(dto.getConsultationDate());
         consultation.setLocation(dto.getLocation());
         consultation.setDescription(dto.getDescription());
