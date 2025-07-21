@@ -6,7 +6,7 @@ import com.swp391_8.schoolhealth.dto.StudentVaccinationDTO;
 import com.swp391_8.schoolhealth.dto.MessageResponse;
 import com.swp391_8.schoolhealth.security.services.UserDetailsImpl;
 import com.swp391_8.schoolhealth.service.HealthDeclarationService;
-import com.swp391_8.schoolhealth.service.MedicalEventService;
+import com.swp391_8.schoolhealth.service.MedicalEventServiceInterface;
 import com.swp391_8.schoolhealth.service.StudentVaccinationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,7 @@ public class StudentDashboardController {
     private HealthDeclarationService healthDeclarationService;
     
     @Autowired
-    private MedicalEventService medicalEventService;
+    private MedicalEventServiceInterface medicalEventService;
     
     @Autowired
     private StudentVaccinationService studentVaccinationService;
@@ -156,9 +156,11 @@ public class StudentDashboardController {
             try {
                 // Vaccination records count
                 List<StudentVaccinationDTO> vaccinations = studentVaccinationService.getCompletedVaccinationsByStudentCode(studentCode);
+                quickStats.put("completedVaccinations", vaccinations.size());
                 quickStats.put("pendingVaccinations", 0); // For now, just set to 0
             } catch (Exception e) {
                 logger.warn("Could not fetch vaccination records for student {}: {}", studentCode, e.getMessage());
+                quickStats.put("completedVaccinations", 0);
                 quickStats.put("pendingVaccinations", 0);
             }
             

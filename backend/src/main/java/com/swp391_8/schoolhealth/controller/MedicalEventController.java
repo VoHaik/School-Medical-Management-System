@@ -1,7 +1,7 @@
 package com.swp391_8.schoolhealth.controller;
 
 import com.swp391_8.schoolhealth.dto.MedicalEventDTO;
-import com.swp391_8.schoolhealth.service.MedicalEventService;
+import com.swp391_8.schoolhealth.service.MedicalEventServiceInterface;
 import com.swp391_8.schoolhealth.service.SecurityService; // Added for @securityService
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,7 +21,7 @@ import org.springframework.format.annotation.DateTimeFormat; // Import DateTimeF
 public class MedicalEventController {
 
     @Autowired
-    private MedicalEventService medicalEventService;
+    private MedicalEventServiceInterface medicalEventService;
 
     @Autowired
     private SecurityService securityService; // Added for @securityService
