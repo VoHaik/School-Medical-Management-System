@@ -133,7 +133,7 @@ const UserManagement = () => {
 
   const handleEditSubmit = async () => {
     try {
-      await updateUser(selectedUser.id, editFormData);
+      await updateUser(selectedUser.userId, editFormData);
       showSnackbar('User updated successfully', 'success');
       setEditDialog(false);
       loadUsers(); // Reload users
@@ -145,7 +145,7 @@ const UserManagement = () => {
 
   const handleDeleteSubmit = async () => {
     try {
-      await deleteUser(selectedUser.id);
+      await deleteUser(selectedUser.userId);
       showSnackbar('User deleted successfully', 'success');
       setDeleteDialog(false);
       loadUsers(); // Reload users

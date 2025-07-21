@@ -12,52 +12,84 @@ export const AuthProvider = ({ children }) => {
   // Check if user is already logged in on component mount and validate token
   useEffect(() => {
     const validateToken = async () => {
+      console.log('[AuthContext] Starting token validation...');
       const token = localStorage.getItem('token');
       const userJson = localStorage.getItem('user');
+      console.log('[AuthContext] Token exists:', !!token);
+      console.log('[AuthContext] User data exists:', !!userJson);
 
-      if (token && userJson) {
+      if (token) {
         try {
-          // const user = JSON.parse(userJson); // User from localStorage might be stale
-
           // Create an axios instance with the token
           const instance = axios.create({
             headers: {
               'Authorization': `Bearer ${token}`
             }
           });
-          // Make a request to the auth/me endpoint to validate the token
+
+          // If we have cached user data, use it immediately
+          if (userJson) {
+            try {
+              const cachedUser = JSON.parse(userJson);
+              console.log('[AuthContext] Using cached user data:', cachedUser.username);
+              setCurrentUser({
+                ...cachedUser,
+                accessToken: token
+              });
+            } catch (parseError) {
+              console.error('[AuthContext] Error parsing cached user data:', parseError);
+              localStorage.removeItem('user');
+            }
+          }
+
+          // Make a request to the auth/me endpoint to validate the token and get fresh data
           try {
             const response = await instance.get('/api/auth/me');
+            console.log('[AuthContext] Token validation successful');
             // If the request succeeds, the token is valid
             // Update user data with the latest from the server
-            const { id, username, email, fullName, roles } = response.data;
+            const { id, username, email, fullName, roles, userCode } = response.data;
             const updatedUser = {
               id,
               username,
               email,
               fullName,
               roles,
-              accessToken: token // Include the token in the currentUser object
+              userCode,
+              accessToken: token
             };
-            // localStorage.setItem('user', JSON.stringify(updatedUser)); // Store updated user (with token)
+            localStorage.setItem('user', JSON.stringify(updatedUser));
             setCurrentUser(updatedUser);
           } catch (error) {
-            console.error('Token validation failed:', error);
+            console.error('[AuthContext] Token validation failed:', error);
             // If the request fails with 401, the token is invalid or expired
             if (error.response && error.response.status === 401) {
-              // localStorage.removeItem('token');
+              console.log('[AuthContext] Token expired/invalid, clearing auth data');
+              localStorage.removeItem('token');
               localStorage.removeItem('user');
               setCurrentUser(null);
+            } else if (!userJson) {
+              console.log('[AuthContext] No cached user data and token validation failed, clearing auth');
+              // If we don't have cached user data and can't validate token, clear everything
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              setCurrentUser(null);
+            } else {
+              console.log('[AuthContext] Network error but keeping cached user data');
             }
+            // If we have cached user data and it's just a network error, keep the user logged in
           }
         } catch (error) {
-          console.error('Error processing stored user data during token validation:', error);
+          console.error('[AuthContext] Error processing stored user data during token validation:', error);
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           setCurrentUser(null); // Clear user if there's an error
         }
+      } else {
+        console.log('[AuthContext] No token found, user not authenticated');
       }
 
+      console.log('[AuthContext] Token validation complete, setting loading to false');
       setLoading(false);
     };
 
@@ -75,7 +107,7 @@ export const AuthProvider = ({ children }) => {
         password
       });
 
-      const { token, id, username: userName, email, fullName, roles } = response.data;
+      const { token, id, username: userName, email, fullName, roles, userCode } = response.data;
 
       // Store token and user info
       localStorage.setItem('token', token);
@@ -85,10 +117,11 @@ export const AuthProvider = ({ children }) => {
         email,
         fullName,
         roles,
+        userCode,
         accessToken: token // Include the token in the currentUser object
       };
 
-      // localStorage.setItem('user', JSON.stringify(user)); // Store user (with token)
+      localStorage.setItem('user', JSON.stringify(user)); // Store user (with token)
       setCurrentUser(user);
 
       return { success: true, user }; // MODIFIED: return user object

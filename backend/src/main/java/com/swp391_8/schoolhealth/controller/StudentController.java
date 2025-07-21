@@ -48,6 +48,25 @@ public class StudentController {
         return ResponseEntity.ok(students);
     }
 
+    // Endpoint for current student to get their own profile
+    @GetMapping("/profile")
+    @PreAuthorize("hasAuthority('Student')")
+    public ResponseEntity<?> getCurrentStudentProfile(Authentication authentication) {
+        try {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            String studentCode = userDetails.getUserCode();
+            
+            Optional<StudentDTO> studentOpt = studentService.getStudentByCode(studentCode);
+            if (studentOpt.isPresent()) {
+                return ResponseEntity.ok(studentOpt.get());
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new MessageResponse("Error retrieving student profile", false));
+        }
+    }
+
     @GetMapping("/{studentCode}")
     @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin') or @securityService.isParentOfStudentByCode(authentication, #studentCode)")
     public ResponseEntity<StudentDTO> getStudentByCode(@PathVariable String studentCode) {

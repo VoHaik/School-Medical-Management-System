@@ -551,11 +551,13 @@ const EventManagement = () => {
                               <EditIcon />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Delete Event">
-                            <IconButton color="error" onClick={() => handleDeleteEvent(event)}>
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
+                          {false && (
+                            <Tooltip title="Delete Event">
+                              <IconButton color="error" onClick={() => handleDeleteEvent(event)}>
+                                <DeleteIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))

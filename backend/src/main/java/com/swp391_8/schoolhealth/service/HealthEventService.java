@@ -241,7 +241,7 @@ public class HealthEventService {
                     .executeUpdate();
 
             // Delete associated student health checkups (if using eventId field)
-            entityManager.createNativeQuery("DELETE FROM student_health_checkups WHERE event_id = ?")
+            entityManager.createNativeQuery("DELETE FROM health_events WHERE event_id = ?")
                     .setParameter(1, eventId)
                     .executeUpdate();
 

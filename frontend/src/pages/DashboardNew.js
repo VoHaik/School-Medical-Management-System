@@ -122,17 +122,24 @@ const Dashboard = () => {
   };
 
   const getRoleSpecificContent = () => {
-    switch (currentUser?.role) {
-      case 'PARENT':
-        // Redirect parent users to the dedicated parent dashboard
-        window.location.href = '/parent/dashboard';
-        return (
-          <Box textAlign="center" py={8}>
-            <Typography color="text.secondary">Redirecting to Parent Dashboard...</Typography>
-          </Box>
-        );
+    const userRole = currentUser?.roles?.[0] || '';
+    
+    // Debug logging
+    console.log('DashboardNew - currentUser:', currentUser);
+    console.log('DashboardNew - userRole:', userRole);
+    console.log('DashboardNew - all roles:', currentUser?.roles);
+    
+    if (userRole === 'ROLE_PARENT' || userRole === 'Parent') {
+      // Redirect parent users to the dedicated parent dashboard
+      window.location.href = '/parent/dashboard';
+      return (
+        <Box textAlign="center" py={8}>
+          <Typography color="text.secondary">Redirecting to Parent Dashboard...</Typography>
+        </Box>
+      );
+    }
 
-      case 'MEDICAL_STAFF':
+    if (userRole === 'ROLE_SCHOOLNURSE' || userRole === 'MEDICAL_STAFF') {
         return (
           <motion.div variants={container} initial="hidden" animate="visible">
             <Grid container spacing={3}>
@@ -206,8 +213,9 @@ const Dashboard = () => {
             </Grid>
           </motion.div>
         );
+    }
 
-      case 'ADMIN':
+    if (userRole === 'ROLE_ADMIN' || userRole === 'ADMIN') {
         return (
           <motion.div variants={container} initial="hidden" animate="visible">
             <Grid container spacing={3}>
@@ -280,8 +288,9 @@ const Dashboard = () => {
             </Grid>
           </motion.div>
         );
+    }
 
-      case 'STUDENT':
+    if (userRole === 'ROLE_STUDENT' || userRole === 'STUDENT') {
         return (
           <motion.div variants={container} initial="hidden" animate="visible">
             <Grid container spacing={3}>
@@ -334,14 +343,14 @@ const Dashboard = () => {
             </Grid>
           </motion.div>
         );
-
-      default:
-        return (
-          <Box textAlign="center" py={8}>
-            <Typography color="text.secondary">Please contact administrator for role assignment.</Typography>
-          </Box>
-        );
     }
+
+    // Default case
+    return (
+      <Box textAlign="center" py={8}>
+        <Typography color="text.secondary">Please contact administrator for role assignment.</Typography>
+      </Box>
+    );
   };
 
   if (loading) {

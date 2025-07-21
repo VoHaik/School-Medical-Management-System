@@ -545,7 +545,7 @@ function MedicationManagement() {
       console.log(`Rejecting request ID: ${requestId} with reason: ${rejectionReason || '(No reason provided)'}`);
       
       // The backend controller expects "reason" as the parameter name
-      const response = await authAxios.put(`/api/medication-requests/${requestId}/reject`, { 
+      const response = await authAxios.put(`/medication-requests/${requestId}/reject`, { 
         reason: rejectionReason
       });
       
@@ -602,7 +602,7 @@ function MedicationManagement() {
     };
     try {
       const authAxios = apiClient;
-      await authAxios.post(`/api/medication-requests/${requestId}/administer`, administrationData);
+      await authAxios.post(`/medication-requests/${requestId}/administer`, administrationData);
       
       // Add success notification
       alert('Medication administered successfully');
@@ -709,7 +709,7 @@ function MedicationManagement() {
       <Tabs value={activeTab} onChange={handleTabChange} indicatorColor="primary" textColor="primary" sx={{ mb: 3 }}>
         <Tab label="Pending Requests" icon={<AssignmentIcon />} />
         <Tab label="Medication Inventory" icon={<InventoryIcon />} />
-        <Tab label="Medication Administration Log" icon={<ScheduleIcon />} />
+        {/* <Tab label="Medication Administration Log" icon={<ScheduleIcon />} /> */}
         <Tab label="Low Stock Alerts" icon={<WarningIcon />} badgeContent={lowStockAlerts.length} color="error" />
         <Tab label="Medical Events" icon={<MedicalEventIcon />} />
       </Tabs>
@@ -911,15 +911,14 @@ function MedicationManagement() {
         </Card>
       )}
 
-      {/* Tab 2: Medication Administration Log (Existing Content for direct logging) */}
-      {activeTab === 2 && (
+      {/* Tab 2: Medication Administration Log (Disabled) */}
+      {/* {activeTab === 2 && (
         <Card>
           <CardHeader
             title="Direct Medication Administration Log"
             action={<Button variant="contained" startIcon={<AddIcon />} onClick={handleAddAdministration}>Log Administration</Button>}
           />
           <CardContent>
-            {/* Existing administration log table and UI */}
             <Typography>Direct medication administration log UI goes here.</Typography>
             <TableContainer component={Paper}>
                 <Table>
@@ -933,7 +932,7 @@ function MedicationManagement() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {administrations.map((adminLog) => ( // Ensure 'administrations' is the correct state variable
+                    {administrations.map((adminLog) => ( 
                       <TableRow key={adminLog.id}>
                         <TableCell>{adminLog.studentName || adminLog.studentId}</TableCell>
                         <TableCell>{adminLog.medicationName}</TableCell>
@@ -947,10 +946,10 @@ function MedicationManagement() {
               </TableContainer>
           </CardContent>
         </Card>
-      )}
+      )} */}
 
-      {/* Tab 3: Low Stock Alerts (Existing Content) */}
-      {activeTab === 3 && (
+      {/* Tab 2: Low Stock Alerts (Updated index) */}
+      {activeTab === 2 && (
         <Card>
           <CardHeader title="Low Stock Alerts" />
           <CardContent>
@@ -982,8 +981,8 @@ function MedicationManagement() {
         </Card>
       )}
 
-      {/* Tab 4: Medical Events */}
-      {activeTab === 4 && (
+      {/* Tab 3: Medical Events (Updated index) */}
+      {activeTab === 3 && (
         <Card>
           <CardHeader title="Medical Event Management" />
           <CardContent>

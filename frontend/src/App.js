@@ -11,6 +11,7 @@ import HealthDocs from './pages/HealthDocs'; // Add HealthDocs import
 
 import NurseBlog from './pages/NurseBlog';
 import DashboardNew from './pages/DashboardNew';
+import StudentDashboard from './pages/student/StudentDashboard';
 
 // Parent Pages
 import HealthDeclaration from './pages/parent/HealthDeclaration';
@@ -128,7 +129,7 @@ function App() {
                 <Route path="/nurse/blog" element={<ProtectedRoute roles={['ROLE_SCHOOLNURSE']}><NurseBlog /></ProtectedRoute>} />
                 
                 {/* Student Dashboard */}
-                <Route path="/student/dashboard" element={<ProtectedRoute roles={['ROLE_STUDENT']}><DashboardNew /></ProtectedRoute>} />
+                <Route path="/student/dashboard" element={<ProtectedRoute roles={['ROLE_STUDENT']}><StudentDashboard /></ProtectedRoute>} />
                 
                 {/* New Student Routes with Updated Components */}
                 <Route path="/health-profile" element={<ProtectedRoute roles={['ROLE_STUDENT']}><StudentHealthProfile /></ProtectedRoute>} />
