@@ -23,10 +23,6 @@ import {
   Assignment,
   MenuBook,
   Login,
-  Policy,
-  Vaccines,
-  LocalHospital,
-  HelpOutline,
   LocationOn,
   Phone,
   Email,
@@ -154,7 +150,7 @@ const Footer = () => {
             </Grid>
 
             {/* Quick Links */}
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid item xs={12} sm={6} md={4}>
               <motion.div variants={itemVariants}>
                 <Typography variant="h6" fontWeight="bold" mb={3}>
                   Quick Links
@@ -162,8 +158,6 @@ const Footer = () => {
                 <Stack spacing={1.5}>
                   {[
                     { icon: <Home fontSize="small" />, label: 'Home', to: '/' },
-                    { icon: <Assignment fontSize="small" />, label: 'Health Docs', to: '/#docs' },
-                    { icon: <MenuBook fontSize="small" />, label: 'Blog', to: '/#blog' },
                     { icon: <Login fontSize="small" />, label: 'Login', to: '/login' },
                   ].map((link) => (
                     <Box
@@ -194,49 +188,8 @@ const Footer = () => {
               </motion.div>
             </Grid>
 
-            {/* Resources */}
-            <Grid item xs={12} sm={6} md={3}>
-              <motion.div variants={itemVariants}>
-                <Typography variant="h6" fontWeight="bold" mb={3}>
-                  Resources
-                </Typography>
-                <Stack spacing={1.5}>
-                  {[
-                    { icon: <Policy fontSize="small" />, label: 'Health Policies', to: '/resources/health-policies' },
-                    { icon: <Vaccines fontSize="small" />, label: 'Vaccination Info', to: '/resources/vaccination-info' },
-                    { icon: <LocalHospital fontSize="small" />, label: 'Emergency Procedures', to: '/resources/emergency-procedures' },
-                    { icon: <HelpOutline fontSize="small" />, label: 'FAQ', to: '/resources/faq' },
-                  ].map((link) => (
-                    <Box
-                      key={link.label}
-                      component={Link}
-                      to={link.to}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: 'white',
-                        textDecoration: 'none',
-                        opacity: 0.9,
-                        transition: 'all 0.2s ease-in-out',
-                        '&:hover': {
-                          opacity: 1,
-                          transform: 'translateX(4px)',
-                        }
-                      }}
-                    >
-                      <ChevronRight fontSize="small" sx={{ mr: 1, fontSize: '0.875rem' }} />
-                      {link.icon}
-                      <Typography variant="body2" sx={{ ml: 1 }}>
-                        {link.label}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Stack>
-              </motion.div>
-            </Grid>
-
             {/* Contact Info */}
-            <Grid item xs={12} md={3}>
+            <Grid item xs={12} md={4}>
               <motion.div variants={itemVariants}>
                 <Typography variant="h6" fontWeight="bold" mb={3}>
                   Contact Us

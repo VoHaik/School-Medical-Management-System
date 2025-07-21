@@ -208,10 +208,7 @@ function VaccinationManagement() {
 
   const fetchVaccinationRecords = async () => {
     try {
-      console.log('Fetching vaccination records from API...');
       const records = await getAllVaccinationRecords();
-      console.log('API returned records:', records);
-      
       if (records && Array.isArray(records)) {
         // Transform API data to match UI format and handle grouped vaccines
         const transformedRecords = records.map(record => {
@@ -544,8 +541,7 @@ function VaccinationManagement() {
         // Refresh the vaccination records list
         await fetchVaccinationRecords();
         // Show success message (optional - you can add a snackbar/toast)
-        console.log('Vaccination record deleted successfully');
-      } catch (error) {
+        } catch (error) {
         console.error('Error deleting vaccination record:', error);
         // Show error message (optional - you can add a snackbar/toast)
         alert('Failed to delete vaccination record. Please try again.');

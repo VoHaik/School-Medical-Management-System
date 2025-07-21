@@ -42,4 +42,7 @@ public interface ParentRegistrationRequestRepository extends JpaRepository<Paren
     
     // Kiểm tra xem email đã được sử dụng chưa
     boolean existsByEmail(String email);
+    
+    // Kiểm tra xem phone number đã được sử dụng chưa
+    boolean existsByPhoneNumber(String phoneNumber);
 }

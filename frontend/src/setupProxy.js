@@ -1,25 +1,22 @@
-﻿/**
+/**
  * Custom proxy configuration for Create React App development server
  * This file is automatically recognized by Create React App
  */
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 module.exports = function(app) {
-  console.log('Setting up proxy middleware for /api to http://localhost:8080');
-  
   app.use(
-    '/api', // Chỉ proxy các request bắt đầu bằng /api
+    '/api', // Ch? proxy c�c request b?t d?u b?ng /api
     createProxyMiddleware({
-      target: 'http://localhost:8080', // URL của backend Spring Boot chính
+      target: 'http://localhost:8080', // URL c?a backend Spring Boot ch�nh
       changeOrigin: true,
-      secure: false, // Thường là false cho môi trường dev localhost
-      // Không dùng pathRewrite vì backend đã có /api trong @RequestMapping
+      secure: false, // Thu?ng l� false cho m�i tru?ng dev localhost
+      // Kh�ng d�ng pathRewrite v� backend d� c� /api trong @RequestMapping
       onProxyReq: (proxyReq, req, res) => {
-        console.log(`[Proxy] Forwarding ${req.method} ${req.path} to ${proxyReq.protocol}//${proxyReq.host}${proxyReq.path}`);
-      },
+        },
       onError: (err, req, res, target) => {
         console.error(`[Proxy Error] Could not connect to ${target.href}: ${err.message}`);
-        // Không tự động thử lại port khác trong phiên bản đơn giản này
+        // Kh�ng t? d?ng th? l?i port kh�c trong phi�n b?n don gi?n n�y
         if (!res.headersSent) {
             res.writeHead(503, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ message: 'Proxy Error: Could not connect to backend service.', error: err.message }));
@@ -28,8 +25,8 @@ module.exports = function(app) {
     })
   );
 
-  // Nếu bạn có các API khác không bắt đầu bằng /api, bạn có thể thêm các proxy khác ở đây
-  // Ví dụ:
+  // N?u b?n c� c�c API kh�c kh�ng b?t d?u b?ng /api, b?n c� th? th�m c�c proxy kh�c ? d�y
+  // V� d?:
   // app.use(
   //   '/auth', 
   //   createProxyMiddleware({

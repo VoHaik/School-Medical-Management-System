@@ -32,8 +32,6 @@ const AppMenu = ({ isOpen, closeMenu }) => {
       primaryRole = 'ROLE_PARENT';
     } else if (roles.includes('SchoolNurse') || roles.includes('ROLE_SCHOOLNURSE')) {
       primaryRole = 'ROLE_SCHOOLNURSE';
-    } else if (roles.includes('Manager') || roles.includes('ROLE_TEACHER')) {
-      primaryRole = 'ROLE_TEACHER';
     } else if (roles.includes('Student') || roles.includes('ROLE_STUDENT')) {
       primaryRole = 'ROLE_STUDENT';
     } else if (roles.length > 0) {
@@ -51,6 +49,7 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/parent/my-requests', label: 'View Medication Requests', icon: 'fas fa-list-alt' },
           { path: '/parent/vaccination-consent', label: 'Vaccination Consent', icon: 'fas fa-syringe' },
           { path: '/parent/checkup-information', label: 'Check up Information', icon: 'fas fa-clipboard-list' },
+          { path: '/health-docs', label: 'Health Docs', icon: 'fas fa-file-medical' },
           { path: '/health-blog', label: 'Health Blog', icon: 'fas fa-blog' },
         ];
         break;
@@ -63,18 +62,8 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/medical/vaccination-management', label: 'Vaccination Management', icon: 'fas fa-syringe' },
           { path: '/medical/health-checkups', label: 'Health Checkups', icon: 'fas fa-stethoscope' },
           { path: '/medical/student-management', label: 'Student Management', icon: 'fas fa-users' },
-          { path: '/nurse/blog', label: 'Manage Health Blog', icon: 'fas fa-edit' },
-          { path: '/health-blog', label: 'View Health Blog', icon: 'fas fa-blog' },
-          { path: '/medical/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
-        ];
-        break;
-      case 'ROLE_TEACHER': // Assuming manager role is teacher
-        items = [
-          { path: '/teacher/dashboard', label: 'Teacher Dashboard', icon: 'fas fa-chalkboard-teacher' },
-          { path: '/manager/reports', label: 'Reports & Analytics', icon: 'fas fa-chart-bar' },
-          { path: '/manager/user-management', label: 'User Management', icon: 'fas fa-users-cog' },
-          { path: '/manager/health-programs', label: 'Health Programs', icon: 'fas fa-heartbeat' },
-          { path: '/manager/content', label: 'Content Management', icon: 'fas fa-file-alt' },
+          { path: '/health-docs', label: 'Health Docs', icon: 'fas fa-file-medical' },
+          { path: '/nurse/blog', label: 'Health Blog Management', icon: 'fas fa-blog' },
         ];
         break;
       case 'ROLE_ADMIN':
@@ -82,9 +71,9 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/admin/dashboard', label: 'Admin Dashboard', icon: 'fas fa-user-shield' },
           { path: '/admin/user-management', label: 'User Management', icon: 'fas fa-users-cog' },
           { path: '/admin/parent-registration-management', label: 'Parent Registration', icon: 'fas fa-user-plus' },
-          { path: '/admin/analytics-reports', label: 'Reports & Analytics', icon: 'fas fa-chart-line' },
           { path: '/admin/health-programs', label: 'Health Programs', icon: 'fas fa-heartbeat' },
           { path: '/admin/data-export', label: 'Data Export', icon: 'fas fa-file-export' },
+          { path: '/health-docs', label: 'Health Docs', icon: 'fas fa-file-medical' },
           { path: '/health-blog', label: 'Health Blog', icon: 'fas fa-blog' },
         ];
         break;
@@ -95,16 +84,19 @@ const AppMenu = ({ isOpen, closeMenu }) => {
           { path: '/medical-history', label: 'Medical History', icon: 'fas fa-file-medical' },
           { path: '/vaccination-record', label: 'Vaccination Record', icon: 'fas fa-syringe' },
           { path: '/profile', label: 'Profile', icon: 'fas fa-user-circle' },
+          { path: '/health-docs', label: 'Health Docs', icon: 'fas fa-file-medical' },
+          { path: '/health-blog', label: 'Health Blog', icon: 'fas fa-blog' },
         ];
         break;
       default:
         items = []; // No specific items if role doesn't match known ones
     }
-    // Add Profile link for all authenticated users if not already present
-    // Student already has /profile, other roles get /profile as well
-    if (!items.find(item => item.path === '/profile')) {
+    
+    // Only add Profile link for students
+    if (primaryRole === 'ROLE_STUDENT' && !items.find(item => item.path === '/profile')) {
         items.push({ path: '/profile', label: 'Profile', icon: 'fas fa-user-circle' });
     }
+    
     return items;
   };
 

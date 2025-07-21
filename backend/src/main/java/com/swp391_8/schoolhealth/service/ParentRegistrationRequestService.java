@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -25,25 +27,61 @@ public class ParentRegistrationRequestService {
     private final RoleRepository roleRepository;
 
     /**
-     * Tạo request đăng ký mới từ parent
+     * Tạo request đăng ký mới từ parent với validation toàn diện
      */
     @Transactional
     public ParentRegistrationRequestDTO createRegistrationRequest(ParentRegistrationRequestDTO requestDTO) {
-        // Kiểm tra xem parent code đã tồn tại request nào chưa
+        // Validation toàn diện với User table
+        StringBuilder validationErrors = new StringBuilder();
+        
+        // Kiểm tra parent code
         if (requestRepository.existsByParentCode(requestDTO.getParentCode())) {
-            throw new RuntimeException("Parent code already has a registration request");
+            validationErrors.append("Parent ID already has a pending registration request. ");
+        }
+        if (userRepository.existsByUserCode(requestDTO.getParentCode())) {
+            validationErrors.append("Parent ID already exists in the system. ");
         }
         
-        // Kiểm tra xem username đã được sử dụng chưa
-        if (requestRepository.existsByUsername(requestDTO.getUsername()) || 
-            userRepository.existsByUsername(requestDTO.getUsername())) {
-            throw new RuntimeException("Username already exists");
+        // Kiểm tra username  
+        if (requestRepository.existsByUsername(requestDTO.getUsername())) {
+            validationErrors.append("Username already has a pending registration request. ");
+        }
+        if (userRepository.existsByUsername(requestDTO.getUsername())) {
+            validationErrors.append("Username already exists in the system. ");
         }
         
-        // Kiểm tra xem email đã được sử dụng chưa
-        if (requestRepository.existsByEmail(requestDTO.getEmail()) || 
-            userRepository.existsByEmail(requestDTO.getEmail())) {
-            throw new RuntimeException("Email already exists");
+        // Kiểm tra email
+        if (requestRepository.existsByEmail(requestDTO.getEmail())) {
+            validationErrors.append("Email already has a pending registration request. ");
+        }
+        if (userRepository.existsByEmail(requestDTO.getEmail())) {
+            validationErrors.append("Email already exists in the system. ");
+        }
+        
+        // Kiểm tra phone number
+        if (requestRepository.existsByPhoneNumber(requestDTO.getPhoneNumber())) {
+            validationErrors.append("Phone number already has a pending registration request. ");
+        }
+        if (userRepository.existsByPhoneNumber(requestDTO.getPhoneNumber())) {
+            validationErrors.append("Phone number already exists in the system. ");
+        }
+        
+        // Validation format
+        if (requestDTO.getEmail() != null && !isValidEmail(requestDTO.getEmail())) {
+            validationErrors.append("Invalid email format. ");
+        }
+        
+        if (requestDTO.getPhoneNumber() != null && !isValidPhoneNumber(requestDTO.getPhoneNumber())) {
+            validationErrors.append("Phone number must be 10-15 digits. ");
+        }
+        
+        if (requestDTO.getPassword() != null && requestDTO.getPassword().length() < 6) {
+            validationErrors.append("Password must be at least 6 characters long. ");
+        }
+        
+        // Nếu có lỗi validation, throw exception với message chi tiết
+        if (validationErrors.length() > 0) {
+            throw new RuntimeException(validationErrors.toString().trim());
         }
 
         ParentRegistrationRequest request = new ParentRegistrationRequest();
@@ -60,6 +98,20 @@ public class ParentRegistrationRequestService {
 
         ParentRegistrationRequest savedRequest = requestRepository.save(request);
         return convertToDTO(savedRequest);
+    }
+    
+    /**
+     * Validate email format
+     */
+    private boolean isValidEmail(String email) {
+        return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    }
+    
+    /**
+     * Validate phone number format
+     */
+    private boolean isValidPhoneNumber(String phoneNumber) {
+        return phoneNumber.matches("^[0-9]{10,15}$");
     }
 
     /**
@@ -95,7 +147,7 @@ public class ParentRegistrationRequestService {
      * Approve registration request và tạo user account
      */
     @Transactional
-    public ParentRegistrationRequestDTO approveRequest(Integer requestId, Integer adminId) {
+    public Map<String, Object> approveRequest(Integer requestId, Integer adminId) {
         ParentRegistrationRequest request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Registration request not found"));
 
@@ -103,8 +155,11 @@ public class ParentRegistrationRequestService {
             throw new RuntimeException("Request is not in pending status");
         }
 
+        // Generate new password for security
+        String generatedPassword = generateSecurePassword();
+
         // Tạo user account
-        createUserFromRequest(request);
+        createUserFromRequest(request, generatedPassword);
 
         // Cập nhật request status
         request.setStatus(ParentRegistrationRequest.RequestStatus.APPROVED);
@@ -112,7 +167,14 @@ public class ParentRegistrationRequestService {
         request.setReviewedAt(LocalDateTime.now());
 
         ParentRegistrationRequest savedRequest = requestRepository.save(request);
-        return convertToDTO(savedRequest);
+        
+        // Return both DTO and generated password
+        Map<String, Object> result = new HashMap<>();
+        result.put("request", convertToDTO(savedRequest));
+        result.put("generatedPassword", generatedPassword);
+        result.put("originalRequest", request);
+        
+        return result;
     }
 
     /**
@@ -139,14 +201,14 @@ public class ParentRegistrationRequestService {
     /**
      * Tạo user account từ approved request
      */
-    private void createUserFromRequest(ParentRegistrationRequest request) {
+    private void createUserFromRequest(ParentRegistrationRequest request, String generatedPassword) {
         // Tìm Parent role
         Role parentRole = roleRepository.findByRoleName("Parent")
                 .orElseThrow(() -> new RuntimeException("Parent role not found"));
 
         User user = new User();
         user.setUsername(request.getUsername());
-        user.setPassword(request.getPassword()); // Note: Should hash this in production
+        user.setPassword(generatedPassword); // Use generated password
         user.setUserCode(request.getParentCode());
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
@@ -155,6 +217,22 @@ public class ParentRegistrationRequestService {
         user.setIsActive(true);
 
         userRepository.save(user);
+    }
+
+    /**
+     * Generate secure password for new user
+     */
+    private String generateSecurePassword() {
+        // Generate a secure random password
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%";
+        StringBuilder password = new StringBuilder();
+        
+        for (int i = 0; i < 12; i++) {
+            int index = (int) (Math.random() * chars.length());
+            password.append(chars.charAt(index));
+        }
+        
+        return password.toString();
     }
 
     /**

@@ -16,7 +16,6 @@ import com.swp391_8.schoolhealth.model.Vaccine;
 import com.swp391_8.schoolhealth.model.MedicationRequest;
 import com.swp391_8.schoolhealth.model.MedicationRequest.MedicationRequestStatus;
 import com.swp391_8.schoolhealth.model.HealthDeclaration.HealthDeclarationStatus;
-import com.swp391_8.schoolhealth.model.ERole;
 import com.swp391_8.schoolhealth.repository.HealthDeclarationChronicIllnessRepository;
 import com.swp391_8.schoolhealth.repository.HealthDeclarationEmergencyContactRepository;
 import com.swp391_8.schoolhealth.repository.HealthDeclarationMedicationRepository;
@@ -37,7 +36,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -508,9 +506,16 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
         // Set allergies with null check
         if (entity.getAllergies() != null) {
             dto.setAllergies(entity.getAllergies());
+            logger.info("Setting allergies for student {}: {}", entity.getStudent().getStudentCode(), entity.getAllergies());
         } else {
             dto.setAllergies(new ArrayList<>());
+            logger.info("No allergies found for student {}, setting empty list", entity.getStudent().getStudentCode());
         }
+        
+        // Log chronic illnesses as well
+        logger.info("Chronic illnesses for student {}: {}", entity.getStudent().getStudentCode(), dto.getChronicIllnesses());
+        logger.info("Medications count for student {}: {}", entity.getStudent().getStudentCode(), dto.getMedications().size());
+        logger.info("Emergency contacts count for student {}: {}", entity.getStudent().getStudentCode(), dto.getEmergencyContacts().size());
         
         // medicalConditions already set above
         
@@ -568,19 +573,32 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
         DeclaredVaccinationRecord entity = new DeclaredVaccinationRecord();
         entity.setStudent(declaration.getStudent()); // Student is set via HealthDeclaration's student
 
-        if (dto.getVaccineId() != null) {
-            Vaccine vaccine = vaccineRepository.findById(dto.getVaccineId())
-                .orElseThrow(() -> new ResourceNotFoundException("Vaccine not found with ID: " + dto.getVaccineId()));
-            entity.setVaccine(vaccine);
-        } else if (dto.getVaccineName() != null && !dto.getVaccineName().isBlank()) {
-             // Optional: Try to find vaccine by name if ID is not provided
-            Vaccine vaccine = vaccineRepository.findByNameIgnoreCase(dto.getVaccineName())
-                .orElseThrow(() -> new ResourceNotFoundException("Vaccine not found with name: " + dto.getVaccineName()));
-            entity.setVaccine(vaccine);
-        } else {
-            throw new IllegalArgumentException("Either Vaccine ID or Vaccine Name is required for declared vaccinations.");
+        try {
+            if (dto.getVaccineId() != null) {
+                Vaccine vaccine = vaccineRepository.findById(dto.getVaccineId())
+                    .orElse(null);
+                entity.setVaccine(vaccine);
+            } else if (dto.getVaccineName() != null && !dto.getVaccineName().isBlank()) {
+                // Try to find vaccine by name, create if not found
+                Vaccine vaccine = vaccineRepository.findByNameIgnoreCase(dto.getVaccineName())
+                    .orElse(null);
+                
+                if (vaccine == null) {
+                    // Create new vaccine if not found
+                    vaccine = new Vaccine();
+                    vaccine.setName(dto.getVaccineName());
+                    vaccine.setDescription("Auto-created vaccine: " + dto.getVaccineName());
+                    vaccine.setDiseaseTargeted(dto.getVaccineName());
+                    vaccine.setStandardDoses(1);
+                    vaccine = vaccineRepository.save(vaccine);
+                    logger.info("Created new vaccine: {}", dto.getVaccineName());
+                }
+                entity.setVaccine(vaccine);
+            }
+        } catch (Exception e) {
+            logger.warn("Could not set vaccine for vaccination record: {}", e.getMessage());
+            // Continue without vaccine if there's an error
         }
-
 
         entity.setVaccinationDate(dto.getVaccinationDate());
         entity.setDoseNumber(dto.getDoseNumber());
@@ -707,12 +725,18 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
         // Note: Tracking modification by nurse can be added later if needed
         
         // Cập nhật dị ứng
+        if (declaration.getAllergies() == null) {
+            declaration.setAllergies(new ArrayList<>());
+        }
+        declaration.getAllergies().clear();
         if (healthDeclarationData.getAllergies() != null) {
-            declaration.getAllergies().clear();
             declaration.getAllergies().addAll(healthDeclarationData.getAllergies());
         }
         
         // Cập nhật bệnh mãn tính
+        if (declaration.getChronicIllnesses() == null) {
+            declaration.setChronicIllnesses(new ArrayList<>());
+        }
         declaration.getChronicIllnesses().clear();
         if (healthDeclarationData.getChronicIllnesses() != null) {
             for (String illness : healthDeclarationData.getChronicIllnesses()) {
@@ -726,6 +750,9 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
         }
         
         // Cập nhật liên hệ khẩn cấp
+        if (declaration.getEmergencyContacts() == null) {
+            declaration.setEmergencyContacts(new ArrayList<>());
+        }
         declaration.getEmergencyContacts().clear();
         if (healthDeclarationData.getEmergencyContacts() != null) {
             for (EmergencyContactDTO contactDTO : healthDeclarationData.getEmergencyContacts()) {
@@ -752,5 +779,23 @@ public class HealthDeclarationServiceImpl implements HealthDeclarationService {
         
         // Chuyển đổi và trả về DTO
         return convertToDTO(updatedDeclaration);
+    }
+
+    @Override
+    public List<HealthDeclarationDTO> getAllHealthDeclarations() {
+        logger.info("Fetching all health declarations from repository");
+        
+        // Get all health declarations ordered by declaration date descending
+        List<HealthDeclaration> allDeclarations = healthDeclarationRepository.findAllByOrderByDeclarationDateDesc();
+        
+        logger.info("Found {} health declarations in the database", allDeclarations.size());
+        
+        // Convert to DTOs and return
+        List<HealthDeclarationDTO> dtos = allDeclarations.stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+            
+        logger.info("Returning {} health declaration DTOs", dtos.size());
+        return dtos;
     }
 }

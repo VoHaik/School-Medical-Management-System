@@ -130,7 +130,12 @@ const HealthDeclarationDetailPage = () => {
     // Fetch declaration data
     useEffect(() => {
         const fetchDeclarationDetails = async () => {
-            if (!declarationId || !currentUser) return;
+            // Check if declarationId is valid
+            if (!declarationId || declarationId === 'undefined' || !currentUser) {
+                setError('Invalid declaration ID provided');
+                setLoading(false);
+                return;
+            }
             
             setLoading(true);
             setError(null);

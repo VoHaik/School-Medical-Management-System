@@ -138,7 +138,6 @@ const CheckupInformation = () => {
       // Handle each API call separately to prevent one failure from affecting the other
       const [checkupHistory] = await Promise.all([
         getStudentHealthCheckupsByStudentId(studentCode).catch(error => {
-          console.warn('Failed to load student health checkups:', error);
           return []; // Return empty array if this fails
         })
       ]);
@@ -288,18 +287,15 @@ const CheckupInformation = () => {
             setHealthEvents(eventsData);
             setLastEventCount(eventsData.length); // Initialize count
           } else {
-            console.warn('No valid health events data received:', eventsData);
             setHealthEvents([]);
           }
         }).catch(error => {
-          console.warn('Failed to load health events data:', error);
           setHealthEvents([]);
         });
         
         // Load checkup data for the first student
         await loadCheckupData(firstStudent.studentCode);
       } else {
-        console.log('No students found in API response:', studentsData);
         setError('No students found for this parent account. Please contact the school administrator to ensure your account is properly linked to your child\'s records.');
       }
     } catch (error) {
@@ -347,14 +343,12 @@ const CheckupInformation = () => {
           // Check if new events were added
           if (lastEventCount > 0 && eventsData.length > lastEventCount) {
             // Show notification for new events
-            console.log('New health events detected!', eventsData.length - lastEventCount, 'new events');
-          }
+            }
           setHealthEvents(eventsData);
           setLastEventCount(eventsData.length);
         }
       }).catch(error => {
-        console.warn('Failed to auto-refresh health events:', error);
-      });
+        });
     }, 30000); // 30 seconds
 
     return () => clearInterval(interval);
@@ -440,69 +434,12 @@ const CheckupInformation = () => {
                 setError(null);
                 loadStudents();
               }}
-              sx={{ mt: 1, mr: 1 }}
+              sx={{ mt: 1 }}
             >
               Try Again
             </Button>
-            <Button 
-              variant="text" 
-              size="small" 
-              onClick={() => {
-                console.log('Current user:', currentUser);
-                console.log('Auth token exists:', !!localStorage.getItem('token'));
-                console.log('User from localStorage:', localStorage.getItem('user'));
-              }}
-              sx={{ mt: 1 }}
-            >
-              Debug Info
-            </Button>
-            <Button 
-              size="small" 
-              variant="contained" 
-              color="secondary"
-              onClick={async () => {
-                try {
-                  console.log('=== Testing API directly ===');
-                  const response = await getParentStudents();
-                  console.log('Direct API response:', response);
-                  alert(`API Response: ${JSON.stringify(response, null, 2)}`);
-                } catch (error) {
-                  console.error('Direct API error:', error);
-                  alert(`API Error: ${error.message}`);
-                }
-              }}
-              sx={{ mt: 1, ml: 1 }}
-            >
-              Test API
-            </Button>
           </Box>
         </Alert>
-      )}
-
-      {/* Debugging Panel - Show when in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <Box className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
-          <Typography variant="h6" className="mb-2">Debug Information</Typography>
-          <Typography variant="body2">Students loaded: {students.length}</Typography>
-          <Typography variant="body2">Selected student: {selectedStudent}</Typography>
-          <Typography variant="body2">Loading: {loading.toString()}</Typography>
-          <Typography variant="body2">Error: {error || 'None'}</Typography>
-          <Button 
-            size="small" 
-            variant="outlined" 
-            onClick={() => {
-              console.log('=== CheckupInformation Debug ===');
-              console.log('Students:', students);
-              console.log('Selected student:', selectedStudent);
-              console.log('Data:', data);
-              console.log('Current user:', currentUser);
-              console.log('Auth token:', localStorage.getItem('token'));
-            }}
-            sx={{ mt: 1 }}
-          >
-            Log Debug Info
-          </Button>
-        </Box>
       )}
 
       {/* Student Selection Dropdown */}
@@ -871,7 +808,7 @@ const CheckupInformation = () => {
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <Typography variant="body2" className="text-gray-600 mb-1">
-                          <strong>Type:</strong>
+                          <strong>Name:</strong>
                         </Typography>
                         <Typography variant="body1">
                           {selectedCheckupDetail.type}
@@ -909,102 +846,104 @@ const CheckupInformation = () => {
                 </Card>
               </Grid>
 
-              {/* Measurements */}
-              <Grid item xs={12}>
-                <Typography variant="h6" className="mb-3 text-blue-700 font-semibold">
-                  Physical Measurements
-                </Typography>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Grid container spacing={2}>
-                      <Grid item xs={6} md={3}>
-                        <Typography variant="body2" className="text-gray-600 mb-1">
-                          <strong>Height:</strong>
-                        </Typography>
-                        <Typography variant="body1">
-                          {selectedCheckupDetail.height ? `${selectedCheckupDetail.height} cm` : 'N/A'}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6} md={3}>
-                        <Typography variant="body2" className="text-gray-600 mb-1">
-                          <strong>Weight:</strong>
-                        </Typography>
-                        <Typography variant="body1">
-                          {selectedCheckupDetail.weight ? `${selectedCheckupDetail.weight} kg` : 'N/A'}
-                        </Typography>
-                      </Grid>
-                      {hasBMIData([selectedCheckupDetail]) && (
+              {/* Physical Measurements - only show for health checkups, not vaccinations */}
+              {selectedCheckupDetail.eventType !== 'VACCINATION' && (
+                <Grid item xs={12}>
+                  <Typography variant="h6" className="mb-3 text-blue-700 font-semibold">
+                    Physical Measurements
+                  </Typography>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Grid container spacing={2}>
                         <Grid item xs={6} md={3}>
                           <Typography variant="body2" className="text-gray-600 mb-1">
-                            <strong>BMI:</strong>
+                            <strong>Height:</strong>
                           </Typography>
                           <Typography variant="body1">
-                            {selectedCheckupDetail.bmi ? selectedCheckupDetail.bmi.toFixed(1) : 'N/A'}
+                            {selectedCheckupDetail.height ? `${selectedCheckupDetail.height} cm` : 'N/A'}
                           </Typography>
                         </Grid>
-                      )}
-                      <Grid item xs={6} md={3}>
-                        <Typography variant="body2" className="text-gray-600 mb-1">
-                          <strong>Heart Rate:</strong>
-                        </Typography>
-                        <Typography variant="body1">
-                          {selectedCheckupDetail.heartRate ? `${selectedCheckupDetail.heartRate} bpm` : 'N/A'}
-                        </Typography>
+                        <Grid item xs={6} md={3}>
+                          <Typography variant="body2" className="text-gray-600 mb-1">
+                            <strong>Weight:</strong>
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedCheckupDetail.weight ? `${selectedCheckupDetail.weight} kg` : 'N/A'}
+                          </Typography>
+                        </Grid>
+                        {hasBMIData([selectedCheckupDetail]) && (
+                          <Grid item xs={6} md={3}>
+                            <Typography variant="body2" className="text-gray-600 mb-1">
+                              <strong>BMI:</strong>
+                            </Typography>
+                            <Typography variant="body1">
+                              {selectedCheckupDetail.bmi ? selectedCheckupDetail.bmi.toFixed(1) : 'N/A'}
+                            </Typography>
+                          </Grid>
+                        )}
+                        <Grid item xs={6} md={3}>
+                          <Typography variant="body2" className="text-gray-600 mb-1">
+                            <strong>Heart Rate:</strong>
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedCheckupDetail.heartRate ? `${selectedCheckupDetail.heartRate} bpm` : 'N/A'}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6} md={3}>
+                          <Typography variant="body2" className="text-gray-600 mb-1">
+                            <strong>Temperature:</strong>
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedCheckupDetail.temperature ? `${selectedCheckupDetail.temperature}°C` : 'N/A'}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6} md={3}>
+                          <Typography variant="body2" className="text-gray-600 mb-1">
+                            <strong>Blood Pressure:</strong>
+                          </Typography>
+                          <Typography variant="body1">
+                            {(selectedCheckupDetail.bloodPressureSystolic && selectedCheckupDetail.bloodPressureDiastolic) 
+                              ? `${selectedCheckupDetail.bloodPressureSystolic}/${selectedCheckupDetail.bloodPressureDiastolic} mmHg` 
+                              : 'N/A'}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6} md={3}>
+                          <Typography variant="body2" className="text-gray-600 mb-1">
+                            <strong>Vision Left:</strong>
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedCheckupDetail.visionLeft || 'N/A'}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6} md={3}>
+                          <Typography variant="body2" className="text-gray-600 mb-1">
+                            <strong>Vision Right:</strong>
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedCheckupDetail.visionRight || 'N/A'}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6} md={3}>
+                          <Typography variant="body2" className="text-gray-600 mb-1">
+                            <strong>Hearing Left:</strong>
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedCheckupDetail.hearingLeft || 'N/A'}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6} md={3}>
+                          <Typography variant="body2" className="text-gray-600 mb-1">
+                            <strong>Hearing Right:</strong>
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedCheckupDetail.hearingRight || 'N/A'}
+                          </Typography>
+                        </Grid>
                       </Grid>
-                      <Grid item xs={6} md={3}>
-                        <Typography variant="body2" className="text-gray-600 mb-1">
-                          <strong>Temperature:</strong>
-                        </Typography>
-                        <Typography variant="body1">
-                          {selectedCheckupDetail.temperature ? `${selectedCheckupDetail.temperature}°C` : 'N/A'}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6} md={3}>
-                        <Typography variant="body2" className="text-gray-600 mb-1">
-                          <strong>Blood Pressure:</strong>
-                        </Typography>
-                        <Typography variant="body1">
-                          {(selectedCheckupDetail.bloodPressureSystolic && selectedCheckupDetail.bloodPressureDiastolic) 
-                            ? `${selectedCheckupDetail.bloodPressureSystolic}/${selectedCheckupDetail.bloodPressureDiastolic} mmHg` 
-                            : 'N/A'}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6} md={3}>
-                        <Typography variant="body2" className="text-gray-600 mb-1">
-                          <strong>Vision Left:</strong>
-                        </Typography>
-                        <Typography variant="body1">
-                          {selectedCheckupDetail.visionLeft || 'N/A'}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6} md={3}>
-                        <Typography variant="body2" className="text-gray-600 mb-1">
-                          <strong>Vision Right:</strong>
-                        </Typography>
-                        <Typography variant="body1">
-                          {selectedCheckupDetail.visionRight || 'N/A'}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6} md={3}>
-                        <Typography variant="body2" className="text-gray-600 mb-1">
-                          <strong>Hearing Left:</strong>
-                        </Typography>
-                        <Typography variant="body1">
-                          {selectedCheckupDetail.hearingLeft || 'N/A'}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6} md={3}>
-                        <Typography variant="body2" className="text-gray-600 mb-1">
-                          <strong>Hearing Right:</strong>
-                        </Typography>
-                        <Typography variant="body1">
-                          {selectedCheckupDetail.hearingRight || 'N/A'}
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              )}
 
               {/* Notes and Recommendations */}
               {(selectedCheckupDetail.healthNotes || selectedCheckupDetail.recommendations) && (

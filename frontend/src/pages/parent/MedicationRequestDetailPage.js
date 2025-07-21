@@ -109,8 +109,7 @@ const MedicationRequestDetailPage = () => {
             errorMessage.includes('Could not extract column') ||
             errorMessage.includes('data type mismatch') ||
             errorMessage.includes('String or binary data would be truncated')) {
-          console.log('Known database error detected. Using fallback medication request data.');
-            // Provide fallback data for the UI with our enhanced structure
+          // Provide fallback data for the UI with our enhanced structure
           setRequestDetails({
             requestId: parseInt(requestId),
             studentName: "Your Child",
@@ -242,8 +241,8 @@ const MedicationRequestDetailPage = () => {
     administered_at // Added as fallback
   } = requestDetails;
 
-  const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString() : 'N/A';
-  const formatDateTime = (dateString) => dateString ? new Date(dateString).toLocaleString() : 'N/A';
+  const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString('en-US') : 'N/A';
+  const formatDateTime = (dateString) => dateString ? new Date(dateString).toLocaleString('en-US') : 'N/A';
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>      {error && requestDetails && (
         <Alert severity="warning" sx={{ mb: 3 }}>

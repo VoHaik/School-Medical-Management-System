@@ -12,7 +12,6 @@ SELECT role_id, role_name, description FROM Roles;
 -- Only update if the role names don't already have the ROLE_ prefix
 UPDATE Roles SET role_name = 'ROLE_ADMIN' WHERE role_name = 'Admin';
 UPDATE Roles SET role_name = 'ROLE_SCHOOLNURSE' WHERE role_name = 'SchoolNurse'; -- Important: Use ROLE_SCHOOLNURSE, not ROLE_NURSE
-UPDATE Roles SET role_name = 'ROLE_MANAGER' WHERE role_name = 'Manager';
 UPDATE Roles SET role_name = 'ROLE_PARENT' WHERE role_name = 'Parent';
 UPDATE Roles SET role_name = 'ROLE_STUDENT' WHERE role_name = 'Student';
 

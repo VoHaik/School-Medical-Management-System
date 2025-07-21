@@ -121,9 +121,10 @@ const colorPalette = {
   }
 };
 
-// Create theme function for light/dark modes
-const createAppTheme = (mode = 'light') => {
-  const isLight = mode === 'light';
+// Light theme only - dark mode removed
+const createAppTheme = () => {
+  const mode = 'light';
+  const isLight = true;
   
   return createTheme({
     palette: {
@@ -515,8 +516,8 @@ const createAppTheme = (mode = 'light') => {
   });
 };
 
-// Default light theme
-const theme = createAppTheme('light');
+// Light theme only
+const theme = createAppTheme();
 
 export default theme;
 export { colorPalette, createAppTheme };

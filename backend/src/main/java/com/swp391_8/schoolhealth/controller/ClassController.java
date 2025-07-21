@@ -19,7 +19,7 @@ public class ClassController {
     private final ClassService classService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SCHOOLNURSE', 'ADMIN', 'TEACHER') or hasAnyAuthority('ROLE_SCHOOLNURSE', 'ROLE_ADMIN', 'ROLE_TEACHER')")
+    @PreAuthorize("hasAnyRole('SCHOOLNURSE', 'ADMIN') or hasAnyAuthority('ROLE_SCHOOLNURSE', 'ROLE_ADMIN')")
     public ResponseEntity<List<ClassDTO>> getAllClasses() {
         List<ClassDTO> classes = classService.getAllClasses();
         return ResponseEntity.ok(classes);

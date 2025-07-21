@@ -14,13 +14,14 @@ const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false); // State to control menu visibility
 
   // Debug authentication state
-  // console.log('Header render - Authentication state:', {
-  //   isAuthenticated: isAuthenticated(),
-  //   currentUser,
-  //   userRoles: currentUser?.roles,
-  //   hasStudentRole: currentUser?.roles?.includes('ROLE_STUDENT'),
-  //   hasParentRole: currentUser?.roles?.includes('ROLE_PARENT')
-  // });
+  console.log('Header render - Authentication state:', {
+    isAuthenticated: isAuthenticated(),
+    currentUser,
+    token: localStorage.getItem('token'),
+    userRoles: currentUser?.roles,
+    hasStudentRole: currentUser?.roles?.includes('ROLE_STUDENT'),
+    hasParentRole: currentUser?.roles?.includes('ROLE_PARENT')
+  });
 
   const handleMenuToggle = () => {
     setMenuOpen(!menuOpen);
@@ -66,20 +67,10 @@ const Header = () => {
               <AppMenu isOpen={menuOpen} closeMenu={handleCloseMenu} />
             </>
           ) : (
-            <>
-              <Link to="/" className="nav-link px-3 py-2 rounded flex items-center">
-                <i className="fas fa-home mr-1"></i> Home
-              </Link>
-              <Link to="/#docs" className="nav-link px-3 py-2 rounded flex items-center">
-                <i className="fas fa-file-medical mr-1"></i> Health Docs
-              </Link>
-              <Link to="/health-blog" className="nav-link px-3 py-2 rounded flex items-center">
-                <i className="fas fa-blog mr-1"></i> Health Blog
-              </Link>
-              <Link to="/login" className="nav-link px-3 py-2 rounded flex items-center">
-                <i className="fas fa-sign-in-alt mr-1"></i> Login
-              </Link>
-            </>
+            // Guest users - minimal header with just login link
+            <Link to="/login" className="nav-link px-4 py-2 bg-white text-blue-600 rounded hover:bg-gray-100 flex items-center font-medium">
+              <i className="fas fa-sign-in-alt mr-2"></i> Login
+            </Link>
           )}
         </nav>
       </div>

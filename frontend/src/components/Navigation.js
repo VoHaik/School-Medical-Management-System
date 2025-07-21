@@ -86,18 +86,15 @@ const Navigation = () => {
   };
 
   const getNavigationItems = () => {
-    console.log('[Navigation.js] currentUser:', currentUser); // Enhanced log
+    // Enhanced log
 
     if (!currentUser || !currentUser.roles || !Array.isArray(currentUser.roles)) {
-      console.log('[Navigation.js] currentUser or currentUser.roles is invalid. Roles:', currentUser ? currentUser.roles : 'N/A');
       // Return common items or empty array if user is not fully loaded or has no roles
       return currentUser ? [
         { path: '/dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
         { path: '/profile', label: 'Profile', icon: 'fas fa-user' },
       ] : [];
     }
-
-    console.log('[Navigation.js] currentUser.roles:', currentUser.roles);
 
     // Determine the primary role for navigation.
     let primaryRole = null;    if (currentUser.roles.includes('Admin') || currentUser.roles.includes('ROLE_ADMIN')) {
@@ -106,20 +103,14 @@ const Navigation = () => {
       primaryRole = 'ROLE_PARENT';
     } else if (currentUser.roles.includes('SchoolNurse') || currentUser.roles.includes('ROLE_SCHOOLNURSE')) {
       primaryRole = 'ROLE_SCHOOLNURSE';
-    } else if (currentUser.roles.includes('Manager') || currentUser.roles.includes('ROLE_TEACHER')) {
-      primaryRole = 'ROLE_TEACHER';
     } else if (currentUser.roles.includes('Student') || currentUser.roles.includes('ROLE_STUDENT')) {
       primaryRole = 'ROLE_STUDENT';
     } else if (currentUser.roles.length > 0) {
       primaryRole = currentUser.roles[0]; // Fallback to first role if specific ones aren't matched
-      console.log('[Navigation.js] Using fallback primary role:', primaryRole);
-    }
-
-    console.log('[Navigation.js] Determined primaryRole for navigation:', primaryRole);
+      }
 
     switch (primaryRole) {
       case 'ROLE_PARENT':
-        console.log('[Navigation.js] Matched ROLE_PARENT');
         return [
           { path: '/parent/dashboard', label: 'Parent Dashboard', icon: 'fas fa-tachometer-alt' },
           { path: '/parent/health-declaration', label: 'Health Declaration', icon: 'fas fa-file-medical-alt' },
@@ -129,7 +120,6 @@ const Navigation = () => {
           { path: '/health-blog', label: 'Health Blog', icon: 'fas fa-blog' },
         ];
       case 'ROLE_SCHOOLNURSE':
-        console.log('[Navigation.js] Matched ROLE_SCHOOLNURSE');
         return [
           // Remove commonItems spread: // ...commonItems,
           { path: '/medical/dashboard', label: 'Medical Dashboard', icon: 'fas fa-tachometer-alt' }, // Added a specific dashboard path
@@ -142,18 +132,7 @@ const Navigation = () => {
           { path: '/health-blog', label: 'View Health Blog', icon: 'fas fa-blog' },
           { path: '/medical/reports', label: 'Reports', icon: 'fas fa-chart-bar' }, // Corrected path
         ];
-      case 'ROLE_TEACHER':
-        console.log('[Navigation.js] Matched ROLE_TEACHER');
-        return [
-          // Remove commonItems spread: // ...commonItems,
-          { path: '/teacher/dashboard', label: 'Teacher Dashboard', icon: 'fas fa-chalkboard-teacher' }, // Added a specific dashboard path
-          { path: '/manager/reports', label: 'Reports & Analytics', icon: 'fas fa-chart-bar' },
-          { path: '/manager/user-management', label: 'User Management', icon: 'fas fa-users-cog' },
-          { path: '/manager/health-programs', label: 'Health Programs', icon: 'fas fa-heartbeat' },
-          { path: '/manager/content', label: 'Content Management', icon: 'fas fa-file-alt' },
-        ];
       case 'ROLE_ADMIN':
-        console.log('[Navigation.js] Matched ROLE_ADMIN');
         return [
           { path: '/admin/dashboard', label: 'Admin Dashboard', icon: 'fas fa-user-shield' },
           { path: '/admin/user-management', label: 'User Management', icon: 'fas fa-users-cog' },
@@ -162,7 +141,6 @@ const Navigation = () => {
           { path: '/admin/data-export', label: 'Data Export', icon: 'fas fa-file-export' },
         ];
       case 'ROLE_STUDENT':
-        console.log('[Navigation.js] Matched ROLE_STUDENT');
         return [
           { path: '/student/dashboard', label: 'Student Dashboard', icon: 'fas fa-user-graduate' },
           { path: '/health-profile', label: 'Health Profile', icon: 'fas fa-heart' },
@@ -171,7 +149,6 @@ const Navigation = () => {
           { path: '/profile', label: 'Profile', icon: 'fas fa-user-circle' },
         ];
       default:
-        console.log('[Navigation.js] Defaulting navigation items. No specific role match or primaryRole is null.');
         // For users with no specific role or unauthenticated, show minimal navigation or public links
         if (currentUser && currentUser.roles && currentUser.roles.length > 0) {
             // If user is authenticated but doesn't match a specific role dashboard, provide a generic one
@@ -182,6 +159,7 @@ const Navigation = () => {
         // For truly unauthenticated or users with no roles array
         return [
             { path: '/', label: 'Home', icon: 'fas fa-home' },
+            { path: '/health-blog', label: 'Health Blog', icon: 'fas fa-blog' },
             { path: '/login', label: 'Login', icon: 'fas fa-sign-in-alt' },
             { path: '/register', label: 'Register', icon: 'fas fa-user-plus' },
         ];
@@ -191,9 +169,7 @@ const Navigation = () => {
   const navigationItems = getNavigationItems();
 
   // Debugging: Log user and determined navigation items
-  // console.log('Navigation User:', currentUser); // Covered by enhanced log above
-  console.log('[Navigation.js] Final navigationItems:', navigationItems);
-
+  // // Covered by enhanced log above
   return (
     <AppBar
       position="sticky"

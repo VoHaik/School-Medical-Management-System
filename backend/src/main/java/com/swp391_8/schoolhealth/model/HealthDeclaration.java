@@ -30,7 +30,7 @@ public class HealthDeclaration {
     @CollectionTable(name = "health_declaration_allergies", joinColumns = @JoinColumn(name = "declaration_id"))
     @Column(name = "allergy")
     @Nationalized
-    private List<String> allergies;
+    private List<String> allergies = new ArrayList<>();
     
     // Bảng health_declaration_conditions đã được thay thế hoàn toàn bằng health_declaration_chronic_illnesses
     // Trường này chỉ giữ lại để tương thích ngược, nên sử dụng chronicIllnesses thay thế

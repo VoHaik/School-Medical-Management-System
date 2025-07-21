@@ -228,4 +228,30 @@ public class UserService {
         }
         userRepository.deleteById(userId.intValue());
     }
+    
+    public User deactivateUser(Long userId) {
+        Optional<User> userOpt = userRepository.findById(userId.intValue());
+        if (!userOpt.isPresent()) {
+            throw new RuntimeException("User not found");
+        }
+        
+        User user = userOpt.get();
+        user.setIsActive(false);
+        User savedUser = userRepository.save(user);
+        logger.info("User deactivated: {} (ID: {})", user.getUsername(), userId);
+        return savedUser;
+    }
+    
+    public User activateUser(Long userId) {
+        Optional<User> userOpt = userRepository.findById(userId.intValue());
+        if (!userOpt.isPresent()) {
+            throw new RuntimeException("User not found");
+        }
+        
+        User user = userOpt.get();
+        user.setIsActive(true);
+        User savedUser = userRepository.save(user);
+        logger.info("User activated: {} (ID: {})", user.getUsername(), userId);
+        return savedUser;
+    }
 }

@@ -338,8 +338,7 @@ const EventManagement = () => {
       }
       
       if (targetGradeNames.length !== data.targetGradeIds.length) {
-        console.warn(`Warning: Some grade IDs could not be converted. Original: ${data.targetGradeIds.length}, Converted: ${targetGradeNames.length}`);
-      }
+        }
 
       // Format the data for the API
       const eventData = {
@@ -552,11 +551,13 @@ const EventManagement = () => {
                               <EditIcon />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Delete Event">
-                            <IconButton color="error" onClick={() => handleDeleteEvent(event)}>
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
+                          {false && (
+                            <Tooltip title="Delete Event">
+                              <IconButton color="error" onClick={() => handleDeleteEvent(event)}>
+                                <DeleteIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))

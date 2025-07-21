@@ -3,6 +3,7 @@ package com.swp391_8.schoolhealth.controller;
 import com.swp391_8.schoolhealth.dto.ParentRegistrationRequestDTO;
 import com.swp391_8.schoolhealth.service.ParentRegistrationRequestService;
 import com.swp391_8.schoolhealth.service.UserService;
+import com.swp391_8.schoolhealth.service.EmailNotificationService;
 import com.swp391_8.schoolhealth.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,7 @@ public class ParentRegistrationController {
 
     private final ParentRegistrationRequestService registrationService;
     private final UserService userService;
+    private final EmailNotificationService emailNotificationService;
 
     /**
      * Endpoint công khai để parent submit registration request
@@ -35,15 +37,30 @@ public class ParentRegistrationController {
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "Registration request submitted successfully. Please wait for admin approval.");
+            response.put("message", "Registration request submitted successfully! Please wait for admin approval.");
             response.put("requestId", createdRequest.getRequestId());
+            response.put("status", "PENDING");
             
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
+            // Parse validation errors để tạo response structured
+            String errorMessage = e.getMessage();
+            String[] errors = errorMessage.split("\\. ");
+            
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            response.put("message", "Registration failed due to validation errors");
+            response.put("errors", errors);
+            response.put("errorType", "VALIDATION_ERROR");
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "An unexpected error occurred. Please try again later.");
+            response.put("errorType", "SYSTEM_ERROR");
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
@@ -95,12 +112,30 @@ public class ParentRegistrationController {
             User admin = userService.findByUsername(userDetails.getUsername());
             Integer adminId = admin.getUserId();
 
-            ParentRegistrationRequestDTO approvedRequest = registrationService.approveRequest(requestId, adminId);
+            Map<String, Object> approvalResult = registrationService.approveRequest(requestId, adminId);
+            ParentRegistrationRequestDTO approvedRequest = (ParentRegistrationRequestDTO) approvalResult.get("request");
+            String generatedPassword = (String) approvalResult.get("generatedPassword");
+            com.swp391_8.schoolhealth.model.ParentRegistrationRequest originalRequest = 
+                (com.swp391_8.schoolhealth.model.ParentRegistrationRequest) approvalResult.get("originalRequest");
+
+            // Send notification via email and SMS - TEMPORARILY DISABLED
+            // try {
+            //     emailNotificationService.sendApprovalNotification(originalRequest, generatedPassword);
+            //     emailNotificationService.sendSMSNotification(originalRequest, generatedPassword);
+            // } catch (Exception e) {
+            //     // Log notification error but don't fail the approval
+            //     System.err.println("Failed to send notifications: " + e.getMessage());
+            // }
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Registration request approved successfully. User account created.");
             response.put("request", approvedRequest);
+            response.put("credentials", Map.of(
+                "username", originalRequest.getUsername(),
+                "password", generatedPassword,
+                "loginUrl", "http://localhost:3000/login"
+            ));
             
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {

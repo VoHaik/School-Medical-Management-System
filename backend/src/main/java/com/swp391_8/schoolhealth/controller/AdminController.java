@@ -161,29 +161,51 @@ public class AdminController {
     }
 
     /**
-     * Placeholder for user deactivation (would need proper user management implementation)
+     * Deactivate user
      */
     @PostMapping("/users/{userId}/deactivate")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Map<String, Object>> deactivateUser(@PathVariable String userId) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", false);
-        response.put("message", "User deactivation requires backend user management implementation");
-        response.put("userId", userId);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Map<String, Object>> deactivateUser(@PathVariable Long userId) {
+        try {
+            User deactivatedUser = userService.deactivateUser(userId);
+            UserDTO userDTO = new UserDTO(deactivatedUser);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "User deactivated successfully");
+            response.put("userId", userId);
+            response.put("user", userDTO);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            response.put("userId", userId);
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
     /**
-     * Placeholder for user activation (would need proper user management implementation)
+     * Activate user
      */
     @PostMapping("/users/{userId}/activate")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Map<String, Object>> activateUser(@PathVariable String userId) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", false);
-        response.put("message", "User activation requires backend user management implementation");
-        response.put("userId", userId);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Map<String, Object>> activateUser(@PathVariable Long userId) {
+        try {
+            User activatedUser = userService.activateUser(userId);
+            UserDTO userDTO = new UserDTO(activatedUser);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "User activated successfully");
+            response.put("userId", userId);
+            response.put("user", userDTO);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            response.put("userId", userId);
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
     /**

@@ -222,7 +222,7 @@ const EditMedicationRequestPage = () => {
           <Button
             startIcon={<ArrowBackIcon />}
             variant="outlined"
-            onClick={() => navigate(`/parent/medication-request/${requestId}`)}
+            onClick={() => navigate('/parent/medication-requests')}
           >
             Cancel
           </Button>

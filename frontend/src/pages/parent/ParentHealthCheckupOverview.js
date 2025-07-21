@@ -28,7 +28,6 @@ const ParentHealthCheckupOverview = () => {
         } else if (user && user.role === 'PARENT') {
             // If user.children is not populated, you might need an API call here
             // For now, assuming it's populated or we show a message
-            console.warn("Parent user has no children listed in auth context.");
             setChildren([]);
         }
     }, [user]);
@@ -86,7 +85,6 @@ const ParentHealthCheckupOverview = () => {
     };
 
     const handleProvideConsent = async (eventId, childId, consentDecision, consentNotes) => {
-        console.log(`Consent action for event ${eventId}, child ${childId}, consent: ${consentDecision}, notes: ${consentNotes}`);
         try {
             // Note: Health checkup consent functionality is not yet implemented in the backend
             // TODO: Implement health checkup consent API when required
@@ -108,7 +106,6 @@ const ParentHealthCheckupOverview = () => {
             setError("Cannot view details: Record ID is missing for this event and child.");
             return;
         }
-        console.log(`Navigate to details for event ${eventId}, child ${childId}, record ${recordId}`);
         navigate(`/parent/health-checkups/event/${eventId}/child/${childId}/result/${recordId}`);
     };
 

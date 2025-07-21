@@ -10,6 +10,9 @@ public interface HealthDeclarationService {
     Optional<HealthDeclarationDTO> getHealthDeclarationByStudentCode(String studentCode);
     List<HealthDeclarationDTO> getAllHealthDeclarationsByStudentCode(String studentCode);
     
+    // Method to get all health declarations (for admin/nurse dashboard)
+    List<HealthDeclarationDTO> getAllHealthDeclarations();
+    
     // Method to get accepted health declaration for student
     Optional<HealthDeclarationDTO> getAcceptedHealthDeclarationByStudentCode(String studentCode);
     // Optional<HealthDeclarationDTO> getDraftHealthDeclarationByStudentCode(String studentCode);

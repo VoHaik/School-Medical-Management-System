@@ -15,22 +15,17 @@ IF NOT EXISTS (SELECT * FROM Roles WHERE role_name = 'Admin')
 IF NOT EXISTS (SELECT * FROM Roles WHERE role_name = 'SchoolNurse')
     INSERT INTO Roles (role_name, description) VALUES ('SchoolNurse', 'Medical staff with access to health records');
 
-IF NOT EXISTS (SELECT * FROM Roles WHERE role_name = 'Manager')
-    INSERT INTO Roles (role_name, description) VALUES ('Manager', 'School management personnel');
-
 IF NOT EXISTS (SELECT * FROM Roles WHERE role_name = 'Parent')
     INSERT INTO Roles (role_name, description) VALUES ('Parent', 'Parent or guardian of students');
 
 -- Step 2: Create variables for role IDs
 DECLARE @AdminRoleId INT,
         @NurseRoleId INT,
-        @ManagerRoleId INT,
         @ParentRoleId INT;
 
 -- Get role IDs from the database
 SELECT @AdminRoleId = role_id FROM Roles WHERE role_name = 'Admin';
 SELECT @NurseRoleId = role_id FROM Roles WHERE role_name = 'SchoolNurse';
-SELECT @ManagerRoleId = role_id FROM Roles WHERE role_name = 'Manager';
 SELECT @ParentRoleId = role_id FROM Roles WHERE role_name = 'Parent';
 
 -- Step 3: Create the user accounts (password is 'Password123' for all users)
@@ -56,16 +51,6 @@ BEGIN
 END
 ELSE
     PRINT 'Nurse account already exists';
-
--- Create Manager account (if it doesn't exist)
-IF NOT EXISTS (SELECT * FROM Users WHERE username = 'manager.davis')
-BEGIN
-    INSERT INTO Users (username, password, user_code, email, phone_number, full_name, role_id)
-    VALUES ('manager.davis', @PlainTextPassword, 'MGR001', 'manager.davis@schoolhealth.edu', '555-300-3000', 'Michael Davis', @ManagerRoleId);
-    PRINT 'Manager account created: manager.davis / Password123 (user_code: MGR001)';
-END
-ELSE
-    PRINT 'Manager account already exists';
 
 -- Create Parent account (if it doesn't exist)
 IF NOT EXISTS (SELECT * FROM Users WHERE username = 'parent.smith')
@@ -128,7 +113,6 @@ JOIN Roles r ON u.role_id = r.role_id
 WHERE u.username IN (
     'admin.user', 'admin.test',
     'nurse.johnson', 'nurse.mary',
-    'manager.davis',
     'parent.smith', 'parent.jones', 'parent.brown'
 )
 ORDER BY r.role_name, u.username;
@@ -143,7 +127,7 @@ SELECT
     COUNT(u.user_id) as user_count
 FROM Roles r
 LEFT JOIN Users u ON r.role_id = u.role_id
-WHERE r.role_name IN ('Admin', 'SchoolNurse', 'Manager', 'Parent')
+WHERE r.role_name IN ('Admin', 'SchoolNurse', 'Parent')
 GROUP BY r.role_name, r.role_id
 ORDER BY r.role_name;
 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { createAppTheme } from '../theme';
@@ -15,33 +15,22 @@ export const useThemeMode = () => {
   return context;
 };
 
-// Theme Provider Component
+// Theme Provider Component - light mode only
 export const AppThemeProvider = ({ children }) => {
-  // Initialize theme mode from localStorage or default to 'light'
-  const [mode, setMode] = useState(() => {
-    const savedMode = localStorage.getItem('themeMode');
-    return savedMode || 'light';
-  });
+  // Always use light mode
+  const mode = 'light';
 
-  // Update localStorage when mode changes
-  useEffect(() => {
-    localStorage.setItem('themeMode', mode);
-  }, [mode]);
-
-  // Toggle between light and dark mode
+  // Disabled functions for dark mode
   const toggleColorMode = () => {
-    setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+    // Dark mode functionality removed
   };
 
-  // Set specific mode
-  const setColorMode = (newMode) => {
-    if (newMode === 'light' || newMode === 'dark') {
-      setMode(newMode);
-    }
+  const setColorMode = () => {
+    // Dark mode functionality removed
   };
 
-  // Create theme based on current mode
-  const theme = createAppTheme(mode);
+  // Create theme based on light mode only
+  const theme = createAppTheme();
 
   // Context value
   const contextValue = {

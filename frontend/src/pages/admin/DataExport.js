@@ -9,8 +9,7 @@ import {
   CardActions,
   Alert,
   CircularProgress,
-  Box,
-  Divider
+  Box
 } from '@mui/material';
 import {
   Download,
@@ -21,6 +20,7 @@ import {
   Event
 } from '@mui/icons-material';
 import { exportStudents, exportHealthEvents, exportUsers, exportHealthCheckups } from '../../utils/api';
+import * as XLSX from 'xlsx';
 
 const DataExport = () => {
   const [loading, setLoading] = useState({});
@@ -49,48 +49,36 @@ const DataExport = () => {
         return;
       }
 
-      // Convert data to CSV format
-      const csvContent = convertToCSV(data);
+      // Create Excel workbook and worksheet
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(data);
       
-      // Create and download file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      // Add the worksheet to the workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, type);
+      
+      // Generate Excel file and download
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      });
+      
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', `${filename}_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       
-      showAlert(`${type} data exported successfully!`);
+      showAlert(`${type} data exported successfully as Excel file!`);
     } catch (error) {
       console.error(`Error exporting ${type}:`, error);
       showAlert(`Failed to export ${type} data`, 'error');
     } finally {
       setLoading(prev => ({ ...prev, [type]: false }));
     }
-  };
-
-  const convertToCSV = (data) => {
-    if (!Array.isArray(data) || data.length === 0) return '';
-    
-    const headers = Object.keys(data[0]);
-    const csvHeaders = headers.join(',');
-    
-    const csvRows = data.map(row => {
-      return headers.map(header => {
-        const value = row[header];
-        // Handle null/undefined values and escape commas/quotes
-        if (value === null || value === undefined) return '';
-        const stringValue = String(value);
-        return stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')
-          ? `"${stringValue.replace(/"/g, '""')}"`
-          : stringValue;
-      }).join(',');
-    });
-    
-    return [csvHeaders, ...csvRows].join('\n');
   };
 
   const exportOptions = [
@@ -128,27 +116,6 @@ const DataExport = () => {
     }
   ];
 
-  const handleFullBackup = async () => {
-    try {
-      setLoading(prev => ({ ...prev, fullBackup: true }));
-      showAlert('Starting full system backup...', 'info');
-      
-      // Export all data types
-      for (const option of exportOptions) {
-        await handleExport(option.type, option.exportFunction, option.filename);
-        // Small delay between exports
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-      
-      showAlert('Full system backup completed successfully!');
-    } catch (error) {
-      console.error('Error during full backup:', error);
-      showAlert('Full backup failed', 'error');
-    } finally {
-      setLoading(prev => ({ ...prev, fullBackup: false }));
-    }
-  };
-
   return (
     <Box sx={{ p: 3 }}>
       <Paper elevation={3} sx={{ p: 3 }}>
@@ -157,7 +124,7 @@ const DataExport = () => {
           Data Export & Backup
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          Export system data in CSV format for backup or analysis purposes.
+          Export system data in Excel format (.xlsx) for backup or analysis purposes.
         </Typography>
 
         {/* Alert Messages */}
@@ -166,32 +133,6 @@ const DataExport = () => {
             {alert.message}
           </Alert>
         ))}
-
-        {/* Full Backup Section */}
-        <Card sx={{ mb: 4, backgroundColor: '#f5f5f5' }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Complete System Backup
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Export all system data at once. This will download separate CSV files for all data types.
-            </Typography>
-          </CardContent>
-          <CardActions>
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              onClick={handleFullBackup}
-              disabled={loading.fullBackup}
-              startIcon={loading.fullBackup ? <CircularProgress size={20} /> : <Backup />}
-            >
-              {loading.fullBackup ? 'Backing up...' : 'Full System Backup'}
-            </Button>
-          </CardActions>
-        </Card>
-
-        <Divider sx={{ my: 3 }} />
 
         {/* Individual Export Options */}
         <Typography variant="h6" gutterBottom>
@@ -220,7 +161,7 @@ const DataExport = () => {
                     disabled={loading[option.type]}
                     startIcon={loading[option.type] ? <CircularProgress size={20} /> : <Download />}
                   >
-                    {loading[option.type] ? 'Exporting...' : 'Export CSV'}
+                    {loading[option.type] ? 'Exporting...' : 'Export Excel'}
                   </Button>
                 </CardActions>
               </Card>
@@ -230,7 +171,7 @@ const DataExport = () => {
 
         <Alert severity="info" sx={{ mt: 3 }}>
           <Typography variant="body2">
-            <strong>Note:</strong> All exported files will be downloaded in CSV format with today's date. 
+            <strong>Note:</strong> All exported files will be downloaded in Excel format (.xlsx) with today's date. 
             Files are saved locally to your computer's Downloads folder.
           </Typography>
         </Alert>

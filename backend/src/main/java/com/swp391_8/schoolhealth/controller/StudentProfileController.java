@@ -2,7 +2,9 @@ package com.swp391_8.schoolhealth.controller;
 
 import com.swp391_8.schoolhealth.dto.MessageResponse;
 import com.swp391_8.schoolhealth.model.Student;
+import com.swp391_8.schoolhealth.model.User;
 import com.swp391_8.schoolhealth.repository.StudentRepository;
+import com.swp391_8.schoolhealth.repository.UserRepository;
 import com.swp391_8.schoolhealth.security.services.UserDetailsImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +27,9 @@ public class StudentProfileController {
     @Autowired
     private StudentRepository studentRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @GetMapping
     @PreAuthorize("hasAuthority('Student') or hasAuthority('Parent')")
     public ResponseEntity<?> getStudentProfile(Authentication authentication) {
@@ -43,6 +48,9 @@ public class StudentProfileController {
                 if (studentOpt.isPresent()) {
                     Student student = studentOpt.get();
                     
+                    // Also get the corresponding User data for email and phone
+                    Optional<User> userOpt = userRepository.findByUserCode(userCode);
+                    
                     // Create response with student profile data
                     Map<String, Object> response = new HashMap<>();
                     response.put("studentCode", student.getStudentCode());
@@ -60,9 +68,24 @@ public class StudentProfileController {
                     response.put("createdAt", student.getCreatedAt());
                     response.put("updatedAt", student.getUpdatedAt());
                     
+                    // Add email and phone from User entity if available
+                    if (userOpt.isPresent()) {
+                        User user = userOpt.get();
+                        response.put("email", user.getEmail());
+                        response.put("phone", user.getPhoneNumber());
+                        logger.info("=== GET PROFILE DEBUG - User found: email={}, phone={} ===", user.getEmail(), user.getPhoneNumber());
+                    } else {
+                        response.put("email", null);
+                        response.put("phone", null);
+                        logger.warn("=== GET PROFILE DEBUG - User NOT found for userCode: {} ===", userCode);
+                    }
+                    
+                    logger.info("=== GET PROFILE DEBUG - Response data: {} ===", response);
+                    
                     return ResponseEntity.ok(response);
                 } else {
-                    return ResponseEntity.notFound().build();
+                    return ResponseEntity.status(404)
+                        .body(new MessageResponse("Student profile not found", false));
                 }
             } else {
                 // For parent role, return error for now as this needs student code parameter
@@ -83,6 +106,11 @@ public class StudentProfileController {
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
             String userCode = userDetails.getUserCode();
             
+            // Debug logging
+            logger.info("=== UPDATE STUDENT PROFILE DEBUG ===");
+            logger.info("UserCode: {}", userCode);
+            logger.info("Received profileData: {}", profileData);
+            
             // For student role, userCode is the student code
             if (userDetails.getAuthorities().stream()
                     .anyMatch(auth -> auth.getAuthority().equals("Student"))) {
@@ -91,7 +119,35 @@ public class StudentProfileController {
                 if (studentOpt.isPresent()) {
                     Student student = studentOpt.get();
                     
-                    // Update allowed fields
+                    logger.info("Found student: {}", student.getStudentCode());
+                    
+                    // Update Student entity fields
+                    if (profileData.containsKey("fullName")) {
+                        student.setFullName((String) profileData.get("fullName"));
+                        logger.info("Updated fullName: {}", profileData.get("fullName"));
+                    }
+                    if (profileData.containsKey("gender")) {
+                        student.setGender((String) profileData.get("gender"));
+                        logger.info("Updated gender: {}", profileData.get("gender"));
+                    }
+                    if (profileData.containsKey("className")) {
+                        student.setClassName((String) profileData.get("className"));
+                        logger.info("Updated className: {}", profileData.get("className"));
+                    }
+                    if (profileData.containsKey("dateOfBirth")) {
+                        // Handle dateOfBirth conversion if needed
+                        Object dobValue = profileData.get("dateOfBirth");
+                        if (dobValue != null && !dobValue.toString().isEmpty()) {
+                            try {
+                                if (dobValue instanceof String) {
+                                    student.setDateOfBirth(java.time.LocalDate.parse((String) dobValue));
+                                    logger.info("Updated dateOfBirth: {}", dobValue);
+                                }
+                            } catch (Exception e) {
+                                logger.warn("Failed to parse dateOfBirth: {}", dobValue);
+                            }
+                        }
+                    }
                     if (profileData.containsKey("emergencyContactName")) {
                         student.setEmergencyContactName((String) profileData.get("emergencyContactName"));
                     }
@@ -106,10 +162,46 @@ public class StudentProfileController {
                     }
                     
                     studentRepository.save(student);
+                    logger.info("Student entity saved successfully");
+                    
+                    // Update User entity fields (email, phone, and fullName)
+                    Optional<User> userOpt = userRepository.findByUserCode(userCode);
+                    if (userOpt.isPresent()) {
+                        User user = userOpt.get();
+                        boolean userUpdated = false;
+                        
+                        logger.info("Found user: {} - Current email: {}, phone: {}", user.getUsername(), user.getEmail(), user.getPhoneNumber());
+                        
+                        if (profileData.containsKey("fullName")) {
+                            user.setFullName((String) profileData.get("fullName"));
+                            userUpdated = true;
+                            logger.info("Updated user fullName: {}", profileData.get("fullName"));
+                        }
+                        if (profileData.containsKey("email")) {
+                            user.setEmail((String) profileData.get("email"));
+                            userUpdated = true;
+                            logger.info("Updated user email: {}", profileData.get("email"));
+                        }
+                        if (profileData.containsKey("phone")) {
+                            user.setPhoneNumber((String) profileData.get("phone"));
+                            userUpdated = true;
+                            logger.info("Updated user phone: {}", profileData.get("phone"));
+                        }
+                        
+                        if (userUpdated) {
+                            userRepository.save(user);
+                            logger.info("User entity saved successfully - New email: {}, phone: {}", user.getEmail(), user.getPhoneNumber());
+                        } else {
+                            logger.info("No user updates needed");
+                        }
+                    } else {
+                        logger.warn("User not found for userCode: {}", userCode);
+                    }
                     
                     return ResponseEntity.ok(new MessageResponse("Student profile updated successfully", true));
                 } else {
-                    return ResponseEntity.notFound().build();
+                    return ResponseEntity.status(404)
+                        .body(new MessageResponse("Student profile not found", false));
                 }
             } else {
                 // For parent role, return error for now
@@ -124,11 +216,11 @@ public class StudentProfileController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('Admin') or hasAuthority('Manager')")
+    @PreAuthorize("hasAuthority('Admin')")
     public ResponseEntity<?> createStudentProfile(@RequestBody Map<String, Object> profileData) {
-        // Only admin/manager can create student profiles
+        // Only admin can create student profiles
         return ResponseEntity.badRequest()
-            .body(new MessageResponse("Student profile creation is restricted to admin/manager roles", false));
+            .body(new MessageResponse("Student profile creation is restricted to admin roles", false));
     }
 
     @GetMapping("/by-parent")

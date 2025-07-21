@@ -167,7 +167,7 @@ public class HealthDeclarationController {
                 .anyMatch(role -> role.equals("ROLE_PARENT"));
         
         if (isParent) {
-            if (!securityService.parentHasAccessToStudent(userDetails.getUsername(), studentCode)) {
+            if (!securityService.parentHasAccessToStudent(userDetails.getUserCode(), studentCode)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(new MessageResponse("You do not have access to this student's data", false));
             }
@@ -237,7 +237,16 @@ public class HealthDeclarationController {
             HealthDeclarationDTO declaration = healthDeclarationService.getHealthDeclarationById(id);
             
             // Nếu là phụ huynh, kiểm tra xem họ có quyền truy cập khai báo này không
-            if (isParent && !securityService.parentHasAccessToStudent(userDetails.getUsername(), declaration.getStudentCode())) {
+            System.out.println("=== AUTHORIZATION DEBUG in HealthDeclarationController ===");
+            System.out.println("User details username: [" + userDetails.getUsername() + "]");
+            System.out.println("User details userCode: [" + userDetails.getUserCode() + "]");
+            System.out.println("Declaration studentCode: [" + declaration.getStudentCode() + "]");
+            
+            boolean accessResult = securityService.parentHasAccessToStudent(userDetails.getUserCode(), declaration.getStudentCode());
+            System.out.println("Authorization result: " + accessResult);
+            
+            if (isParent && !accessResult) {
+                System.out.println("Access DENIED - returning 403");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(new MessageResponse("You do not have access to this health declaration", false));
             }

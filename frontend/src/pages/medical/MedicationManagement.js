@@ -178,28 +178,14 @@ function MedicationManagement() {
     try {
       // Use apiClient as authenticated axios instance
       const authAxios = apiClient;
-      console.log('Fetching pending medication requests with authorization headers...');
-      
       // Add debugging info to help trace the request
       authAxios.defaults.headers.common['X-Debug'] = 'MedicationManagement-FetchPending';
-      console.log('Request Headers:', authAxios.defaults.headers);
-      
       // Use the correct endpoint path - this is the API URL configured in the controller
       // Always include details to get full parent and student names
-      const response = await authAxios.get('/api/medication-requests/pending?includeDetails=true');
-      console.log('Successfully fetched pending requests:', response.data);
-      
+      const response = await authAxios.get('/medication-requests/pending?includeDetails=true');
       // Process the data to ensure we have the full names available for display
       const processedData = response.data.map(request => {
         // Log the original data to help with debugging
-        console.log('Original request data:', {
-          requestId: request.requestId,
-          id: request.id,
-          studentCode: request.studentCode,
-          studentName: request.studentName,
-          studentFullName: request.studentFullName
-        });
-        
         // Use the new studentFullName field if available
         let displayStudentName;
         
@@ -259,16 +245,13 @@ function MedicationManagement() {
 
   const fetchMedications = async () => {
     try {
-      console.log('Fetching medications inventory...');
       const authAxios = apiClient;
       
       // Add debugging headers
       authAxios.defaults.headers.common['X-Debug-Request'] = 'FetchMedications';
       
       // Call API to get medication data from backend
-      const response = await authAxios.get('/api/medications/inventory');
-      console.log('Medications fetched from API:', response.data);
-      
+      const response = await authAxios.get('/medications/inventory');
       if (Array.isArray(response.data)) {
         // Convert API response to a format compatible with the UI
         // Make sure we map medicationId to id for frontend compatibility
@@ -277,7 +260,6 @@ function MedicationManagement() {
           id: med.medicationId // Ensure frontend compatibility
         }));
         
-        console.log('Processed medications:', medications);
         setMedications(medications);
       } else {
         console.error('API returned non-array data:', response.data);
@@ -368,8 +350,6 @@ function MedicationManagement() {
   const handleEditMedication = (medication) => {
     setSelectedMedication(medication);
     
-    console.log('Editing medication:', medication);
-    
     // Format date to match the expected input format (YYYY-MM-DD)
     let formattedData = { ...medication };
     
@@ -398,7 +378,6 @@ function MedicationManagement() {
   
   const handleMedicationFormSubmit = async (data) => {
     try {
-      console.log('Medication inventory data:', data);
       const authAxios = apiClient;
       
       // Format date properly before submitting
@@ -422,20 +401,16 @@ function MedicationManagement() {
         unitCost: data.unitCost || 0
       };
       
-      console.log('Sending medication data to API:', medicationDTO);
-      
-      console.log('Sending medication data to API:', medicationDTO);
-      
       // Use the actual backend API endpoints to save medication data
       if (selectedMedication) {
-        await authAxios.put(`/api/medications/inventory/${selectedMedication.medicationId}`, medicationDTO);
+        await authAxios.put(`/medications/inventory/${selectedMedication.medicationId}`, medicationDTO);
         setAlertMessage({
           message: `Medication "${data.medicationName}" updated successfully!`,
           severity: 'success',
           show: true
         });
       } else {
-        await authAxios.post('/api/medications/inventory', medicationDTO);
+        await authAxios.post('/medications/inventory', medicationDTO);
         setAlertMessage({
           message: `New medication "${data.medicationName}" added to inventory!`,
           severity: 'success',
@@ -482,7 +457,6 @@ function MedicationManagement() {
   // };
 
   const handleAdministrationFormSubmit = async (data) => { // For direct log
-    console.log('Direct administration data:', data);
     // Replace with actual API call to log direct administration
     // Example: await axios.post('/api/medications/administrations/log', data);
     fetchAdministrations();
@@ -512,17 +486,11 @@ function MedicationManagement() {
         return;
       }
       
-      console.log(`Approving request ID: ${requestId}`);
       const authAxios = apiClient;
       
       // First let's check if the API endpoint is accessible
-      console.log(`Sending approval to: /api/medication-requests/${requestId}/approve`);
-      console.log('Request object:', selectedRequest);
-      
       // Ensure we're using the correct endpoint from the MedicationRequestController
-      const response = await authAxios.put(`/api/medication-requests/${requestId}/approve`);
-      console.log('Request approved successfully:', response.data);
-      
+      const response = await authAxios.put(`/medication-requests/${requestId}/approve`);
       // Add success notification - we should show this in the UI
       alert('Medication request approved successfully'); // Simple alert for now
       
@@ -565,8 +533,6 @@ function MedicationManagement() {
       const rejectionReason = data.rejectionReason || '';
       
       // Debug logging to identify the correct ID field
-      console.log('Selected request object:', selectedRequest);
-      
       // Use requestId which is the correct field from the backend DTO
       const requestId = selectedRequest.requestId;
       
@@ -579,11 +545,9 @@ function MedicationManagement() {
       console.log(`Rejecting request ID: ${requestId} with reason: ${rejectionReason || '(No reason provided)'}`);
       
       // The backend controller expects "reason" as the parameter name
-      const response = await authAxios.put(`/api/medication-requests/${requestId}/reject`, { 
+      const response = await authAxios.put(`/medication-requests/${requestId}/reject`, { 
         reason: rejectionReason
       });
-      
-      console.log('Request rejected successfully:', response.data);
       
       // Show a success message to the user
       alert('Medication request rejected successfully');
@@ -637,9 +601,8 @@ function MedicationManagement() {
       administrationNotes: data.notes
     };
     try {
-      console.log(`Administering medication for request ID: ${requestId}`);
       const authAxios = apiClient;
-      await authAxios.post(`/api/medication-requests/${requestId}/administer`, administrationData);
+      await authAxios.post(`/medication-requests/${requestId}/administer`, administrationData);
       
       // Add success notification
       alert('Medication administered successfully');
@@ -689,17 +652,10 @@ function MedicationManagement() {
       
       // Add debugging headers
       authAxios.defaults.headers.common['X-Debug'] = 'TestMedicationAPI';
-      console.log('Headers being sent:', authAxios.defaults.headers);
-      
       // Test GET endpoint
-      console.log('Testing GET /api/medications/inventory');
-      const getResponse = await authAxios.get('/api/medications/inventory');
-      console.log('GET response:', getResponse.data);
-      
+      const getResponse = await authAxios.get('/medications/inventory');
       // Test POST endpoint with a test medication (if there's no data)
       if (Array.isArray(getResponse.data) && getResponse.data.length === 0) {
-        console.log('No medications found, testing POST endpoint');
-        
         const testMedication = {
           medicationName: 'Test Medication API',
           dosage: '10mg',
@@ -713,9 +669,8 @@ function MedicationManagement() {
           unitCost: 10.0
         };
         
-        const postResponse = await authAxios.post('/api/medications/inventory', testMedication);
-        console.log('POST response:', postResponse.data);
-      }
+        const postResponse = await authAxios.post('/medications/inventory', testMedication);
+        }
       
       // Show success message
       setAlertMessage({
@@ -754,7 +709,7 @@ function MedicationManagement() {
       <Tabs value={activeTab} onChange={handleTabChange} indicatorColor="primary" textColor="primary" sx={{ mb: 3 }}>
         <Tab label="Pending Requests" icon={<AssignmentIcon />} />
         <Tab label="Medication Inventory" icon={<InventoryIcon />} />
-        <Tab label="Medication Administration Log" icon={<ScheduleIcon />} />
+        {/* <Tab label="Medication Administration Log" icon={<ScheduleIcon />} /> */}
         <Tab label="Low Stock Alerts" icon={<WarningIcon />} badgeContent={lowStockAlerts.length} color="error" />
         <Tab label="Medical Events" icon={<MedicalEventIcon />} />
       </Tabs>
@@ -956,15 +911,14 @@ function MedicationManagement() {
         </Card>
       )}
 
-      {/* Tab 2: Medication Administration Log (Existing Content for direct logging) */}
-      {activeTab === 2 && (
+      {/* Tab 2: Medication Administration Log (Disabled) */}
+      {/* {activeTab === 2 && (
         <Card>
           <CardHeader
             title="Direct Medication Administration Log"
             action={<Button variant="contained" startIcon={<AddIcon />} onClick={handleAddAdministration}>Log Administration</Button>}
           />
           <CardContent>
-            {/* Existing administration log table and UI */}
             <Typography>Direct medication administration log UI goes here.</Typography>
             <TableContainer component={Paper}>
                 <Table>
@@ -978,7 +932,7 @@ function MedicationManagement() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {administrations.map((adminLog) => ( // Ensure 'administrations' is the correct state variable
+                    {administrations.map((adminLog) => ( 
                       <TableRow key={adminLog.id}>
                         <TableCell>{adminLog.studentName || adminLog.studentId}</TableCell>
                         <TableCell>{adminLog.medicationName}</TableCell>
@@ -992,10 +946,10 @@ function MedicationManagement() {
               </TableContainer>
           </CardContent>
         </Card>
-      )}
+      )} */}
 
-      {/* Tab 3: Low Stock Alerts (Existing Content) */}
-      {activeTab === 3 && (
+      {/* Tab 2: Low Stock Alerts (Updated index) */}
+      {activeTab === 2 && (
         <Card>
           <CardHeader title="Low Stock Alerts" />
           <CardContent>
@@ -1027,8 +981,8 @@ function MedicationManagement() {
         </Card>
       )}
 
-      {/* Tab 4: Medical Events */}
-      {activeTab === 4 && (
+      {/* Tab 3: Medical Events (Updated index) */}
+      {activeTab === 3 && (
         <Card>
           <CardHeader title="Medical Event Management" />
           <CardContent>

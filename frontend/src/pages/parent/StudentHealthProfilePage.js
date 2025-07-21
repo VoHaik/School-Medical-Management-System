@@ -100,17 +100,11 @@ const StudentHealthProfilePage = () => {
                     ) || declarations[0]; // Fallback to the first declaration if none is approved
                       if (latestApprovedDeclaration) {                        // Get student details from the children array instead of making a separate API call
                         const selectedChild = children.find(child => child.studentCode === selectedStudent);
-                        console.log('Children array:', children);
-                        console.log('Selected student code:', selectedStudent);
-                        console.log('Selected child data:', selectedChild);
-                        
                         const studentDetails = {
                             fullName: selectedChild?.fullName || 'Student',
                             studentCode: selectedStudent,
                             ...selectedChild // Include other properties if available
                         };
-                        
-                        console.log('Student details being used:', studentDetails);
                         
                         // Combine data to create a complete health profile
                         setHealthProfile({

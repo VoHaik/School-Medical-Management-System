@@ -98,8 +98,7 @@ const HealthEventForm = ({ onSubmit, initialData, isEdit = false }) => {
           return;
         }
       } catch (apiError) {
-        console.warn('API call failed, using fallback data:', apiError);
-      }
+        }
       
       // Fallback to hardcoded data if API fails
       const fallbackTypes = [

@@ -223,7 +223,7 @@ const HealthRecordsPage = () => {
                                     size="small"
                                     startIcon={<VisibilityIcon />}
                                     component={Link}
-                                    to={`/parent/health-declaration-detail/${declaration.id || declaration._id}`}
+                                    to={`/parent/health-declaration-detail/${declaration.declarationId}`}
                                 >
                                     View Full Details
                                 </Button>
@@ -352,7 +352,7 @@ const HealthRecordsPage = () => {
                                     Health Declarations
                                 </Typography>
                                 {healthDeclarations.map((declaration) => (
-                                    <Box key={declaration.id || declaration._id} sx={{ mb: 3 }}>
+                                    <Box key={declaration.declarationId} sx={{ mb: 3 }}>
                                         {renderDeclarationDetails(declaration)}
                                     </Box>
                                 ))}

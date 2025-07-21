@@ -24,9 +24,14 @@ public class MedicationInventoryController {
     
     @GetMapping("")
     @PreAuthorize("hasAnyRole('SCHOOLNURSE', 'ADMIN')")
-    public ResponseEntity<List<MedicationInventoryDTO>> getAllMedications() {
-        List<MedicationInventoryDTO> medications = medicationInventoryService.getAllMedications();
-        return ResponseEntity.ok(medications);
+    public ResponseEntity<?> getAllMedications() {
+        try {
+            List<MedicationInventoryDTO> medications = medicationInventoryService.getAllMedications();
+            return ResponseEntity.ok(medications);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Could not retrieve medications: " + e.getMessage()));
+        }
     }
     
     @GetMapping("/{id}")

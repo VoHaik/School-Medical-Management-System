@@ -32,10 +32,7 @@ export const useGradeLevels = () => {
       setLoading(true);
       setError(null);
       
-      console.log('Fetching grade levels from API...');
       const gradeLevels = await getAllActiveGradeLevels();
-      console.log('Grade levels response:', gradeLevels);
-      
       if (gradeLevels && Array.isArray(gradeLevels)) {
         // Sort by grade number
         const sortedGrades = gradeLevels.sort((a, b) => {
@@ -49,8 +46,7 @@ export const useGradeLevels = () => {
         const options = sortedGrades.map(grade => grade.gradeName);
         setGradeOptions(options);
         
-        console.log('Grade levels loaded successfully:', sortedGrades);
-      } else {
+        } else {
         throw new Error('Invalid response format from API');
       }
     } catch (err) {

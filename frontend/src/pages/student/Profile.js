@@ -77,7 +77,12 @@ const Profile = () => {
         studentCode: response.data.studentCode || '',
         avatarUrl: response.data.avatarUrl || ''
       };
-        setProfileData(data);
+      
+      console.log('=== LOAD PROFILE DEBUG ===');
+      console.log('Raw response:', response.data);
+      console.log('Processed data:', data);
+      
+      setProfileData(data);
       setEditData(data);
       setMessage('');
       setProfileExists(true); // Profile loaded successfully
@@ -132,8 +137,8 @@ const Profile = () => {
     };
     
     // Debug log to check what we're sending
-    console.log('Submitting data:', submitData);
-    console.log('Date of birth value:', editData.dateOfBirth);
+    console.log('=== SAVE PROFILE DEBUG ===');
+    console.log('submitData:', submitData);
     
     try {
       setSaving(true);
@@ -146,6 +151,9 @@ const Profile = () => {
       const method = isNewProfile ? 'post' : 'put';
       
       const response = await authAxios[method](endpoint, submitData);
+      
+      console.log('=== SAVE RESPONSE ===');
+      console.log('response:', response.data);
       
       // If we reach here, the request was successful (status 200)
       setMessage(`Profile ${isNewProfile ? 'created' : 'updated'} successfully!`);

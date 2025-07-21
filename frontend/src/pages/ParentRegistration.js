@@ -22,6 +22,7 @@ function ParentRegistration() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState([]);
   
   const [formData, setFormData] = useState({
     parentCode: '',
@@ -113,6 +114,7 @@ function ParentRegistration() {
 
     setLoading(true);
     setError('');
+    setValidationErrors([]);
 
     try {
       const { confirmPassword, ...submitData } = formData;
@@ -136,10 +138,22 @@ function ParentRegistration() {
       }
     } catch (error) {
       console.error('Registration error:', error);
-      if (error.response?.data?.message) {
-        setError(error.response.data.message);
+      
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        
+        if (errorData.errorType === 'VALIDATION_ERROR' && errorData.errors) {
+          // Hiển thị validation errors dưới dạng list
+          setValidationErrors(errorData.errors);
+          setError('Please fix the following issues:');
+        } else if (errorData.message) {
+          // Hiển thị general error message
+          setError(errorData.message);
+        } else {
+          setError('Registration failed. Please check your information and try again.');
+        }
       } else {
-        setError('An error occurred during registration. Please try again.');
+        setError('An unexpected error occurred. Please try again later.');
       }
     } finally {
       setLoading(false);
@@ -193,6 +207,15 @@ function ParentRegistration() {
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
+            {validationErrors.length > 0 && (
+              <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2 }}>
+                {validationErrors.map((errorMsg, index) => (
+                  <li key={index} style={{ marginBottom: '4px' }}>
+                    {errorMsg}
+                  </li>
+                ))}
+              </Box>
+            )}
           </Alert>
         )}
 

@@ -51,7 +51,6 @@ public class UserAccountInitializer implements CommandLineRunner {
         // Create roles if they don't exist
         createRoleIfNotExists("Admin", "System administrator with full access");
         createRoleIfNotExists("SchoolNurse", "Medical staff with access to health records");
-        createRoleIfNotExists("Manager", "School management personnel"); // Assuming Manager might be like a Teacher role for user_code generation
         createRoleIfNotExists("Parent", "Parent or guardian of students");
         createRoleIfNotExists("Student", "Student account");
         
@@ -61,9 +60,6 @@ public class UserAccountInitializer implements CommandLineRunner {
                 
         Role nurseRole = roleRepository.findByRoleName("SchoolNurse")
                 .orElseThrow(() -> new RuntimeException("SchoolNurse role not found"));
-                
-        Role managerRole = roleRepository.findByRoleName("Manager")
-                .orElseThrow(() -> new RuntimeException("Manager role not found"));
                 
         Role parentRole = roleRepository.findByRoleName("Parent")
                 .orElseThrow(() -> new RuntimeException("Parent role not found"));
@@ -76,9 +72,6 @@ public class UserAccountInitializer implements CommandLineRunner {
         // Create nurse account
         // User code for Nurse will be their nurse_code
         createUserIfNotExists("nurse.johnson", "NUR001", password, "nurse.johnson@schoolhealth.edu", nurseRole, "Sarah Johnson", "555-200-2000", "Female");
-        
-        // Create manager account (using a TEA prefix for user_code as an example, adjust if Manager has its own prefix)
-        createUserIfNotExists("manager.davis", "TEA001", password, "manager.davis@schoolhealth.edu", managerRole, "David Manager", "555-300-3000", "Male");
         
         // Create parent account
         // User code for Parent will be their parent_code

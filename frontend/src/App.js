@@ -7,9 +7,11 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import ParentRegistration from './pages/ParentRegistration';
 import BlogPostDetail from './pages/BlogPostDetail';
+import HealthDocs from './pages/HealthDocs'; // Add HealthDocs import
 
 import NurseBlog from './pages/NurseBlog';
 import DashboardNew from './pages/DashboardNew';
+import StudentDashboard from './pages/student/StudentDashboard';
 
 // Parent Pages
 import HealthDeclaration from './pages/parent/HealthDeclaration';
@@ -33,6 +35,7 @@ import SubmitMedicationPage from './pages/parent/SubmitMedicationPage'; // <<< I
 import ViewMedicationRequestsPage from './pages/parent/ViewMedicationRequestsPage'; // <<< IMPORT FOR VIEWING REQUESTS
 
 // Medical Staff Pages
+import NurseDashboard from './pages/nurse/NurseDashboard';
 import MedicationManagement from './pages/medical/MedicationManagement';
 import VaccinationManagement from './pages/medical/VaccinationManagement';
 import HealthCheckupManagement from './pages/medical/HealthCheckupManagement';
@@ -42,13 +45,6 @@ import MedicalEvents from './pages/medical/MedicalEvents';
 import HealthEventManagement from './pages/nurse/HealthEventManagement'; // Updated for nurse/admin - renamed from HealthCheckupEventManagement
 import HealthEventStudentManagement from './pages/nurse/HealthEventStudentManagement'; // Updated for nurse/admin - renamed from HealthCheckupEventStudentManagement
 import HealthDeclarationApproval from './pages/nurse/HealthDeclarationApproval'; // Added for nurse approval of health declarations
-
-// Manager Pages
-import ManagerDashboard from './pages/manager/ManagerDashboard';
-import ReportsAnalytics from './pages/manager/ReportsAnalytics';
-import ManagerUserManagement from './pages/manager/UserManagement';
-import ManagerHealthPrograms from './pages/manager/HealthPrograms';
-import ContentManagement from './pages/manager/ContentManagement';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -78,8 +74,7 @@ import { AuthProvider } from './context/AuthContext';
 import { AppThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
-console.log('--- App.js MODULE LOADED - V3 ---');
-// console.log('[App.js] ProtectedRoute module imported:', ProtectedRoute); // New log
+// Compiled v3 React app with enhanced routing
 
 // Prevent direct execution with Node.js
 if (typeof window === 'undefined') {
@@ -96,7 +91,6 @@ if (typeof window === 'undefined') {
 }
 
 function App() {
-  // console.log('[App.js] App function component rendering'); // New log
   return (
     <ErrorBoundary>
       <AuthProvider>
@@ -120,18 +114,22 @@ function App() {
                 } />
 
                 {/* Common Protected Routes */}
-                <Route path="/notifications" element={
+                {/* TEMPORARILY DISABLED - NOTIFICATIONS ROUTE */}
+                {/* <Route path="/notifications" element={
                   <ProtectedRoute>
                     <NotificationsPage />
                   </ProtectedRoute>
-                } />
+                } /> */}
+
+                {/* Health Docs - Available for all users without login */}
+                <Route path="/health-docs" element={<HealthDocs />} />
 
                 {/* Student Routes */}
                 <Route path="/health-blog" element={<NurseBlog />} />
                 <Route path="/nurse/blog" element={<ProtectedRoute roles={['ROLE_SCHOOLNURSE']}><NurseBlog /></ProtectedRoute>} />
                 
                 {/* Student Dashboard */}
-                <Route path="/student/dashboard" element={<ProtectedRoute roles={['ROLE_STUDENT']}><DashboardNew /></ProtectedRoute>} />
+                <Route path="/student/dashboard" element={<ProtectedRoute roles={['ROLE_STUDENT']}><StudentDashboard /></ProtectedRoute>} />
                 
                 {/* New Student Routes with Updated Components */}
                 <Route path="/health-profile" element={<ProtectedRoute roles={['ROLE_STUDENT']}><StudentHealthProfile /></ProtectedRoute>} />
@@ -166,6 +164,7 @@ function App() {
                 <Route path="/parent/medication-request/:requestId" element={<ProtectedRoute roles={['ROLE_PARENT']}><MedicationRequestDetailPage /></ProtectedRoute>} /> {/* Route cho chi tiết yêu cầu thuốc */}                <Route path="/parent/student-health-profile" element={<ProtectedRoute roles={['ROLE_PARENT']}><StudentHealthProfilePage /></ProtectedRoute>} /> {/* <<< ROUTE MỚI - Student Health Profile */}
 
                 {/* Medical Staff (Nurse/Doctor) Routes */}
+                <Route path="/medical/dashboard" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_DOCTOR']}><NurseDashboard /></ProtectedRoute>} />
                 <Route path="/medical/medication-management" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_DOCTOR']}><MedicationManagement /></ProtectedRoute>} />
                 <Route path="/medical/vaccination-management" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_DOCTOR']}><VaccinationManagement /></ProtectedRoute>} />
                 <Route path="/medical/health-checkups" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_DOCTOR']}><HealthCheckupManagement /></ProtectedRoute>} />
@@ -174,13 +173,6 @@ function App() {
                 <Route path="/nurse/health-checkup-events" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_ADMIN']}><HealthEventManagement /></ProtectedRoute>} />
                 <Route path="/nurse/health-checkup-events/:eventId/students" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_ADMIN']}><HealthEventStudentManagement /></ProtectedRoute>} />
                 <Route path="/nurse/health-declaration-approval" element={<ProtectedRoute roles={['ROLE_NURSE', 'ROLE_SCHOOLNURSE', 'ROLE_ADMIN']}><HealthDeclarationApproval /></ProtectedRoute>} /> {/* Route cho phê duyệt khai báo sức khỏe */}
-
-                {/* Manager Routes */}
-                <Route path="/manager/dashboard" element={<ProtectedRoute roles={['ROLE_MANAGER']}><ManagerDashboard /></ProtectedRoute>} />
-                <Route path="/manager/reports-analytics" element={<ProtectedRoute roles={['ROLE_MANAGER']}><ReportsAnalytics /></ProtectedRoute>} />
-                <Route path="/manager/user-management" element={<ProtectedRoute roles={['ROLE_MANAGER']}><ManagerUserManagement /></ProtectedRoute>} />
-                <Route path="/manager/health-programs" element={<ProtectedRoute roles={['ROLE_MANAGER']}><ManagerHealthPrograms /></ProtectedRoute>} />
-                <Route path="/manager/content-management" element={<ProtectedRoute roles={['ROLE_MANAGER']}><ContentManagement /></ProtectedRoute>} />
 
                 {/* Admin Routes */}
                 <Route path="/admin/dashboard" element={<ProtectedRoute roles={['ROLE_ADMIN']}><AdminDashboard /></ProtectedRoute>} />

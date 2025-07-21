@@ -64,7 +64,7 @@ import {
 } from '@mui/icons-material';
 import PageHeader from '../../components/PageHeader';
 import './StudentManagement.css';
-import { getAllStudents, getHealthDeclarationByStudentCode, getAllStudentsWithHealthData, nurseEditHealthDeclaration } from '../../utils/api';
+import { getAllStudents, getHealthDeclarationByStudentCode, getAllStudentsWithHealthData, nurseEditHealthDeclaration, getMedicalEventsByStudent } from '../../utils/api';
 
 function StudentManagement() {
   const [activeTab, setActiveTab] = useState(0);
@@ -96,6 +96,10 @@ function StudentManagement() {
         // Extract health data
         const healthData = student.healthData || {};
         
+        // Debug logging
+        if (student.studentCode === 'STU001') {
+          }
+        
         return {
           id: student.studentCode,
           name: student.fullName,
@@ -115,19 +119,27 @@ function StudentManagement() {
           
           // Health declaration details
           allergies: healthData.allergies ? 
-            (typeof healthData.allergies === 'string' ? 
-              healthData.allergies.split(',').filter(item => item.trim() !== '') : 
-              healthData.allergies) : [],
+            (Array.isArray(healthData.allergies) ? 
+              healthData.allergies.filter(item => item && item.trim() !== '') : 
+              (typeof healthData.allergies === 'string' ? 
+                healthData.allergies.split(',').filter(item => item.trim() !== '') : [])) : [],
           medications: healthData.medications ? 
-            healthData.medications.map(med => med.medicationName) : [],
+            (Array.isArray(healthData.medications) ?
+              healthData.medications.map(med => 
+                typeof med === 'string' ? med : (med.medicationName || med.name || String(med))
+              ) : 
+              (typeof healthData.medications === 'string' ?
+                healthData.medications.split(',').filter(item => item.trim() !== '') : [])) : [],
           chronicIllnesses: healthData.chronicIllnesses ? 
-            (typeof healthData.chronicIllnesses === 'string' ? 
-              healthData.chronicIllnesses.split(',').filter(item => item.trim() !== '') : 
-              healthData.chronicIllnesses) : [],
+            (Array.isArray(healthData.chronicIllnesses) ? 
+              healthData.chronicIllnesses.filter(item => item && item.trim() !== '') : 
+              (typeof healthData.chronicIllnesses === 'string' ? 
+                healthData.chronicIllnesses.split(',').filter(item => item.trim() !== '') : [])) : [],
           healthConditions: healthData.chronicIllnesses ? 
-            (typeof healthData.chronicIllnesses === 'string' ? 
-              healthData.chronicIllnesses.split(',').filter(item => item.trim() !== '') : 
-              healthData.chronicIllnesses) : [],
+            (Array.isArray(healthData.chronicIllnesses) ? 
+              healthData.chronicIllnesses.filter(item => item && item.trim() !== '') : 
+              (typeof healthData.chronicIllnesses === 'string' ? 
+                healthData.chronicIllnesses.split(',').filter(item => item.trim() !== '') : [])) : [],
           emergencyContacts: healthData.emergencyContacts ? 
             healthData.emergencyContacts : 
             (healthData.emergencyContactName ? [{ 
@@ -140,7 +152,18 @@ function StudentManagement() {
           lastCheckup: healthData.lastModifiedDate || 'N/A',
           nextCheckup: 'Scheduled based on school policy',
           vaccinationStatus: healthData.vaccinationStatus || 'unknown',
-          medicalEvents: [],
+          medicalEvents: student.medicalEvents || [],
+          
+          // Additional health declaration fields
+          visionStatus: healthData.visionStatus || '',
+          hearingStatus: healthData.hearingStatus || '',
+          medicalHistory: healthData.medicalHistory || '',
+          specialNeeds: healthData.specialNeeds || '',
+          physicalLimitations: healthData.physicalLimitations || '',
+          mentalHealthConcerns: healthData.mentalHealthConcerns || '',
+          dietaryRestrictions: healthData.dietaryRestrictions || '',
+          vaccinations: healthData.vaccinations || [],
+          
           restrictions: healthData.specialNeeds ? 
             [healthData.specialNeeds] : []
         };
@@ -375,18 +398,13 @@ function StudentManagement() {
                     <TableCell>Student</TableCell>
                     <TableCell>Grade</TableCell>
                     <TableCell>Health Status</TableCell>
-                    <TableCell>Conditions</TableCell>
-                    <TableCell>Allergies</TableCell>
-                    <TableCell>Medications</TableCell>
-                    <TableCell>Last Checkup</TableCell>
-                    <TableCell>Vaccination</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={9} align="center">
+                      <TableCell colSpan={4} align="center">
                         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
                           <CircularProgress />
                         </Box>
@@ -397,7 +415,7 @@ function StudentManagement() {
                     </TableRow>
                   ) : filteredStudents.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} align="center">
+                      <TableCell colSpan={4} align="center">
                         <Typography variant="body2" color="textSecondary">
                           No students found matching your criteria.
                         </Typography>
@@ -423,53 +441,6 @@ function StudentManagement() {
                           icon={getHealthStatusIcon(student.healthStatus)}
                           label={student.healthStatus}
                           color={getHealthStatusColor(student.healthStatus)}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {student.healthConditions.length > 0 ? (
-                          <div>
-                            {student.healthConditions.slice(0, 2).map((condition, index) => (
-                              <Chip key={index} label={condition} size="small" className="mr-1 mb-1" />
-                            ))}
-                            {student.healthConditions.length > 2 && (
-                              <Chip label={`+${student.healthConditions.length - 2} more`} size="small" />
-                            )}
-                          </div>
-                        ) : (
-                          <Typography variant="caption" color="textSecondary">None</Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {student.allergies.length > 0 ? (
-                          <div>
-                            {student.allergies.slice(0, 2).map((allergy, index) => (
-                              <Chip key={index} label={allergy} size="small" color="error" className="mr-1 mb-1" />
-                            ))}
-                            {student.allergies.length > 2 && (
-                              <Chip label={`+${student.allergies.length - 2} more`} size="small" color="error" />
-                            )}
-                          </div>
-                        ) : (
-                          <Typography variant="caption" color="textSecondary">None</Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {student.medications.length > 0 ? (
-                          <Badge badgeContent={student.medications.length} color="primary">
-                            <MedicationIcon />
-                          </Badge>
-                        ) : (
-                          <Typography variant="caption" color="textSecondary">None</Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {student.lastCheckup ? new Date(student.lastCheckup).toLocaleDateString() : 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={student.vaccinationStatus}
-                          color={getVaccinationStatusColor(student.vaccinationStatus)}
                           size="small"
                         />
                       </TableCell>
@@ -589,15 +560,21 @@ function StudentManagement() {
                     <Typography variant="body2" className="mb-2">
                       <strong>Gender:</strong> {healthProfile.gender}
                     </Typography>
-                    <Typography variant="body2" className="mb-2">
-                      <strong>Email:</strong> {healthProfile.email}
-                    </Typography>
-                    <Typography variant="body2" className="mb-2">
-                      <strong>Phone:</strong> {healthProfile.phone}
-                    </Typography>
-                    <Typography variant="body2">
-                      <strong>Address:</strong> {healthProfile.address}
-                    </Typography>
+                    {healthProfile.email && healthProfile.email !== 'N/A' && (
+                      <Typography variant="body2" className="mb-2">
+                        <strong>Email:</strong> {healthProfile.email}
+                      </Typography>
+                    )}
+                    {healthProfile.phone && healthProfile.phone !== 'N/A' && (
+                      <Typography variant="body2" className="mb-2">
+                        <strong>Phone:</strong> {healthProfile.phone}
+                      </Typography>
+                    )}
+                    {healthProfile.address && healthProfile.address !== 'N/A' && (
+                      <Typography variant="body2">
+                        <strong>Address:</strong> {healthProfile.address}
+                      </Typography>
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
@@ -615,19 +592,16 @@ function StudentManagement() {
                         color={getHealthStatusColor(healthProfile.healthStatus)}
                       />
                     </Box>
-                    <Box className="mb-3">
-                      <Typography variant="body2" className="mb-1"><strong>Vaccination Status:</strong></Typography>
-                      <Chip
-                        label={healthProfile.vaccinationStatus}
-                        color={getVaccinationStatusColor(healthProfile.vaccinationStatus)}
-                      />
-                    </Box>
-                    <Typography variant="body2" className="mb-2">
-                      <strong>Last Checkup:</strong> {new Date(healthProfile.lastCheckup).toLocaleDateString()}
-                    </Typography>
-                    <Typography variant="body2">
-                      <strong>Next Checkup:</strong> {new Date(healthProfile.nextCheckup).toLocaleDateString()}
-                    </Typography>
+                    {healthProfile.lastCheckup && healthProfile.lastCheckup !== 'Invalid Date' && !isNaN(new Date(healthProfile.lastCheckup)) && (
+                      <Typography variant="body2" className="mb-2">
+                        <strong>Last Checkup:</strong> {new Date(healthProfile.lastCheckup).toLocaleDateString()}
+                      </Typography>
+                    )}
+                    {healthProfile.nextCheckup && healthProfile.nextCheckup !== 'Invalid Date' && !isNaN(new Date(healthProfile.nextCheckup)) && (
+                      <Typography variant="body2">
+                        <strong>Next Checkup:</strong> {new Date(healthProfile.nextCheckup).toLocaleDateString()}
+                      </Typography>
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
@@ -639,48 +613,193 @@ function StudentManagement() {
                   <CardContent>
                     <Accordion>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="subtitle2">Health Conditions ({healthProfile.healthConditions.length})</Typography>
+                        <Typography variant="subtitle2">
+                          Health Conditions ({healthProfile.healthConditions ? healthProfile.healthConditions.length : 0})
+                        </Typography>
                       </AccordionSummary>
                       <AccordionDetails>
-                        {healthProfile.healthConditions.length > 0 ? (
-                          healthProfile.healthConditions.map((condition, index) => (
-                            <Chip key={index} label={condition} className="mr-1 mb-1" />
-                          ))
+                        {console.log('Current healthProfile healthConditions:', healthProfile.healthConditions)}
+                        {healthProfile.healthConditions && healthProfile.healthConditions.length > 0 ? (
+                          <Box>
+                            {healthProfile.healthConditions.map((condition, index) => (
+                              <Chip key={index} label={String(condition)} className="mr-1 mb-1" />
+                            ))}
+                          </Box>
                         ) : (
-                          <Typography variant="body2" color="textSecondary">No health conditions reported</Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            No health conditions reported (Data: {JSON.stringify(healthProfile.healthConditions)})
+                          </Typography>
                         )}
                       </AccordionDetails>
                     </Accordion>
 
                     <Accordion>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="subtitle2">Allergies ({healthProfile.allergies.length})</Typography>
+                        <Typography variant="subtitle2">
+                          Allergies ({healthProfile.allergies ? healthProfile.allergies.length : 0})
+                        </Typography>
                       </AccordionSummary>
                       <AccordionDetails>
-                        {healthProfile.allergies.length > 0 ? (
-                          healthProfile.allergies.map((allergy, index) => (
-                            <Chip key={index} label={allergy} color="error" className="mr-1 mb-1" />
-                          ))
+                        {/* Enhanced Debug logging */}
+                        {console.log('Current healthProfile allergies:', healthProfile.allergies)}
+                        {console.log('Allergies type:', typeof healthProfile.allergies)}
+                        {console.log('Allergies is array:', Array.isArray(healthProfile.allergies))}
+                        {healthProfile.allergies && healthProfile.allergies.length > 0 ? (
+                          <Box>
+                            {console.log('Rendering allergies:', healthProfile.allergies)}
+                            {healthProfile.allergies.map((allergy, index) => (
+                              <Chip key={index} label={String(allergy)} color="error" className="mr-1 mb-1" />
+                            ))}
+                          </Box>
                         ) : (
-                          <Typography variant="body2" color="textSecondary">No allergies reported</Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            No allergies reported (Data: {JSON.stringify(healthProfile.allergies)})
+                          </Typography>
                         )}
                       </AccordionDetails>
                     </Accordion>
 
                     <Accordion>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="subtitle2">Current Medications ({healthProfile.medications.length})</Typography>
+                        <Typography variant="subtitle2">
+                          Current Medications ({healthProfile.medications ? healthProfile.medications.length : 0})
+                        </Typography>
                       </AccordionSummary>
                       <AccordionDetails>
-                        {healthProfile.medications.length > 0 ? (
-                          healthProfile.medications.map((medication, index) => (
-                            <Chip key={index} label={medication} color="primary" className="mr-1 mb-1" />
-                          ))
+                        {console.log('Current healthProfile medications:', healthProfile.medications)}
+                        {healthProfile.medications && healthProfile.medications.length > 0 ? (
+                          <Box>
+                            {healthProfile.medications.map((medication, index) => (
+                              <Chip key={index} label={String(medication)} color="primary" className="mr-1 mb-1" />
+                            ))}
+                          </Box>
                         ) : (
-                          <Typography variant="body2" color="textSecondary">No current medications</Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            No current medications (Data: {JSON.stringify(healthProfile.medications)})
+                          </Typography>
                         )}
                       </AccordionDetails>
                     </Accordion>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Vision & Hearing and Medical History */}
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardHeader title="Vision & Hearing Status" />
+                  <CardContent>
+                    <Grid container spacing={2}>
+                      <Grid item xs={6}>
+                        <Typography variant="subtitle2" color="textSecondary">Vision Status</Typography>
+                        <Typography variant="body2">{healthProfile.visionStatus || 'Not specified'}</Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="subtitle2" color="textSecondary">Hearing Status</Typography>
+                        <Typography variant="body2">{healthProfile.hearingStatus || 'Not specified'}</Typography>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Medical History */}
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardHeader title="Medical History" />
+                  <CardContent>
+                    <Typography variant="body2">
+                      {healthProfile.medicalHistory || 'No medical history provided'}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Other Health Information */}
+              <Grid item xs={12}>
+                <Card>
+                  <CardHeader title="Other Health Information" />
+                  <CardContent>
+                    <Accordion>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="subtitle2">Special Needs or Accommodations</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Typography variant="body2">
+                          {healthProfile.specialNeeds || 'None specified'}
+                        </Typography>
+                      </AccordionDetails>
+                    </Accordion>
+
+                    <Accordion>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="subtitle2">Physical Limitations or Activity Restrictions</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Typography variant="body2">
+                          {healthProfile.physicalLimitations || 'None specified'}
+                        </Typography>
+                      </AccordionDetails>
+                    </Accordion>
+
+                    <Accordion>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="subtitle2">Mental or Emotional Health Concerns</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Typography variant="body2">
+                          {healthProfile.mentalHealthConcerns || 'None specified'}
+                        </Typography>
+                      </AccordionDetails>
+                    </Accordion>
+
+                    <Accordion>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="subtitle2">Dietary Restrictions or Preferences</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Typography variant="body2">
+                          {healthProfile.dietaryRestrictions || 'None specified'}
+                        </Typography>
+                      </AccordionDetails>
+                    </Accordion>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Vaccinations */}
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardHeader title="Vaccination Records" />
+                  <CardContent>
+                    {healthProfile.vaccinations && healthProfile.vaccinations.length > 0 ? (
+                      <TableContainer component={Paper} variant="outlined">
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell sx={{ fontWeight: 'bold' }}>Vaccine</TableCell>
+                              <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {healthProfile.vaccinations.map((vaccination, index) => (
+                              <TableRow key={index}>
+                                <TableCell sx={{ py: 1 }}>{vaccination.vaccineName}</TableCell>
+                                <TableCell sx={{ py: 1 }}>
+                                  {vaccination.vaccinationDate ? 
+                                    new Date(vaccination.vaccinationDate).toLocaleDateString() : 
+                                    'Date not available'}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    ) : (
+                      <Typography variant="body2" color="textSecondary">
+                        No vaccination records available
+                      </Typography>
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
@@ -711,22 +830,186 @@ function StudentManagement() {
               <Grid item xs={12}>
                 <Card>
                   <CardHeader title="Recent Medical Events" />
-                  <CardContent>
-                    <Timeline>
-                      {healthProfile.medicalEvents.map((event, index) => (
-                        <TimelineItem key={index}>
+                  <CardContent sx={{ p: 0 }}>
+                    <Timeline sx={{ 
+                      '& .MuiTimelineItem-root': {
+                        '&:before': {
+                          flex: 0,
+                          padding: 0
+                        }
+                      },
+                      '& .MuiTimelineContent-root': {
+                        flex: 1,
+                        px: 2,
+                        py: 1
+                      }
+                    }}>
+                      {healthProfile.medicalEvents && healthProfile.medicalEvents.length > 0 ? (
+                        healthProfile.medicalEvents.map((event, index) => (
+                          <TimelineItem key={index}>
+                            <TimelineSeparator>
+                              <TimelineDot color={
+                                event.severity === 'LOW' ? 'success' : 
+                                event.severity === 'MEDIUM' ? 'warning' : 
+                                event.severity === 'HIGH' ? 'error' : 'primary'
+                              } />
+                              {index < healthProfile.medicalEvents.length - 1 && <TimelineConnector />}
+                            </TimelineSeparator>
+                            <TimelineContent sx={{ flex: 1, minWidth: 0 }}>
+                              <Box sx={{ 
+                                backgroundColor: 'background.paper', 
+                                borderRadius: 2, 
+                                p: 2,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                boxShadow: 1,
+                                width: '100%',
+                                maxWidth: 'none'
+                              }}>
+                                {/* Header Row */}
+                                <Box sx={{ 
+                                  display: 'flex', 
+                                  justifyContent: 'space-between', 
+                                  alignItems: 'center',
+                                  mb: 2,
+                                  pb: 1,
+                                  borderBottom: '1px solid',
+                                  borderColor: 'divider'
+                                }}>
+                                  <Typography variant="h6" fontWeight="bold" color="primary">
+                                    {event.type || event.eventType || 'INJURY'}
+                                  </Typography>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Typography variant="body2" color="textSecondary">
+                                      {event.date ? new Date(event.date).toLocaleDateString() : 'Date not available'}
+                                    </Typography>
+                                    <Chip 
+                                      label={event.severity || 'MEDIUM'} 
+                                      size="small" 
+                                      color={
+                                        event.severity === 'LOW' ? 'success' : 
+                                        event.severity === 'MEDIUM' ? 'warning' : 
+                                        event.severity === 'HIGH' ? 'error' : 'warning'
+                                      }
+                                    />
+                                  </Box>
+                                </Box>
+                                
+                                {/* Details Grid - Stretch to full width */}
+                                <Grid container spacing={3} sx={{ width: '100%' }}>
+                                  {event.description && (
+                                    <Grid item xs={12} md={6}>
+                                      <Box sx={{ 
+                                        backgroundColor: 'grey.50', 
+                                        p: 2, 
+                                        borderRadius: 1,
+                                        height: '100%'
+                                      }}>
+                                        <Typography variant="body2" fontWeight="bold" color="text.primary" sx={{ mb: 1 }}>
+                                          Injury/Condition:
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                          {event.description}
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                  )}
+                                  
+                                  {event.symptoms && (
+                                    <Grid item xs={12} md={6}>
+                                      <Box sx={{ 
+                                        backgroundColor: 'grey.50', 
+                                        p: 2, 
+                                        borderRadius: 1,
+                                        height: '100%'
+                                      }}>
+                                        <Typography variant="body2" fontWeight="bold" color="text.primary" sx={{ mb: 1 }}>
+                                          Symptoms:
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                          {event.symptoms}
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                  )}
+                                  
+                                  {event.treatment && (
+                                    <Grid item xs={12}>
+                                      <Box sx={{ 
+                                        backgroundColor: 'blue.50', 
+                                        p: 2, 
+                                        borderRadius: 1
+                                      }}>
+                                        <Typography variant="body2" fontWeight="bold" color="text.primary" sx={{ mb: 1 }}>
+                                          Treatment Provided:
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                          {event.treatment}
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                  )}
+                                  
+                                  {event.medicationsUsed && event.medicationsUsed.length > 0 && (
+                                    <Grid item xs={12}>
+                                      <Box sx={{ 
+                                        backgroundColor: 'green.50', 
+                                        p: 2, 
+                                        borderRadius: 1
+                                      }}>
+                                        <Typography variant="body2" fontWeight="bold" color="text.primary" sx={{ mb: 1 }}>
+                                          Medications Used:
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                          {event.medicationsUsed.map((med, medIndex) => (
+                                            <Chip 
+                                              key={medIndex} 
+                                              label={`${med.name}${med.dosage ? ` - ${med.dosage}` : ''}`}
+                                              size="small"
+                                              color="success"
+                                              variant="outlined"
+                                              sx={{ fontWeight: 'medium' }}
+                                            />
+                                          ))}
+                                        </Box>
+                                      </Box>
+                                    </Grid>
+                                  )}
+                                  
+                                  {event.followUpRequired && (
+                                    <Grid item xs={12}>
+                                      <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        gap: 1,
+                                        backgroundColor: 'warning.light',
+                                        color: 'warning.contrastText',
+                                        p: 2,
+                                        borderRadius: 1
+                                      }}>
+                                        <Typography variant="body2" fontWeight="bold">
+                                          ⚠️ Follow-up Required
+                                        </Typography>
+                                      </Box>
+                                    </Grid>
+                                  )}
+                                </Grid>
+                              </Box>
+                            </TimelineContent>
+                          </TimelineItem>
+                        ))
+                      ) : (
+                        <TimelineItem>
                           <TimelineSeparator>
-                            <TimelineDot color={event.severity === 'Normal' ? 'success' : 'warning'} />
-                            {index < healthProfile.medicalEvents.length - 1 && <TimelineConnector />}
+                            <TimelineDot color="grey" />
                           </TimelineSeparator>
                           <TimelineContent>
-                            <Typography variant="subtitle2">{event.type}</Typography>
                             <Typography variant="body2" color="textSecondary">
-                              {new Date(event.date).toLocaleDateString()} - {event.severity}
+                              No recent medical events recorded
                             </Typography>
                           </TimelineContent>
                         </TimelineItem>
-                      ))}
+                      )}
                     </Timeline>
                   </CardContent>
                 </Card>

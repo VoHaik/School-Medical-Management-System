@@ -1,510 +1,454 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-import axios from 'axios';
-import apiClient from '../../utils/api';
 import {
-  Box,
-  Typography,
-  Button,
-  Paper,
+  Container,
   Grid,
   Card,
   CardContent,
-  CardHeader,
-  ListItemIcon,
-  ListItemText,
+  Typography,
+  Box,
+  Button,
+  Chip,
+  Alert,
+  CircularProgress,
+  Paper,
   List,
   ListItem,
-  CircularProgress
+  ListItemText,
+  ListItemIcon,
+  Divider,
+  IconButton
 } from '@mui/material';
-import PageHeader from '../../components/PageHeader';
-import { 
-  Medication as MedicationIcon, 
-  AssignmentLate as AssignmentLateIcon, 
-  EventAvailable as EventAvailableIcon, 
-  Assessment as AssessmentIcon,
-  Warning as WarningIcon,
+import {
+  Dashboard as DashboardIcon,
+  MedicalServices as MedicalIcon,
+  Person as PersonIcon,
+  Assignment as AssignmentIcon,
+  Notifications as NotificationIcon,
+  CheckCircle as CheckCircleIcon,
+  Pending as PendingIcon,
   Refresh as RefreshIcon,
-  MedicalServices as MedicalServicesIcon
+  Medication as MedicationIcon,
+  People as PeopleIcon,
+  Today as TodayIcon,
+  Warning as WarningIcon,
+  Error as ErrorIcon
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import authHeader from '../../services/auth-header'; // Add this import for direct header testing
+import { apiClient } from '../../utils/api';
 
-// Trạng thái ban đầu cho dữ liệu bảng điều khiển
-const initialSummaryData = {
-  pendingMedicationRequests: 0,
-  pendingHealthDeclarations: 0,
-  upcomingAppointments: 0,
-  recentAlerts: 0,
+// Helper Components
+const StatCard = ({ title, value, icon, color, onClick, subtitle }) => (
+  <Card 
+    sx={{ 
+      height: '100%', 
+      cursor: onClick ? 'pointer' : 'default',
+      '&:hover': onClick ? { boxShadow: 3 } : {}
+    }}
+    onClick={onClick}
+  >
+    <CardContent>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ color: `${color}.main`, mr: 2 }}>
+          {icon}
+        </Box>
+        <Typography variant="h6" component="h2">
+          {title}
+        </Typography>
+      </Box>
+      <Typography variant="h4" component="div" color="primary">
+        {value}
+      </Typography>
+      {subtitle && (
+        <Typography variant="body2" color="text.secondary">
+          {subtitle}
+        </Typography>
+      )}
+    </CardContent>
+  </Card>
+);
+
+const QuickActionCard = ({ title, description, onClick, icon, color }) => (
+  <Card sx={{ height: '100%' }}>
+    <CardContent>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ color: `${color}.main`, mr: 2 }}>
+          {icon}
+        </Box>
+        <Typography variant="h6">{title}</Typography>
+      </Box>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        {description}
+      </Typography>
+      <Button variant="contained" onClick={onClick} fullWidth>
+        View Details
+      </Button>
+    </CardContent>
+  </Card>
+);
+
+const AlertItem = ({ alert }) => {
+  const navigate = useNavigate();
+  
+  const getAlertIcon = (type) => {
+    switch (type) {
+      case 'error': return <ErrorIcon color="error" />;
+      case 'warning': return <WarningIcon color="warning" />;
+      default: return <NotificationIcon color="info" />;
+    }
+  };
+
+  return (
+    <ListItem>
+      <ListItemIcon>
+        {getAlertIcon(alert.type)}
+      </ListItemIcon>
+      <ListItemText
+        primary={alert.message}
+        secondary={alert.action}
+      />
+      {alert.link && (
+        <Button 
+          size="small" 
+          onClick={() => navigate(alert.link)}
+        >
+          {alert.action}
+        </Button>
+      )}
+    </ListItem>
+  );
+};
+
+// Enhanced initial data structure
+const initialDashboardData = {
+  statistics: {
+    totalStudents: 0,
+    pendingMedicationRequests: 0,
+    pendingHealthDeclarations: 0,
+    todayEvents: 0,
+    upcomingCheckups: 0,
+    completedToday: 0
+  },
+  recentMedicationRequests: [],
+  pendingHealthDeclarations: [],
+  recentMedicalEvents: [],
+  upcomingCheckups: [],
+  todayActivities: [],
+  alerts: []
 };
 
 function NurseDashboard() {
-  const [summaryData, setSummaryData] = useState(initialSummaryData);
+  const { currentUser } = useContext(AuthContext);
+  const navigate = useNavigate();
+  
+  // State management
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const { getAuthAxios, currentUser } = useContext(AuthContext);
+  const [error, setError] = useState('');
+  const [dashboardData, setDashboardData] = useState(initialDashboardData);
 
-  // Function to fetch dashboard data
-  const fetchDashboardData = async () => {
-    // Don't fetch if no user is logged in
-    if (!currentUser) {
-      setError('You must be logged in to view this page');
-      setLoading(false);
-      return;
-    }
-    
+  // Load dashboard data
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
     try {
       setLoading(true);
-      setError(null); // Clear previous errors
-        // Check roles first - using role names from database (Admin, SchoolNurse)
-      if (!currentUser.roles || !currentUser.roles.some(role => 
-          role === 'SchoolNurse' || role === 'Admin')) {        setError('You do not have permission to access this page');
+      setError('');
+
+      // Check authorization first
+      if (!currentUser || !currentUser.roles || 
+          !currentUser.roles.some(role => role === 'SchoolNurse' || role === 'Admin')) {
+        setError('You do not have permission to access this page');
         setLoading(false);
         return;
       }
-      
-      // Get an authenticated axios instance using our consistent utility
-      const authAxios = apiClient;
-      
-      // Debug auth token
-      const token = localStorage.getItem('token');
-      console.log('Token available:', token ? 'Yes' : 'No');
-      console.log('Token first 10 characters:', token ? token.substring(0, 10) + '...' : 'N/A');
-      
-      // Check token validity
-      if (!token) {
-        console.error('No token available - triggering logout');
-        setError('Your session may have expired. Please log in again.');
-        setLoading(false);
-        return;
-      }
-      
-      // Debug auth headers
-      const user = JSON.parse(localStorage.getItem('user'));
-      console.log('User from localStorage:', user ? 'Found' : 'Not found');
-      console.log('User roles:', user?.roles);
-      
-      // Make sure authAxios is configured with headers
-      console.log('Auth headers present:', authAxios.defaults?.headers?.common?.Authorization ? 'Yes' : 'No');
-      
-      // Add a specific header for debugging
-      authAxios.defaults.headers.common['X-Debug'] = 'NurseDashboard';
-      
+
       try {
-        // Use our new apiClient utility instead of getAuthAxios from context
-        const authAxios = apiClient;
+        // Try to get data from the new nurse dashboard endpoint
+        const response = await apiClient.get('/nurse/dashboard');
         
-        // Add debug headers
-        authAxios.defaults.headers.common['X-Debug'] = 'NurseDashboard';
-        
-        // Inspect request URL structure
-        const apiUrl = '/api/medication-requests/pending/count';
-        console.log('Full API URL:', window.location.origin + apiUrl);
-        
-        console.log('Headers being sent:', authAxios.defaults.headers);
-        
-        // Fetch pending medication requests with explicit error handling
-        console.log('Fetching medication requests count...');
-        
-        try {
-          const medicationResponse = await authAxios.get(apiUrl);
-          console.log('Medication response:', medicationResponse.data);
-        } catch (medError) {
-          console.error('Medication request specific error:', medError.message);
-          console.log('Status code:', medError.response?.status);
-          console.log('Server response:', medError.response?.data);
-          
-          // Check for the specific "No static resource" error
-          if (medError.response?.data?.message?.includes('No static resource')) {
-            console.error('Backend is treating API endpoint as static resource!');
-            throw new Error('API configuration error: Endpoint being treated as static resource. Please check backend config.');
-          }
-          
-          throw new Error('Failed to fetch medication requests count');
+        const statistics = {
+          totalStudents: response.data.totalStudents || 0,
+          pendingMedicationRequests: response.data.pendingMedicationRequests || 0,
+          pendingHealthDeclarations: response.data.pendingHealthDeclarations || 0,
+          todayEvents: response.data.todayEvents || 0,
+          upcomingCheckups: 0,
+          completedToday: response.data.completedToday || 0
+        };
+
+        // Generate alerts based on statistics
+        const alerts = [];
+        if (statistics.pendingMedicationRequests > 5) {
+          alerts.push({
+            id: 1,
+            type: 'warning',
+            message: `There are ${statistics.pendingMedicationRequests} pending medication requests`,
+            action: 'View Now',
+            link: '/medical/medication-management'
+          });
         }
-        
-        // Fetch pending health declarations
-        console.log('Fetching health declarations count...');
-        try {
-          const healthDeclarationResponse = await authAxios.get('/api/health-declaration/pending/count');
-          console.log('Health declaration response:', healthDeclarationResponse.data);
-        } catch (healthError) {
-          console.error('Health declaration specific error:', healthError.message);
-          console.log('Status code:', healthError.response?.status);
-          console.log('Server response:', healthError.response?.data);
-          throw new Error('Failed to fetch health declarations count');
-        }
-        
-        // Update state with actual data
-        setSummaryData({
-          pendingMedicationRequests: medicationResponse.data || 0,
-          pendingHealthDeclarations: healthDeclarationResponse.data || 0,
-          upcomingAppointments: 0, // This will be implemented in future
-          recentAlerts: 0, // This will be implemented in future
+
+        setDashboardData({
+          statistics,
+          recentMedicationRequests: response.data.recentMedicationRequests || [],
+          pendingHealthDeclarations: [],
+          recentMedicalEvents: [],
+          upcomingCheckups: [],
+          todayActivities: [],
+          alerts
         });
         
-        setError(null);
       } catch (apiError) {
-        console.error('API call error:', apiError);
-        
-        // Check if it's an authorization error
-        if (apiError.response?.status === 401 || apiError.response?.status === 403) {
-          console.log('Auth error. Headers:', apiError.config?.headers);
-          setError(`Authentication error (${apiError.response.status}): ${apiError.response.data?.message || 'Access denied'}`);
-        } else {
-          setError(`API Error (${apiError.response?.status || 'unknown'}): ${apiError.message}`);
-        }
-      }
-    } catch (err) {
-      console.error('General error in fetchDashboardData:', err);
-      setError('An unexpected error occurred. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Call fetchDashboardData when component mounts
-  useEffect(() => {
-    // Don't fetch if no user is logged in
-    if (currentUser) {
-      console.log('Component mounted/updated, fetching dashboard data');
-      console.log('Current user:', currentUser.username, 'roles:', currentUser.roles);
-      fetchDashboardData();
-    } else {
-      console.log('No current user available, skipping data fetch');
-    }
-  }, [currentUser]);
+        // Fallback: Load data from individual endpoints
+        const [
+          medicationRequestsRes,
+          studentsRes
+        ] = await Promise.allSettled([
+          apiClient.get('/medication-requests/pending').catch(() => ({ data: [] })),
+          apiClient.get('/students/summary').catch(() => ({ data: { totalCount: 0 } }))
+        ]);
 
-  // Add an alternative authentication testing function
-  const testApiConnectivity = async () => {
-    try {
-      console.log('======= AUTHENTICATION DEBUG =======');
-      console.log('Current user from context:', currentUser ? `${currentUser.username} (${currentUser.roles.join(', ')})` : 'Not logged in');
-      
-      // Test 0: Check stored values in localStorage
-      const storedToken = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
-      console.log('localStorage token exists:', storedToken ? 'Yes' : 'No');
-      console.log('localStorage user exists:', storedUser ? 'Yes' : 'No');
-      
-      if (storedToken) {
-        try {
-          // Check if token is valid JWT format
-          const parts = storedToken.split('.');
-          console.log('Token parts:', parts.length);
-          console.log('First 10 chars:', storedToken.substring(0, 10) + '...');
-          
-          if (parts.length === 3) {
-            // Try to decode the token payload
-            const payload = JSON.parse(atob(parts[1]));
-            console.log('Token payload:', payload);
-            console.log('Token subject:', payload.sub);
-            console.log('Token roles:', payload.roles);
-            console.log('Token expiration:', new Date(payload.exp * 1000).toLocaleString());
-            console.log('Token expired?', Date.now() > payload.exp * 1000 ? 'Yes' : 'No');
-          }
-        } catch (e) {
-          console.error('Error parsing token:', e);
-        }
-      }
-      
-      // Test 1: Use direct authHeader()
-      console.log('\nTesting with direct authHeader()');
-      const headers = authHeader();
-      console.log('Auth headers from authHeader():', headers);
-      
-      // Log auth header specific info
-      if (headers.Authorization) {
-        const tokenParts = headers.Authorization.split(' ');
-        if (tokenParts.length === 2) {
-          console.log('Token type:', tokenParts[0]);
-          console.log('Token first 10 chars:', tokenParts[1].substring(0, 10) + '...');
-          
-          // Check if token looks like JWT (contains 2 periods)
-          const periods = tokenParts[1].split('.').length - 1;
-          console.log('Token looks like JWT:', periods === 2 ? 'Yes' : 'No');
-        }
-      }
-      
-      try {
-        // Use our new apiClient utility for consistent auth handling
-        console.log('Testing endpoint with apiClient:', '/api/medication-requests/pending/count');
-        console.log('Current origin:', window.location.origin);
-        
-        const authAxios = apiClient;
-        authAxios.defaults.headers.common['X-Debug-Request'] = 'TestApiConnectivity';
-        
-        console.log('Headers being sent:', authAxios.defaults.headers);
-        
-        const directResponse = await authAxios.get('/api/medication-requests/pending/count');
-        console.log('axiosWithAuth success:', directResponse.data);
-        
-        // Update UI with success
-        setSummaryData(prev => ({
-          ...prev,
-          pendingMedicationRequests: directResponse.data || 0
-        }));
-        
-        setError(null);
-        return;
-      } catch (err) {
-        console.log('axiosWithAuth failed:', err.message);
-        console.log('Response status:', err.response?.status);
-        console.log('Response data:', err.response?.data);
-      }
-      
-      // Test 2: Try with token directly from localStorage
-      const token = localStorage.getItem('token');
-      if (token) {
-        console.log('Testing with direct token from localStorage');
-        try {
-          const tokenResponse = await axios.get('/api/medication-requests/pending/count', { 
-            headers: { 
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            } 
+        const medicationRequests = medicationRequestsRes.status === 'fulfilled' ? 
+          (medicationRequestsRes.value?.data || []) : [];
+        const studentsData = studentsRes.status === 'fulfilled' ? 
+          (studentsRes.value?.data || { totalCount: 0 }) : { totalCount: 0 };
+
+        const statistics = {
+          totalStudents: studentsData.totalCount || 0,
+          pendingMedicationRequests: Array.isArray(medicationRequests) ? medicationRequests.length : 0,
+          pendingHealthDeclarations: 0,
+          todayEvents: 0,
+          upcomingCheckups: 0,
+          completedToday: 0
+        };
+
+        const alerts = [];
+        if (statistics.pendingMedicationRequests > 5) {
+          alerts.push({
+            id: 1,
+            type: 'warning',
+            message: `Có ${statistics.pendingMedicationRequests} yêu cầu thuốc đang chờ xử lý`,
+            action: 'Xem ngay',
+            link: '/medical/medication-management'
           });
-          console.log('Direct token success:', tokenResponse.data);
-          return;
-        } catch (err) {
-          console.log('Direct token failed:', err.message);
         }
-      }
-      
-      // Test 3: Try the user object token
-      const userJson = localStorage.getItem('user');
-      if (userJson) {
-        const user = JSON.parse(userJson);
-        if (user?.accessToken) {
-          console.log('Testing with token from user object');
-          try {
-            const userTokenResponse = await axios.get('/api/medication-requests/pending/count', { 
-              headers: { 
-                'Authorization': `Bearer ${user.accessToken}`,
-                'Content-Type': 'application/json'
-              } 
-            });
-            console.log('User token success:', userTokenResponse.data);
-            return;
-          } catch (err) {
-            console.log('User token failed:', err.message);
-          }
-        }
-      }
-      
-      console.log('All authentication tests failed');
-    } catch (error) {
-      console.error('Error testing API connectivity:', error);
-    }
-  };
 
-  // Test backend connectivity directly
-  const testBackendConnection = async () => {
-    try {
-      setLoading(true);
-      setError('Testing backend connection...');
-      
-      // First test if backend is up by accessing a public endpoint
-      try {
-        const response = await axios.get('/api/health');
-        console.log('Backend health check:', response.data);
-        setError(`Backend server is up: ${JSON.stringify(response.data)}`);
-      } catch (healthError) {
-        console.error('Health check failed:', healthError);
-        setError(`Backend health check failed: ${healthError.message}`);
-      }
-      
-      // Try to access an endpoint with current credentials
-      const currentToken = localStorage.getItem('token');
-      if (!currentToken) {
-        setError('No token found in localStorage. Please login again.');
-        setLoading(false);
-        return;
+        setDashboardData({
+          statistics,
+          recentMedicationRequests: Array.isArray(medicationRequests) ? medicationRequests.slice(0, 5) : [],
+          pendingHealthDeclarations: [],
+          recentMedicalEvents: [],
+          upcomingCheckups: [],
+          todayActivities: [],
+          alerts
+        });
       }
 
-      try {
-        // Try to get user info with our consistent auth handling
-        const authAxios = apiClient;
-        const userResponse = await authAxios.get('/api/auth/me');
-        
-        console.log('User info request succeeded:', userResponse.data);
-        const userRoles = userResponse.data.roles || [];
-        setError(`User authenticated successfully. Roles: ${userRoles.join(', ')}`);
-        
-        // Check if user has the required role
-        const hasNurseRole = userRoles.some(role => 
-          role === 'SchoolNurse' || role === 'ROLE_SCHOOLNURSE' || 
-          role === 'Admin' || role === 'ROLE_ADMIN'
-        );
-        
-        if (hasNurseRole) {
-          setError('User has the required role. Should have access to the endpoint.');
-        } else {
-          setError(`User does not have the required role. Current roles: ${userRoles.join(', ')}`);
-        }
-      } catch (userError) {
-        console.error('User info request failed:', userError);
-        setError(`User authentication check failed: ${userError.message}`);
-      }
-    } catch (e) {
-      console.error('Connection test error:', e);
-      setError(`Connection test failed: ${e.message}`);
+    } catch (err) {
+      console.error('Error loading nurse dashboard:', err);
+      setError('Unable to load dashboard data. Please try again.');
+      
+      // Set fallback data
+      setDashboardData(initialDashboardData);
     } finally {
       setLoading(false);
     }
   };
-  return (
-    <Box sx={{ p: 3 }}>      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <PageHeader title="Nurse Dashboard" />
-        <Button 
-          variant="contained" 
-          color="primary"
-          onClick={fetchDashboardData}
-          startIcon={<RefreshIcon />}
-          disabled={loading}
-        >
-          Refresh Data
-        </Button>
-      </Box>
-      
-      {error && (
-        <Box sx={{ mb: 2 }}>
-          <Typography color="error" sx={{ mb: 1 }}>
-            {error}
-          </Typography>          <Button 
-            variant="outlined" 
-            color="secondary"
-            onClick={testApiConnectivity}
-            size="small"
-            sx={{ mr: 1 }}
-          >            
-            Test Authentication
-          </Button>
-          <Button 
-            variant="outlined" 
-            color="primary"
-            onClick={testBackendConnection}
-            size="small"
-          >
-            Test Connection
-          </Button>
+
+  if (loading) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+          <CircularProgress />
         </Box>
+      </Container>
+    );
+  }
+
+  return (
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {/* Header */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box>
+            <Typography variant="h4" component="h1" gutterBottom>
+              Nurse Dashboard
+            </Typography>
+            <Typography variant="subtitle1" color="text.secondary">
+              Welcome, {currentUser?.fullName || currentUser?.username}
+            </Typography>
+          </Box>
+          <IconButton onClick={loadDashboardData} color="primary">
+            <RefreshIcon />
+          </IconButton>
+        </Box>
+      </Paper>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
       )}
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>        <Grid item xs={12} md={6} lg={3}>
-          <Card>            <CardHeader title="Pending Medication Requests" avatar={<AssignmentLateIcon color="warning" />} />
+      {/* Alerts Section */}
+      {dashboardData.alerts && dashboardData.alerts.length > 0 && (
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Alerts & Notifications
+          </Typography>
+          <List>
+            {dashboardData.alerts.map((alert, index) => (
+              <React.Fragment key={alert.id || index}>
+                <AlertItem alert={alert} />
+                {index < dashboardData.alerts.length - 1 && <Divider />}
+              </React.Fragment>
+            ))}
+          </List>
+        </Paper>
+      )}
+
+      {/* Statistics Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Medication Requests"
+            value={dashboardData.statistics.pendingMedicationRequests}
+            icon={<MedicationIcon />}
+            color="primary"
+            subtitle="Pending Review"
+            onClick={() => navigate('/medical/medication-management')}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Total Students"
+            value={dashboardData.statistics.totalStudents}
+            icon={<PeopleIcon />}
+            color="info"
+            subtitle="In System"
+            onClick={() => navigate('/medical/student-management')}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Health Declarations"
+            value={dashboardData.statistics.pendingHealthDeclarations}
+            icon={<AssignmentIcon />}
+            color="warning"
+            subtitle="Pending Approval"
+            onClick={() => navigate('/nurse/health-declaration-approval')}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Today's Activities"
+            value={dashboardData.statistics.todayEvents}
+            icon={<TodayIcon />}
+            color="success"
+            subtitle="Scheduled Events"
+          />
+        </Grid>
+      </Grid>
+
+      {/* Main Content Grid */}
+      <Grid container spacing={3}>
+        {/* Quick Actions */}
+        <Grid item xs={12} md={6}>
+          <Typography variant="h6" gutterBottom>
+            Quick Actions
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <QuickActionCard
+                title="Medication Management"
+                description="Review and process medication requests from parents"
+                icon={<MedicationIcon />}
+                color="primary"
+                onClick={() => navigate('/medical/medication-management')}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <QuickActionCard
+                title="Student Management"
+                description="View student health information"
+                icon={<PeopleIcon />}
+                color="info"
+                onClick={() => navigate('/medical/student-management')}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <QuickActionCard
+                title="Health Checkups"
+                description="Manage health checkup schedules"
+                icon={<CheckCircleIcon />}
+                color="success"
+                onClick={() => navigate('/medical/health-checkups')}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <QuickActionCard
+                title="Vaccination Management"
+                description="Track vaccination schedules"
+                icon={<MedicalIcon />}
+                color="warning"
+                onClick={() => navigate('/medical/vaccination-management')}
+              />
+            </Grid>
+          </Grid>
+        </Grid>
+
+        {/* Recent Activity */}
+        <Grid item xs={12} md={6}>
+          <Typography variant="h6" gutterBottom>
+            Recent Medication Requests
+          </Typography>
+          <Card>
             <CardContent>
-              {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-                  <CircularProgress size={40} />
-                </Box>
+              {dashboardData.recentMedicationRequests && dashboardData.recentMedicationRequests.length > 0 ? (
+                <List>
+                  {dashboardData.recentMedicationRequests.map((request, index) => (
+                    <React.Fragment key={request.requestId || index}>
+                      <ListItem>
+                        <ListItemIcon>
+                          <PendingIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={`${request.studentFullName || request.studentName || 'Student'}`}
+                          secondary={`${request.medicationName} - ${request.dosage || ''}`}
+                        />
+                        <Chip
+                          label={request.status || 'PENDING'}
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                        />
+                      </ListItem>
+                      {index < dashboardData.recentMedicationRequests.length - 1 && <Divider />}
+                    </React.Fragment>
+                  ))}
+                </List>
               ) : (
-                <Typography variant="h4" component="p" gutterBottom>
-                  {summaryData.pendingMedicationRequests}
-                </Typography>
-              )}
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                requests pending approval.
-              </Typography>
-              <Button 
-                variant="contained" 
-                component={RouterLink} 
-                to="/medical/medication-management"
-                startIcon={<MedicationIcon />}
-              >
-                Manage Medication Requests
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>        <Grid item xs={12} md={6} lg={3}>
-          <Card>            <CardHeader title="Pending Health Declarations" avatar={<AssessmentIcon color="primary" />} />
-            <CardContent>
-              {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-                  <CircularProgress size={40} />
+                <Box sx={{ textAlign: 'center', py: 3 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No recent medication requests
+                  </Typography>
                 </Box>
-              ) : (
-                <Typography variant="h4" component="p" gutterBottom>
-                  {summaryData.pendingHealthDeclarations}
-                </Typography>
               )}
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                health declarations to review.
-              </Typography>
-              <Button 
-                variant="contained" 
-                component={RouterLink} 
-                to="/nurse/health-declaration-approval"
-                startIcon={<AssessmentIcon />}
-              >
-                Review Declarations
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>        <Grid item xs={12} md={6} lg={3}>
-          <Card>            <CardHeader title="Upcoming Events" avatar={<EventAvailableIcon color="info" />} />
-            <CardContent>
-              <Typography variant="h4" component="p" gutterBottom>
-                {summaryData.upcomingAppointments} 
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                events scheduled for today.
-              </Typography>
-              <Button 
-                variant="outlined" 
-                // component={RouterLink} 
-                // to="/nurse/schedule" // Example future link
-                disabled // Enable when schedule page is ready
-              >
-                View Schedule
-              </Button>
+              
+              <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate('/medical/medication-management')}
+                >
+                  View All Requests
+                </Button>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
-          <Grid item xs={12} md={6} lg={3}>
-          <Card>            <CardHeader title="Recent Alerts" avatar={<WarningIcon color="error" />} />
-            <CardContent>
-              <Typography variant="h4" component="p" gutterBottom>
-                {summaryData.recentAlerts}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                important alerts.
-              </Typography>
-              <Button 
-                variant="outlined" 
-                // component={RouterLink} 
-                // to="/nurse/alerts" // Example future link
-                disabled // Enable when alerts page is ready
-              >
-                View Alerts
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>      <Paper sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom>Quick Access</Typography>
-        <List>
-          <ListItem button component={RouterLink} to="/medical/medication-management">
-            <ListItemIcon><MedicationIcon /></ListItemIcon>
-            <ListItemText primary="Medication Management" />
-          </ListItem>
-          <ListItem button component={RouterLink} to="/medical/medication-management?tab=4">
-            <ListItemIcon><MedicalServicesIcon color="error" /></ListItemIcon>
-            <ListItemText primary="Medical Events & Incidents" />
-          </ListItem>
-          <ListItem button component={RouterLink} to="/nurse/health-declaration-approval">
-            <ListItemIcon><AssessmentIcon /></ListItemIcon>
-            <ListItemText primary="Health Declaration Approval" />
-          </ListItem>
-          <ListItem button component={RouterLink} to="/nurse/health-checkup-events">
-            <ListItemIcon><EventAvailableIcon /></ListItemIcon>
-            <ListItemText primary="Create and Manage Events" />
-          </ListItem>
-          {/* Add more quick links as other nurse functionalities are developed */}
-          {/* e.g., Vaccination Management */}
-        </List>
-      </Paper>
-    </Box>
+      </Grid>
+    </Container>
   );
 }
 

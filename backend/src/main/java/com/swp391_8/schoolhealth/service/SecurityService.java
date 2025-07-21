@@ -56,7 +56,7 @@ public class SecurityService {
         // For now, we will assume studentId is a placeholder for what should be studentCode.
         // If studentId is a legacy database ID, it needs to be resolved to a studentCode first.
         // For the purpose of fixing the immediate compilation error based on previous changes:
-        return parentStudentRelationshipRepository.existsByParentParentCodeAndStudentStudentCode(parentCode, String.valueOf(studentId));
+        return parentStudentRelationshipRepository.existsByParentCodeAndStudentStudentCode(parentCode, String.valueOf(studentId));
     }
 
     // New method to check relationship using studentCode
@@ -92,16 +92,24 @@ public class SecurityService {
             return false;
         }
         
-        // Get parent by username from repository to find their actual parent_code
+        System.out.println("SecurityService.parentHasAccessToStudent - Checking access for parentCode: " + parentCode + ", studentCode: " + studentCode);
+        
+        // Get parent by parentCode from repository to find their actual parent_code
         Optional<com.swp391_8.schoolhealth.model.Parent> parent = parentRepository.findByParentCode(parentCode);
         if (parent.isPresent()) {
             // Use the actual parent_code from the Parent entity
             String actualParentCode = parent.get().getParentCode();
-            return parentStudentRelationshipRepository.existsByParentCodeAndStudentStudentCode(actualParentCode, studentCode);
+            System.out.println("SecurityService.parentHasAccessToStudent - Found parent with parentCode: " + actualParentCode);
+            boolean result = parentStudentRelationshipRepository.existsByParentCodeAndStudentStudentCode(actualParentCode, studentCode);
+            System.out.println("SecurityService.parentHasAccessToStudent - Relationship exists: " + result);
+            return result;
         }
         
+        System.out.println("SecurityService.parentHasAccessToStudent - Parent not found by parentCode, trying direct check");
         // If parent not found by username, try direct check with provided code
-        return parentStudentRelationshipRepository.existsByParentCodeAndStudentStudentCode(parentCode, studentCode);
+        boolean directResult = parentStudentRelationshipRepository.existsByParentCodeAndStudentStudentCode(parentCode, studentCode);
+        System.out.println("SecurityService.parentHasAccessToStudent - Direct check result: " + directResult);
+        return directResult;
     }
 
     public boolean isPostAuthor(Authentication authentication, Integer postId) {
@@ -273,7 +281,7 @@ public class SecurityService {
         }
         
         // Fallback to the original method for backward compatibility
-        return parentStudentRelationshipRepository.existsByParentParentCodeAndStudentStudentCode(parentCode, studentCode);
+        return parentStudentRelationshipRepository.existsByParentCodeAndStudentStudentCode(parentCode, studentCode);
     }
 
     // Overload for isAdmin to accept Authentication only

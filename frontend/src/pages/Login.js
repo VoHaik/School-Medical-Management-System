@@ -22,7 +22,7 @@ const Login = () => {
     if (currentUser) {
       // Redirect based on role if currentUser is available
       if (currentUser.roles && (currentUser.roles.includes('Parent') || currentUser.roles.includes('ROLE_PARENT'))) {
-        navigate('/parent/dashboard');
+        navigate('/');
       } else {
         navigate('/'); // Default redirect for other roles or if role is not yet defined
       }
@@ -79,7 +79,7 @@ const Login = () => {
         // Redirect based on role
         // setTimeout(() => { // MODIFIED: Removed setTimeout for immediate redirection based on role
           if (result.user.roles && (result.user.roles.includes('Parent') || result.user.roles.includes('ROLE_PARENT'))) {
-            navigate('/parent/dashboard');
+            navigate('/');
           } else {
             navigate('/'); // Default redirect for other roles
           }
@@ -192,28 +192,9 @@ const Login = () => {
               <i className="fas fa-sign-in-alt mr-2"></i> Sign In
             </button>
 
-            <div className="relative flex items-center justify-center mt-6 mb-6">
-              <div className="absolute w-full border-t border-gray-300"></div>
-              <div className="relative bg-white px-4 text-sm text-gray-500">Or continue with</div>
-            </div>
-
-            <button 
-              type="button" 
-              className="login-btn w-full bg-red-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-700 transition-all flex justify-center items-center"
-            >
-              <i className="fab fa-google mr-2"></i> Google
-            </button>
-
             <p className="text-center mt-6 text-gray-600">
               Don't have an account? 
-              <Link to="/register" className="text-indigo-600 font-medium hover:text-indigo-800 transition-all ml-1">
-                Register here
-              </Link>
-            </p>
-            
-            <p className="text-center mt-3 text-gray-600">
-              Are you a parent? 
-              <Link to="/parent-registration" className="text-green-600 font-medium hover:text-green-800 transition-all ml-1">
+              <Link to="/parent-registration" className="text-indigo-600 font-medium hover:text-indigo-800 transition-all ml-1">
                 Register as Parent
               </Link>
             </p>

@@ -17,7 +17,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -107,6 +109,89 @@ public class StudentDashboardController {
             logger.error("Error retrieving vaccination records", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new MessageResponse("Error retrieving vaccination records", false));
+        }
+    }
+    
+    /**
+     * Get dashboard statistics for current student
+     */
+    @GetMapping("/dashboard")
+    @PreAuthorize("hasAuthority('Student')")
+    public ResponseEntity<?> getStudentDashboard(Authentication authentication) {
+        try {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            String studentCode = userDetails.getUserCode();
+            
+            logger.info("GET request for dashboard data of student: {}", studentCode);
+            
+            // Prepare dashboard data
+            Map<String, Object> dashboardData = new HashMap<>();
+            
+            // Basic student info
+            dashboardData.put("studentCode", studentCode);
+            dashboardData.put("fullName", userDetails.getFullName());
+            dashboardData.put("email", userDetails.getEmail());
+            
+            // Quick stats
+            Map<String, Integer> quickStats = new HashMap<>();
+            
+            try {
+                // Health declarations count
+                List<HealthDeclarationDTO> declarations = healthDeclarationService.getAllHealthDeclarationsByStudentCode(studentCode);
+                quickStats.put("healthDeclarations", declarations.size());
+            } catch (Exception e) {
+                logger.warn("Could not fetch health declarations for student {}: {}", studentCode, e.getMessage());
+                quickStats.put("healthDeclarations", 0);
+            }
+            
+            try {
+                // Medical events/appointments count
+                List<MedicalEventDTO> medicalEvents = medicalEventService.getMedicalEventsByStudentStudentCode(studentCode);
+                quickStats.put("totalAppointments", medicalEvents.size());
+            } catch (Exception e) {
+                logger.warn("Could not fetch medical events for student {}: {}", studentCode, e.getMessage());
+                quickStats.put("totalAppointments", 0);
+            }
+            
+            try {
+                // Vaccination records count
+                List<StudentVaccinationDTO> vaccinations = studentVaccinationService.getCompletedVaccinationsByStudentCode(studentCode);
+                quickStats.put("pendingVaccinations", 0); // For now, just set to 0
+            } catch (Exception e) {
+                logger.warn("Could not fetch vaccination records for student {}: {}", studentCode, e.getMessage());
+                quickStats.put("pendingVaccinations", 0);
+            }
+            
+            // Placeholder for notifications (implement when notification system is ready)
+            quickStats.put("unreadNotifications", 0);
+            
+            dashboardData.put("quickStats", quickStats);
+            
+            // Recent activities (simplified for now)
+            List<Map<String, Object>> recentActivities = List.of(
+                Map.of(
+                    "id", 1,
+                    "type", "success",
+                    "title", "Health Profile Updated",
+                    "description", "Your health information has been successfully updated.",
+                    "timestamp", java.time.LocalDateTime.now().toString()
+                ),
+                Map.of(
+                    "id", 2,
+                    "type", "info", 
+                    "title", "Vaccination Schedule Available",
+                    "description", "Check your vaccination schedule for upcoming requirements.",
+                    "timestamp", java.time.LocalDateTime.now().minusDays(1).toString()
+                )
+            );
+            dashboardData.put("recentActivities", recentActivities);
+            
+            return ResponseEntity.ok(dashboardData);
+            
+        } catch (Exception e) {
+            logger.error("Error retrieving student dashboard data", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new MessageResponse("Error retrieving dashboard data: " + e.getMessage(), false));
         }
     }
 }

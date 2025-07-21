@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
+import { getAdminDashboardStats, getStudentDashboard } from '../utils/api';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import {
   Box,
@@ -39,15 +39,13 @@ import {
   School,
   MenuBook,
   TrendingUp,
-  Notifications,
   AccessTime,
 } from '@mui/icons-material';
 
 const Dashboard = () => {
-  const { user } = useContext(AuthContext);
+  const { currentUser } = useContext(AuthContext);
   const theme = useTheme();
   const [dashboardData, setDashboardData] = useState({
-    notifications: [],
     upcomingEvents: [],
     quickStats: {},
     recentActivities: []
@@ -56,17 +54,39 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [user]);
+  }, [currentUser]);
 
   const fetchDashboardData = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('/api/dashboard', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setDashboardData(response.data);
+      // Temporarily disable dashboard API calls due to backend endpoint issues
+      // Return mock data structure to prevent errors
+      const mockResponse = {
+        quickStats: {
+          totalAppointments: 0,
+          pendingVaccinations: 0,
+          healthDeclarations: 0,
+          unreadNotifications: 0
+        },
+        recentActivities: [
+          {
+            id: 1,
+            type: 'info',
+            title: 'System Status',
+            description: 'Dashboard functionality is being updated. Please use the navigation menu to access specific features.',
+            time: new Date().toISOString()
+          }
+        ],
+        healthProfile: { hasData: false, message: 'Dashboard temporarily unavailable' }
+      };
+      
+      setDashboardData(mockResponse);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('Error in dashboard:', error);
+      // Set default data structure on any error
+      setDashboardData({
+        quickStats: {},
+        recentActivities: []
+      });
     } finally {
       setLoading(false);
     }
@@ -75,7 +95,7 @@ const Dashboard = () => {
   const getWelcomeMessage = () => {
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    return `${greeting}, ${user?.fullName || user?.username}!`;
+    return `${greeting}, ${currentUser?.fullName || currentUser?.username}!`;
   };
 
   const container = {
@@ -99,43 +119,31 @@ const Dashboard = () => {
         stiffness: 100
       }
     }
-  };  const getRoleSpecificContent = () => {
-    switch (user?.role) {
-      case 'PARENT':
-        // Redirect parent users to the dedicated parent dashboard
-        window.location.href = '/parent/dashboard';
-        return (
-          <Box textAlign="center" py={8}>
-            <Typography color="text.secondary">Redirecting to Parent Dashboard...</Typography>
-          </Box>
-        );
+  };
 
-      case 'MEDICAL_STAFF':
+  const getRoleSpecificContent = () => {
+    const userRole = currentUser?.roles?.[0] || '';
+    
+    // Debug logging
+    console.log('DashboardNew - currentUser:', currentUser);
+    console.log('DashboardNew - userRole:', userRole);
+    console.log('DashboardNew - all roles:', currentUser?.roles);
+    
+    if (userRole === 'ROLE_PARENT' || userRole === 'Parent') {
+      // Redirect parent users to the dedicated parent dashboard
+      window.location.href = '/parent/dashboard';
+      return (
+        <Box textAlign="center" py={8}>
+          <Typography color="text.secondary">Redirecting to Parent Dashboard...</Typography>
+        </Box>
+      );
+    }
+
+    if (userRole === 'ROLE_SCHOOLNURSE' || userRole === 'MEDICAL_STAFF') {
         return (
           <motion.div variants={container} initial="hidden" animate="visible">
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={6} lg={4}>
-                <motion.div variants={item}>
-                  <ModernDashboardCard
-                    title="Manage Health Blog"
-                    description="Create and manage health education articles"
-                    icon={<Assignment />}
-                    link="/nurse/blog"
-                    color={theme.palette.success.main}
-                  />
-                </motion.div>
-              </Grid>
-              <Grid item xs={12} sm={6} lg={4}>
-                <motion.div variants={item}>
-                  <ModernDashboardCard
-                    title="View Health Blog"
-                    description="Read health tips and articles"
-                    icon={<MenuBook />}
-                    link="/health-blog"
-                    color={theme.palette.secondary.main}
-                  />
-                </motion.div>
-              </Grid>
+              {/* Health Blog management removed */}
               <Grid item xs={12} sm={6} lg={4}>
                 <motion.div variants={item}>
                   <ModernDashboardCard
@@ -205,8 +213,9 @@ const Dashboard = () => {
             </Grid>
           </motion.div>
         );
+    }
 
-      case 'ADMIN':
+    if (userRole === 'ROLE_ADMIN' || userRole === 'ADMIN') {
         return (
           <motion.div variants={container} initial="hidden" animate="visible">
             <Grid container spacing={3}>
@@ -279,8 +288,9 @@ const Dashboard = () => {
             </Grid>
           </motion.div>
         );
+    }
 
-      case 'STUDENT':
+    if (userRole === 'ROLE_STUDENT' || userRole === 'STUDENT') {
         return (
           <motion.div variants={container} initial="hidden" animate="visible">
             <Grid container spacing={3}>
@@ -317,17 +327,7 @@ const Dashboard = () => {
                   />
                 </motion.div>
               </Grid>
-              <Grid item xs={12} sm={6} lg={4}>
-                <motion.div variants={item}>
-                  <ModernDashboardCard
-                    title="Health Blog"
-                    description="Read health tips and articles"
-                    icon={<MenuBook />}
-                    link="/health-blog"
-                    color={theme.palette.secondary.main}
-                  />
-                </motion.div>
-              </Grid>
+              {/* Health Blog card removed */}
               <Grid item xs={12} sm={6} lg={4}>
                 <motion.div variants={item}>
                   <ModernDashboardCard
@@ -339,28 +339,18 @@ const Dashboard = () => {
                   />
                 </motion.div>
               </Grid>
-              <Grid item xs={12} sm={6} lg={4}>
-                <motion.div variants={item}>
-                  <ModernDashboardCard
-                    title="Health Resources"
-                    description="Access health education materials"
-                    icon={<MenuBook />}
-                    link="/health-resources"
-                    color={theme.palette.info.main}
-                  />
-                </motion.div>
-              </Grid>
+              {/* Health Resources card removed */}
             </Grid>
           </motion.div>
         );
-
-      default:
-        return (
-          <Box textAlign="center" py={8}>
-            <Typography color="text.secondary">Please contact administrator for role assignment.</Typography>
-          </Box>
-        );
     }
+
+    // Default case
+    return (
+      <Box textAlign="center" py={8}>
+        <Typography color="text.secondary">Please contact administrator for role assignment.</Typography>
+      </Box>
+    );
   };
 
   if (loading) {
@@ -442,7 +432,7 @@ const Dashboard = () => {
                         fontSize: { xs: '2rem', md: '2.5rem' }
                       }}
                     >
-                      {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                      {currentUser?.fullName?.charAt(0) || currentUser?.username?.charAt(0) || 'U'}
                     </Avatar>
                   </Box>
                 </motion.div>
@@ -517,7 +507,7 @@ const Dashboard = () => {
           {getRoleSpecificContent()}
         </motion.div>
 
-        {/* Recent Activities and Notifications */}
+        {/* Recent Activities */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -555,48 +545,6 @@ const Dashboard = () => {
                               />
                             </ListItem>
                             {index < dashboardData.recentActivities.slice(0, 5).length - 1 && (
-                              <Divider component="li" />
-                            )}
-                          </React.Fragment>
-                        ))}
-                      </List>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              )}
-            </AnimatePresence>
-
-            {/* Notifications */}
-            <AnimatePresence>
-              {dashboardData.notifications?.length > 0 && (
-                <Grid item xs={12} lg={6}>
-                  <Card elevation={2} sx={{ height: '100%' }}>
-                    <CardContent sx={{ p: 3 }}>
-                      <Box display="flex" alignItems="center" mb={3}>
-                        <Avatar sx={{ bgcolor: theme.palette.warning.main, mr: 2 }}>
-                          <Notifications />
-                        </Avatar>
-                        <Typography variant="h6" component="h3" fontWeight="bold">
-                          Recent Notifications
-                        </Typography>
-                      </Box>
-                      <List>
-                        {dashboardData.notifications.slice(0, 5).map((notification, index) => (
-                          <React.Fragment key={index}>
-                            <ListItem sx={{ px: 0 }}>
-                              <ListItemIcon>
-                                <Avatar sx={{ width: 32, height: 32, bgcolor: alpha(theme.palette.warning.main, 0.2) }}>
-                                  <Notifications fontSize="small" color="warning" />
-                                </Avatar>
-                              </ListItemIcon>
-                              <ListItemText
-                                primary={notification.message}
-                                secondary={notification.timestamp}
-                                primaryTypographyProps={{ variant: 'body2' }}
-                                secondaryTypographyProps={{ variant: 'caption' }}
-                              />
-                            </ListItem>
-                            {index < dashboardData.notifications.slice(0, 5).length - 1 && (
                               <Divider component="li" />
                             )}
                           </React.Fragment>

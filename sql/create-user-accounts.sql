@@ -1,5 +1,5 @@
 -- Create School Medical Management System User Accounts
--- This script creates admin, nurse, manager, and parent accounts
+-- This script creates admin, nurse, and parent accounts
 
 USE [HealthSchoolDB]; -- Adjust the database name if needed
 GO
@@ -12,22 +12,17 @@ IF NOT EXISTS (SELECT * FROM Roles WHERE role_name = 'Admin')
 IF NOT EXISTS (SELECT * FROM Roles WHERE role_name = 'SchoolNurse')
     INSERT INTO Roles (role_name, description) VALUES ('SchoolNurse', 'Medical staff with access to health records');
 
-IF NOT EXISTS (SELECT * FROM Roles WHERE role_name = 'Manager')
-    INSERT INTO Roles (role_name, description) VALUES ('Manager', 'School management personnel');
-
 IF NOT EXISTS (SELECT * FROM Roles WHERE role_name = 'Parent')
     INSERT INTO Roles (role_name, description) VALUES ('Parent', 'Parent or guardian of students');
 
 -- Step 2: Create variables for role IDs
 DECLARE @AdminRoleId INT,
         @NurseRoleId INT,
-        @ManagerRoleId INT,
         @ParentRoleId INT;
 
 -- Get role IDs from the database
 SELECT @AdminRoleId = role_id FROM Roles WHERE role_name = 'Admin';
 SELECT @NurseRoleId = role_id FROM Roles WHERE role_name = 'SchoolNurse';
-SELECT @ManagerRoleId = role_id FROM Roles WHERE role_name = 'Manager';
 SELECT @ParentRoleId = role_id FROM Roles WHERE role_name = 'Parent';
 
 -- Step 3: Create the user accounts (password is 'Password123' for all users)
@@ -54,16 +49,6 @@ END
 ELSE
     PRINT 'Nurse account already exists';
 
--- Create Manager account (if it doesn't exist)
-IF NOT EXISTS (SELECT * FROM Users WHERE username = 'manager.davis')
-BEGIN
-    INSERT INTO Users (username, password, email, phone_number, full_name, role_id)
-    VALUES ('manager.davis', @PlainTextPassword, 'manager.davis@schoolhealth.edu', '555-300-3000', 'Michael Davis', @ManagerRoleId);
-    PRINT 'Manager account created: manager.davis / Password123';
-END
-ELSE
-    PRINT 'Manager account already exists';
-
 -- Create Parent account (if it doesn't exist)
 IF NOT EXISTS (SELECT * FROM Users WHERE username = 'parent.smith')
 BEGIN
@@ -88,5 +73,5 @@ ELSE
 SELECT username, full_name, r.role_name 
 FROM Users u
 JOIN Roles r ON u.role_id = r.role_id
-WHERE username IN ('admin.user', 'nurse.johnson', 'manager.davis', 'parent.smith', 'parent.jones');
+WHERE username IN ('admin.user', 'nurse.johnson', 'parent.smith', 'parent.jones');
 GO
