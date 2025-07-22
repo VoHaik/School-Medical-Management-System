@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAlert } from '../hooks/useAlert'; // Import useAlert hook
 import {
   Container,
   Typography,
@@ -18,6 +19,7 @@ import {
 } from '@mui/icons-material';
 
 const HealthDocuments = () => {
+  const { errorAlert } = useAlert(); // Initialize useAlert hook
   const navigate = useNavigate();
 
   const healthDocuments = [
@@ -282,7 +284,7 @@ const HealthDocuments = () => {
       pdf.save(doc.filename);
       
     } catch (error) {
-      alert('Sorry, there was an error generating the PDF. Please try again later.');
+      errorAlert('Sorry, there was an error generating the PDF. Please try again later.');
       console.error('PDF generation error:', error);
     }
   };
@@ -291,7 +293,7 @@ const HealthDocuments = () => {
     try {
       await generateDocumentPDF(doc);
     } catch (error) {
-      alert('Sorry, there was an error downloading the document. Please try again later.');
+      errorAlert('Sorry, there was an error downloading the document. Please try again later.');
     }
   };
 

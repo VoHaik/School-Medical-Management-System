@@ -5,6 +5,7 @@ import * as yup from 'yup';
 import axios from 'axios';
 import { AuthContext } from '../../context/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom'; // Added useNavigate
+import { useAlert } from '../../hooks/useAlert';
 
 // Updated schema for MedicationRequestDTO
 const schema = yup.object().shape({
@@ -21,6 +22,7 @@ const schema = yup.object().shape({
 // Consider renaming the component to MedicationRequest or ParentMedicationRequests
 const MedicationSubmission = () => {
   const { currentUser } = useContext(AuthContext);
+  const { successAlert, errorAlert, cancelConfirm } = useAlert();
   const location = useLocation();
   const navigate = useNavigate(); // For navigation
   const [children, setChildren] = useState([]);
@@ -108,7 +110,7 @@ const MedicationSubmission = () => {
 
   const onSubmit = async (data) => {
     if (!selectedStudentCode) {
-      alert('Please select a child first.');
+      errorAlert('Vui lòng chọn con em trước.');
       return;
     }
     setSubmitting(true);
@@ -133,7 +135,7 @@ const MedicationSubmission = () => {
         }
       });
       
-      alert('Medication request submitted successfully!');
+      successAlert('Yêu cầu sử dụng thuốc đã được gửi thành công!');
       reset({
         studentCode: selectedStudentCode, 
         medicationName: '',
@@ -148,8 +150,8 @@ const MedicationSubmission = () => {
       fetchMedicationRequests(); // Refresh requests for the current child
     } catch (error) {
       console.error('Error submitting medication request:', error.response ? error.response.data : error);
-      const errorMessage = error.response?.data?.error || 'Error submitting medication request. Please try again.';
-      alert(errorMessage);
+      const errorMessage = error.response?.data?.error || 'Lỗi khi gửi yêu cầu sử dụng thuốc. Vui lòng thử lại.';
+      errorAlert(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -181,18 +183,19 @@ const MedicationSubmission = () => {
   };
   
   const handleCancelRequest = async (requestId) => {
-    if (!window.confirm("Are you sure you want to cancel this medication request?")) return;
+    const confirmed = await cancelConfirm('yêu cầu sử dụng thuốc này');
+    if (!confirmed) return;
     try {
         const token = localStorage.getItem('token');
         await axios.put(`/api/medication-requests/${requestId}/cancel`, {}, {
             headers: { Authorization: `Bearer ${token}` }
         });
-        alert('Medication request cancelled successfully.');
+        successAlert('Yêu cầu sử dụng thuốc đã được hủy thành công.');
         fetchMedicationRequests(); // Refresh the list
     } catch (error) {
         console.error('Error cancelling medication request:', error.response ? error.response.data : error);
-        const errorMessage = error.response?.data?.error || 'Failed to cancel medication request.';
-        alert(errorMessage);
+        const errorMessage = error.response?.data?.error || 'Lỗi khi hủy yêu cầu sử dụng thuốc.';
+        errorAlert(errorMessage);
     }
   };
 

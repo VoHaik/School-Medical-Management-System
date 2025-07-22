@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useAuth } from '../../context/AuthContext';
+import { useAlert } from '../../hooks/useAlert'; // Import useAlert hook
 import {
   Card,
   CardContent,
@@ -112,6 +113,7 @@ const healthCheckupSchema = yup.object().shape({
 
 function HealthCheckupManagement() {
   const { currentUser } = useAuth();
+  const { successAlert, errorAlert, deleteConfirm } = useAlert(); // Initialize useAlert hook
   const [checkups, setCheckups] = useState([]);
   const [students, setStudents] = useState([]);
   const [healthEvents, setHealthEvents] = useState([]);
@@ -235,7 +237,7 @@ function HealthCheckupManagement() {
     } catch (error) {
       console.error('Error fetching checkups:', error);
       // Show error to user instead of using mock data
-      alert('Unable to load health checkup records. Please refresh the page or contact administrator.');
+      errorAlert('Unable to load health checkup records. Please refresh the page or contact administrator.');
       setCheckups([]);
     }
   };
@@ -257,7 +259,7 @@ function HealthCheckupManagement() {
     } catch (error) {
       console.error('Error fetching students:', error);
       // Show error to user instead of using mock data
-      alert('Unable to load students. Please refresh the page or contact administrator.');
+      errorAlert('Unable to load students. Please refresh the page or contact administrator.');
       setStudents([]);
     }
   };
@@ -335,15 +337,17 @@ function HealthCheckupManagement() {
   };
 
   const handleDeleteCheckup = async (id) => {
-    if (window.confirm('Are you sure you want to delete this checkup record?')) {
+    const confirmed = await deleteConfirm('Are you sure you want to delete this checkup record?');
+    if (confirmed) {
       try {
         await deleteHealthCheckupRecord(id);
         if (students.length > 0) {
           fetchCheckups();
         }
+        successAlert('Health checkup record deleted successfully');
       } catch (error) {
         console.error('Error deleting checkup:', error);
-        alert('Error deleting health checkup record. Please try again.');
+        errorAlert('Error deleting health checkup record. Please try again.');
       }
     }
   };
@@ -365,7 +369,7 @@ function HealthCheckupManagement() {
         const existingRecord = checkDuplicateRecord(data.studentId, data.eventId);
         if (existingRecord) {
           // Ask user if they want to update the existing record instead
-          const shouldUpdate = window.confirm(
+          const shouldUpdate = await deleteConfirm(
             `A health checkup record already exists for this student in this event.\n\n` +
             `Student: ${existingRecord.studentName}\n` +
             `Event: ${existingRecord.eventName}\n` +
@@ -402,9 +406,10 @@ function HealthCheckupManagement() {
       if (students.length > 0) {
         fetchCheckups();
       }
+      successAlert('Health checkup record saved successfully');
     } catch (error) {
       console.error('Error saving checkup:', error);
-      alert('Error saving health checkup record. Please try again.');
+      errorAlert('Error saving health checkup record. Please try again.');
     }
   };
 

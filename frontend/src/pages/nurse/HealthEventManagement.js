@@ -5,6 +5,8 @@ import HealthEventForm from '../../components/healthcheckup/HealthEventForm'; //
 import HealthEventListItem from '../../components/healthcheckup/HealthEventListItem'; // Corrected path
 import { getAllHealthEvents, createHealthEvent, updateHealthEvent, deleteHealthEvent, sendVaccinationConsents } from '../../utils/api';
 import { useUIText } from '../../hooks/useUIText';
+import { useAlert } from '../../hooks/useAlert';
+import { VaccinationSuccessDialog } from '../../components/notifications';
 
 // Modal style
 const style = {
@@ -24,6 +26,7 @@ const style = {
 
 const HealthEventManagement = () => {
     const { t } = useUIText();
+    const { successAlert, errorAlert, deleteConfirm } = useAlert();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -31,6 +34,8 @@ const HealthEventManagement = () => {
     const [openViewModal, setOpenViewModal] = useState(false); // Added for view modal
     const [selectedEvent, setSelectedEvent] = useState(null); // For editing
     const [isEditMode, setIsEditMode] = useState(false);
+    const [vaccinationSuccessOpen, setVaccinationSuccessOpen] = useState(false);
+    const [successEventName, setSuccessEventName] = useState('');
 
     const fetchEvents = useCallback(async () => {
         setLoading(true);
@@ -86,21 +91,24 @@ const HealthEventManagement = () => {
     const handleSendConsents = async (event) => {
         try {
             await sendVaccinationConsents(event.eventId);
-            alert(`Vaccination consent requests sent successfully for "${event.eventName}"`);
+            setSuccessEventName(event.eventName);
+            setVaccinationSuccessOpen(true);
             // Optionally refresh the events list to show updated status
             fetchEvents();
         } catch (err) {
-            setError(err.message || 'Failed to send vaccination consent requests');
+            errorAlert(err.message || 'Không thể gửi yêu cầu đồng ý tiêm chủng');
         }
     };
 
     const handleDeleteEvent = async (eventId) => {
-        if (window.confirm(t.deleteConfirm)) {
+        const confirmed = await deleteConfirm(t.deleteConfirm);
+        if (confirmed) {
             try {
                 await deleteHealthEvent(eventId);
                 fetchEvents(); // Refresh list
+                successAlert('Đã xóa sự kiện thành công');
             } catch (err) {
-                setError(err.message || t.deleteError);
+                errorAlert(err.message || t.deleteError);
             }
         }
     };
@@ -220,6 +228,15 @@ const HealthEventManagement = () => {
                     )}
                 </Box>
             </Modal>
+
+            {/* Vaccination Success Dialog */}
+            <VaccinationSuccessDialog
+                open={vaccinationSuccessOpen}
+                onClose={() => setVaccinationSuccessOpen(false)}
+                title="Thành công!"
+                message={`Yêu cầu đồng ý tiêm chủng đã được gửi thành công cho "${successEventName}"`}
+                confirmText="Đồng ý"
+            />
         </Paper>
     );
 };

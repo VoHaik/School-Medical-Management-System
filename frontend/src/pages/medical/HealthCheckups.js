@@ -3,6 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import axios from 'axios'; // Import axios
+import { useAlert } from '../../hooks/useAlert'; // Import useAlert hook
 import {
   getAllHealthCheckupRecords,
   createHealthCheckupRecord,
@@ -74,6 +75,7 @@ const healthCheckupSchema = yup.object().shape({
 
 
 const HealthCheckups = () => {
+  const { successAlert, errorAlert } = useAlert(); // Initialize useAlert hook
   const [checkupDialogOpen, setCheckupDialogOpen] = useState(false);
   const [selectedCheckup, setSelectedCheckup] = useState(null);
   const [checkups, setCheckups] = useState([]);
@@ -346,17 +348,17 @@ const HealthCheckups = () => {
       if (selectedCheckup) {
         // Update existing checkup
         await updateHealthCheckupRecord(selectedCheckup.id, payload);
-        alert('Health checkup updated successfully!');
+        successAlert('Health checkup updated successfully!');
       } else {
         // Create new checkup
         await createHealthCheckupRecord(payload);
-        alert('Health checkup completed and saved successfully!');
+        successAlert('Health checkup completed and saved successfully!');
       }
       setCheckupDialogOpen(false);
       fetchCheckups(); // Refresh the list
     } catch (error) {
       console.error('Error saving checkup:', error.response?.data || error.message);
-      alert(`Error saving health checkup: ${error.response?.data?.message || error.message}`);
+      errorAlert(`Error saving health checkup: ${error.response?.data?.message || error.message}`);
     } finally {
       setSubmittingCheckup(false);
     }

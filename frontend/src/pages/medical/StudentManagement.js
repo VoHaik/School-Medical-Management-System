@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAlert } from '../../hooks/useAlert'; // Import useAlert hook
 import {
   Card,
   CardContent,
@@ -67,6 +68,7 @@ import './StudentManagement.css';
 import { getAllStudents, getHealthDeclarationByStudentCode, getAllStudentsWithHealthData, nurseEditHealthDeclaration, getMedicalEventsByStudent } from '../../utils/api';
 
 function StudentManagement() {
+  const { successAlert, errorAlert } = useAlert(); // Initialize useAlert hook
   const [activeTab, setActiveTab] = useState(0);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [students, setStudents] = useState([]);
@@ -218,13 +220,13 @@ function StudentManagement() {
         medicalHistory: editingProfile.medicalHistory
       });
 
-      alert('Health profile updated successfully!');
+      successAlert('Health profile updated successfully!');
       setEditDialogOpen(false);
       setEditingProfile(null);
       fetchStudents(); // Reload the student list
     } catch (error) {
       console.error('Error updating health profile:', error);
-      alert('Error updating health profile: ' + (error.message || 'Unknown error'));
+      errorAlert('Error updating health profile: ' + (error.message || 'Unknown error'));
     } finally {
       setIsSubmittingEdit(false);
     }

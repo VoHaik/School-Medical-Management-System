@@ -3,6 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import axios from 'axios';
+import { useAlert } from '../../hooks/useAlert'; // Import useAlert hook
 
 const schema = yup.object().shape({
   studentCode: yup.string().required('Student selection is required'),
@@ -23,6 +24,7 @@ const schema = yup.object().shape({
 });
 
 const MedicalEvents = () => {
+  const { successAlert, errorAlert, deleteConfirm } = useAlert(); // Initialize useAlert hook
   const [events, setEvents] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -154,12 +156,12 @@ const MedicalEvents = () => {
         await axios.put(`/api/medical-events/${selectedEvent.id}`, data, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        alert('Medical event updated successfully!');
+        successAlert('Medical event updated successfully!');
       } else {
         await axios.post('/api/medical-events', data, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        alert('Medical event recorded successfully!');
+        successAlert('Medical event recorded successfully!');
       }
       
       reset();
@@ -168,24 +170,25 @@ const MedicalEvents = () => {
       fetchMedicalEvents();
     } catch (error) {
       console.error('Error saving medical event:', error);
-      alert('Error saving medical event. Please try again.');
+      errorAlert('Error saving medical event. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteEvent = async (eventId) => {
-    if (window.confirm('Are you sure you want to delete this medical event?')) {
+    const confirmed = await deleteConfirm('Are you sure you want to delete this medical event?');
+    if (confirmed) {
       try {
         const token = localStorage.getItem('token');
         await axios.delete(`/api/medical-events/${eventId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        alert('Medical event deleted successfully!');
+        successAlert('Medical event deleted successfully!');
         fetchMedicalEvents(); // Refresh the list
       } catch (error) {
         console.error('Error deleting medical event:', error);
-        alert('Error deleting medical event. Please try again.');
+        errorAlert('Error deleting medical event. Please try again.');
       }
     }
   };

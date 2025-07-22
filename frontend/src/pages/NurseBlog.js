@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { useAlert } from '../hooks/useAlert'; // Import useAlert hook
 import axios from 'axios';
 import { handleApiError } from '../utils/errorHandler';
 
 const NurseBlog = () => {
     const { getAuthAxios, currentUser } = useContext(AuthContext);
+    const { successAlert, errorAlert, deleteConfirm } = useAlert(); // Initialize useAlert hook
 
     // State management
     const [posts, setPosts] = useState([]);
@@ -182,12 +184,13 @@ const NurseBlog = () => {
     };
 
     const handleDelete = async (postId) => {
-        if (!window.confirm('Are you sure you want to delete this post?')) return;
+        const confirmed = await deleteConfirm('Are you sure you want to delete this post?');
+        if (!confirmed) return;
 
         try {
             const authAxios = getAuthAxios();
             await authAxios.delete(`/api/blog/${postId}`);
-            showMessage('Post deleted successfully!', 'success');
+            successAlert('Post deleted successfully!');
             loadMyPosts();
             loadAllPosts();
         } catch (error) {

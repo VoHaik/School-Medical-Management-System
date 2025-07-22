@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import { useAlert } from '../../hooks/useAlert'; // Import useAlert hook
 import {
   Card,
   CardContent,
@@ -104,6 +105,7 @@ const vaccinationCampaignSchema = yup.object().shape({
 });
 
 function VaccinationManagement() {
+  const { successAlert, errorAlert, deleteConfirm } = useAlert(); // Initialize useAlert hook
   // Administration site options
   const administrationSiteOptions = [
     'Left Arm',
@@ -535,16 +537,17 @@ function VaccinationManagement() {
   };
 
   const handleDeleteVaccination = async (record) => {
-    if (window.confirm(`Are you sure you want to delete the vaccination record for ${record.studentName}?`)) {
+    const confirmed = await deleteConfirm(`Are you sure you want to delete the vaccination record for ${record.studentName}?`);
+    if (confirmed) {
       try {
         await deleteVaccinationRecord(record.id);
         // Refresh the vaccination records list
         await fetchVaccinationRecords();
-        // Show success message (optional - you can add a snackbar/toast)
+        successAlert('Vaccination record deleted successfully');
         } catch (error) {
         console.error('Error deleting vaccination record:', error);
         // Show error message (optional - you can add a snackbar/toast)
-        alert('Failed to delete vaccination record. Please try again.');
+        errorAlert('Failed to delete vaccination record. Please try again.');
       }
     }
   };

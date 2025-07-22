@@ -7,9 +7,11 @@ import {
     getStudentHealthCheckupsByStudentId
 } from '../../utils/api'; 
 import { useAuth } from '../../context/AuthContext';
+import { useAlert } from '../../hooks/useAlert';
 
 const ParentHealthCheckupOverview = () => {
     const { user } = useAuth();
+    const { successAlert } = useAlert();
     const navigate = useNavigate(); // Initialize useNavigate
     const [events, setEvents] = useState([]);
     const [children, setChildren] = useState([]);
@@ -91,7 +93,7 @@ const ParentHealthCheckupOverview = () => {
             console.log('Health checkup consent recorded locally (backend implementation pending)');
             
             // For now, just show success message without API call
-            alert(`Consent "${consentDecision}" recorded for health checkup event.`);
+            successAlert(`Đồng ý "${consentDecision}" đã được ghi nhận cho sự kiện kiểm tra sức khỏe.`);
             
             // Refresh data to reflect any changes
             // fetchEventsAndChildData(); 

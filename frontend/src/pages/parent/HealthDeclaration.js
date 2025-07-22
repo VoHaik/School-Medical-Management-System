@@ -9,6 +9,7 @@ import ChronicIllnessItem from '../../components/parent/ChronicIllnessItem';
 import EmergencyContactItem from '../../components/parent/EmergencyContactItem';
 import VaccinationItem from '../../components/parent/VaccinationItem';
 import { useLocation, Link } from 'react-router-dom'; // Added Link
+import { useAlert } from '../../hooks/useAlert';
 
 const schema = yup.object().shape({
   studentCode: yup.string().required("Child selection is required"),
@@ -36,6 +37,7 @@ const schema = yup.object().shape({
 
 const HealthDeclaration = () => {
   const { currentUser } = useContext(AuthContext);
+  const { successAlert, errorAlert, cancelConfirm } = useAlert();
   const location = useLocation(); // Added to get state from navigation
   const [children, setChildren] = useState([]);
   
@@ -126,7 +128,7 @@ const HealthDeclaration = () => {
     fetchHealthDeclaration(selectedStudentCode);
   }, [selectedStudentCode, fetchHealthDeclaration]);  const onSubmit = async (formData) => {
     if (!selectedStudentCode) {
-      alert("Please select a child first.");
+      errorAlert("Vui lòng chọn con em trước.");
       return;
     }
     setSubmitting(true);
@@ -146,23 +148,26 @@ const HealthDeclaration = () => {
       );        
       
       // Show success alert with information about viewing the health declaration and checking status
-      alert('Health declaration submitted successfully!\n\n' + 
-            'Your declaration will be reviewed by the school medical staff. ' +
-            'You can view the status of your declaration (Pending, Approved, or Rejected) ' +
-            'in the Health Records section.');
+      successAlert(
+        'Tờ khai sức khỏe đã được gửi thành công!\n\n' + 
+        'Tờ khai của bạn sẽ được xem xét bởi nhân viên y tế của trường. ' +
+        'Bạn có thể xem trạng thái tờ khai (Đang chờ, Đã duyệt, hoặc Từ chối) ' +
+        'trong phần Hồ sơ sức khỏe.'
+      );
       
       // Reset form and clear student selection after successful submission
       resetFormToDefaults('');
       setSelectedStudentCode('');
     } catch (error) {
       console.error('Error submitting health declaration:', error);
-      alert('Error submitting health declaration. Please try again. ' + (error.response?.data?.message || error.message));
+      errorAlert('Lỗi khi gửi tờ khai sức khỏe. Vui lòng thử lại. ' + (error.response?.data?.message || error.message));
     } finally {
       setSubmitting(false);
     }
-  };  const handleCancel = () => {
+  };  const handleCancel = async () => {
     // Confirm before cancelling
-    if (window.confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
+    const confirmed = await cancelConfirm();
+    if (confirmed) {
       // Reset the form to defaults and clear student selection
       resetFormToDefaults('');
       // Clear student selection

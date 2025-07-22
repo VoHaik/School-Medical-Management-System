@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAlert } from '../hooks/useAlert'; // Import useAlert hook
 import {
   Container,
   Typography,
@@ -31,6 +32,7 @@ import {
 import { getBlogPostById } from '../services/api';
 
 const BlogPostDetail = () => {
+  const { successAlert } = useAlert(); // Initialize useAlert hook
   const { id } = useParams();
   const navigate = useNavigate();
   const [blogPost, setBlogPost] = useState(null);
@@ -158,7 +160,7 @@ const BlogPostDetail = () => {
     } else {
       // Fallback: copy URL to clipboard
       navigator.clipboard.writeText(window.location.href);
-      alert('Link copied to clipboard!');
+      successAlert('Link copied to clipboard!');
     }
   };
 

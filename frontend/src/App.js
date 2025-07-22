@@ -69,10 +69,12 @@ import StudentVaccinationRecords from './components/student/StudentVaccinationRe
 
 // Common Pages
 import NotificationsPage from './pages/common/NotificationsPage'; // Import the new common notifications page
+import NotificationDemo from './pages/demo/NotificationDemo'; // Import notification demo
 
 import { AuthProvider } from './context/AuthContext';
 import { AppThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import { NotificationProvider } from './components/notifications';
 
 // Compiled v3 React app with enhanced routing
 
@@ -95,9 +97,10 @@ function App() {
     <ErrorBoundary>
       <AuthProvider>
         <AppThemeProvider>
-          <div className="app-container">
-            <Header />
-            <main className="main-content">
+          <NotificationProvider>
+            <div className="app-container">
+              <Header />
+              <main className="main-content">
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<Home />} />
@@ -181,12 +184,17 @@ function App() {
                 <Route path="/admin/analytics-reports" element={<ProtectedRoute roles={['ROLE_ADMIN']}><AnalyticsReports /></ProtectedRoute>} />
                 <Route path="/admin/health-programs" element={<ProtectedRoute roles={['ROLE_ADMIN']}><HealthPrograms /></ProtectedRoute>} />
                 <Route path="/admin/data-export" element={<ProtectedRoute roles={['ROLE_ADMIN']}><DataExport /></ProtectedRoute>} />
+                
+                {/* Demo Routes - Remove in production */}
+                <Route path="/demo/notifications" element={<NotificationDemo />} />
+                
                 {/* Fallback for unmatched routes - consider a 404 page */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
             <Footer />
           </div>
+          </NotificationProvider>
         </AppThemeProvider>
       </AuthProvider>
     </ErrorBoundary>

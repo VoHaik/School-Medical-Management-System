@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { useAlert } from '../../hooks/useAlert';
 import {
   Container,
   Grid,
@@ -56,6 +57,7 @@ import { useNavigate } from 'react-router-dom';
 
 const ParentDashboard = () => {
   const { currentUser } = useContext(AuthContext);
+  const { errorAlert, cancelConfirm } = useAlert();
   const navigate = useNavigate();
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
@@ -454,10 +456,11 @@ const ParentDashboard = () => {
 
   const handleCancelRequest = async (requestId) => {
     if (!currentUser || !currentUser.accessToken) {
-      alert("Authentication required. Please log in.");
+      errorAlert("Vui lòng đăng nhập để thực hiện thao tác này.");
       return;
     }
-    if (!window.confirm("Are you sure you want to cancel this medication request?")) {
+    const confirmed = await cancelConfirm("yêu cầu sử dụng thuốc này");
+    if (!confirmed) {
       return;
     }
     try {
@@ -468,7 +471,7 @@ const ParentDashboard = () => {
       fetchDashboardData(); 
     } catch (error) {
       console.error("Error cancelling medication request:", error);
-      alert(`Failed to cancel medication request: ${error.response?.data?.message || error.message}`);
+      errorAlert(`Không thể hủy yêu cầu sử dụng thuốc: ${error.response?.data?.message || error.message}`);
       setLoading(false); 
     }
   };

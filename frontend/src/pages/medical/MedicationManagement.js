@@ -5,6 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import apiClient from '../../utils/api'; // Import the api client
 import MedicalEventTab from '../../components/medical/MedicalEventTab'; // Import MedicalEventTab component
+import { useAlert } from '../../hooks/useAlert'; // Import useAlert hook
 import {
   Card,
   CardContent,
@@ -100,6 +101,7 @@ const recordAdministrationSchema = yup.object().shape({
 
 
 function MedicationManagement() {
+  const { successAlert, errorAlert, deleteConfirm } = useAlert(); // Initialize useAlert hook
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') ? parseInt(searchParams.get('tab'), 10) : 0;
   const [activeTab, setActiveTab] = useState(initialTab); // Read initial tab from URL if available
@@ -482,7 +484,7 @@ function MedicationManagement() {
       
       if (!requestId) {
         console.error('Error: Request ID is undefined or null', selectedRequest);
-        alert('Error: Cannot approve request - missing request ID');
+        errorAlert('Error: Cannot approve request - missing request ID');
         return;
       }
       
@@ -492,7 +494,7 @@ function MedicationManagement() {
       // Ensure we're using the correct endpoint from the MedicationRequestController
       const response = await authAxios.put(`/medication-requests/${requestId}/approve`);
       // Add success notification - we should show this in the UI
-      alert('Medication request approved successfully'); // Simple alert for now
+      successAlert('Medication request approved successfully'); // Modern notification
       
       // Update the UI by fetching the latest data
       fetchPendingMedicationRequests();
@@ -507,9 +509,9 @@ function MedicationManagement() {
         console.error('Request headers:', error.config.headers);
         
         // Show error message to the user
-        alert(`Error approving request: ${error.response.data?.error || error.message}`);
+        errorAlert(`Error approving request: ${error.response.data?.error || error.message}`);
       } else {
-        alert(`Error approving request: ${error.message}`);
+        errorAlert(`Error approving request: ${error.message}`);
       }
     } finally {
       setApproveConfirmationDialogOpen(false);
@@ -538,7 +540,7 @@ function MedicationManagement() {
       
       if (!requestId) {
         console.error('Error: Request ID is undefined or null', selectedRequest);
-        alert('Error: Cannot reject request - missing request ID');
+        errorAlert('Error: Cannot reject request - missing request ID');
         return;
       }
       
@@ -550,7 +552,7 @@ function MedicationManagement() {
       });
       
       // Show a success message to the user
-      alert('Medication request rejected successfully');
+      successAlert('Medication request rejected successfully');
       
       // Update the UI by fetching the latest data
       fetchPendingMedicationRequests();
@@ -565,9 +567,9 @@ function MedicationManagement() {
         console.error('Request payload:', error.config.data);
         
         // Show error message to the user
-        alert(`Error rejecting request: ${error.response.data?.error || error.message}`);
+        errorAlert(`Error rejecting request: ${error.response.data?.error || error.message}`);
       } else {
-        alert(`Error rejecting request: ${error.message}`);
+        errorAlert(`Error rejecting request: ${error.message}`);
       }
     } finally {
       setRejectDialogOpen(false);
@@ -590,7 +592,7 @@ function MedicationManagement() {
     
     if (!requestId) {
       console.error('Error: Request ID is undefined or null', selectedRequest);
-      alert('Error: Cannot administer medication - missing request ID');
+      errorAlert('Error: Cannot administer medication - missing request ID');
       return;
     }
     
@@ -605,7 +607,7 @@ function MedicationManagement() {
       await authAxios.post(`/medication-requests/${requestId}/administer`, administrationData);
       
       // Add success notification
-      alert('Medication administered successfully');
+      successAlert('Medication administered successfully');
       
       fetchPendingMedicationRequests(); // Refetch to update the UI
     } catch (error) {
@@ -618,9 +620,9 @@ function MedicationManagement() {
         console.error('Request payload:', error.config.data);
         
         // Show error message to the user
-        alert(`Error administering medication: ${error.response.data?.error || error.message}`);
+        errorAlert(`Error administering medication: ${error.response.data?.error || error.message}`);
       } else {
-        alert(`Error administering medication: ${error.message}`);
+        errorAlert(`Error administering medication: ${error.message}`);
       }
     } finally {
       setAdministerDialogOpen(false);
