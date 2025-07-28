@@ -44,6 +44,13 @@ const VaccinationConsent = () => {
     try {
       setLoading(true);
       
+      console.log('🔍 Frontend - Submitting consent:', { 
+        consentId, 
+        status, 
+        selectedStudent,
+        studentName: students.find(s => s.studentCode === selectedStudent)?.fullName 
+      });
+      
       // Submit the consent decision
       await submitVaccinationConsent(consentId, {
         consentStatus: status,

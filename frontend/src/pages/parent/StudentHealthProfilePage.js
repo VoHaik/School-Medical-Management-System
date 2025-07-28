@@ -94,10 +94,12 @@ const StudentHealthProfilePage = () => {
                     });
                     
                     const declarations = declarationsResponse.data || [];
-                      // Find the latest approved declaration if any (handling different status formats)
-                    const latestApprovedDeclaration = declarations.find(
+                    // Filter to only show APPROVED declarations
+                    const approvedDeclarations = declarations.filter(
                         d => d.status && ['approved', 'APPROVED', 'Approved'].includes(d.status)
-                    ) || declarations[0]; // Fallback to the first declaration if none is approved
+                    );
+                    // Find the latest approved declaration (no fallback to non-approved)
+                    const latestApprovedDeclaration = approvedDeclarations.length > 0 ? approvedDeclarations[0] : null;
                       if (latestApprovedDeclaration) {                        // Get student details from the children array instead of making a separate API call
                         const selectedChild = children.find(child => child.studentCode === selectedStudent);
                         const studentDetails = {
@@ -111,7 +113,7 @@ const StudentHealthProfilePage = () => {
                             studentDetails: studentDetails,
                             healthData: latestApprovedDeclaration,
                             latestDeclarationDate: latestApprovedDeclaration.declarationDate || new Date().toISOString(),
-                            declarations: declarations
+                            declarations: approvedDeclarations // Only include approved declarations
                         });
                     } else {
                         setHealthProfile(null);
@@ -186,7 +188,7 @@ const StudentHealthProfilePage = () => {
             <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
                 <Box sx={{ mb: 3 }}>
                     <Typography variant="body1" paragraph>
-                        View your child's comprehensive health profile. This information is compiled from the latest approved health declaration.
+                        View your child's comprehensive health profile. This information is compiled from the latest approved health declaration. Only health declarations with APPROVED status are displayed here.
                     </Typography>
                     
                     <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
@@ -437,7 +439,7 @@ const StudentHealthProfilePage = () => {
                             </Box>
                         ) : (
                             <Alert severity="info" sx={{ mt: 2 }}>
-                                No health profile available for this student. Please submit a health declaration to establish a health profile.
+                                No approved health profile available for this student. Only approved health declarations are displayed here. Please submit a health declaration and wait for approval to establish a health profile.
                                 <Box sx={{ mt: 2 }}>
                                     <Button
                                         variant="contained"

@@ -171,8 +171,17 @@ public class VaccinationConsentService {
      */
     @Transactional
     public void processConsentResponse(Integer consentId, VaccinationConsent.ConsentStatus status, String parentNotes) {
+        log.info("🔍 Processing consent response - ConsentId: {}, Status: {}", consentId, status);
+        
         VaccinationConsent consent = consentRepository.findById(consentId)
             .orElseThrow(() -> new RuntimeException("Consent not found"));
+
+        // DEBUG: Log student information to verify correct mapping
+        log.info("🎯 Consent found - Student: {} (Code: {}), Event: {} (ID: {})", 
+                consent.getStudent().getFullName(), 
+                consent.getStudent().getStudentCode(),
+                consent.getHealthEvent().getEventName(),
+                consent.getHealthEvent().getEventId());
 
         consent.setConsentStatus(status);
         consent.setParentNotes(parentNotes);
@@ -193,6 +202,11 @@ public class VaccinationConsentService {
      */
     @Transactional
     public void createVaccinationRecord(VaccinationConsent consent, VaccinationConsent.ConsentStatus consentStatus) {
+        log.info("🏥 Creating vaccination record for student: {} (Code: {}), Event: {}", 
+                consent.getStudent().getFullName(), 
+                consent.getStudent().getStudentCode(),
+                consent.getHealthEvent().getEventName());
+        
         // Check if vaccination record already exists
         if (vaccinationRecordRepository.findByHealthEventAndStudent(
                 consent.getHealthEvent(), consent.getStudent()).isEmpty()) {
@@ -216,8 +230,11 @@ public class VaccinationConsentService {
             
             vaccinationRecordRepository.save(record);
             
-            log.info("Created vaccination record for student {} with status: {}", 
+            log.info("✅ Created vaccination record for student {} with status: {}", 
                     consent.getStudent().getFullName(), record.getVaccinationStatus());
+        } else {
+            log.warn("⚠️ Vaccination record already exists for student {} and event {}", 
+                    consent.getStudent().getFullName(), consent.getHealthEvent().getEventName());
         }
     }
 

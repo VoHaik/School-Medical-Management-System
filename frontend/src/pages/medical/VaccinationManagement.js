@@ -214,17 +214,15 @@ function VaccinationManagement() {
       if (records && Array.isArray(records)) {
         // Transform API data to match UI format and handle grouped vaccines
         const transformedRecords = records.map(record => {
-          // Find matching student from students list for consistent display
-          const matchingStudent = students.find(s => 
-            s.id === record.student?.studentCode || 
-            s.originalData?.studentId === record.student?.studentId
-          );
+          // Use student data directly from vaccination record instead of relying on students list
+          // This ensures we always show the correct student information
+          console.log('📋 Processing vaccination record for student:', record.student?.studentCode, record.student?.fullName);
           
           return {
             id: record.vaccinationRecordId,
             studentId: record.student?.studentCode || 'Unknown ID',
-            studentName: matchingStudent?.name || record.student?.fullName || 'Unknown Student',
-            grade: matchingStudent?.grade || record.student?.gradeLevel?.gradeName || 'N/A',
+            studentName: record.student?.fullName || 'Unknown Student',
+            grade: record.student?.gradeLevel?.gradeName || 'N/A',
             vaccineType: record.healthEvent?.eventType || 'VACCINATION',
             // Handle both grouped vaccine names and individual vaccine name
             vaccineNames: record.vaccineNames || [], // Array of vaccine names for this event
