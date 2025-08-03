@@ -20,9 +20,14 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.Optional;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
 @RestController
 @RequestMapping("/api/admin")
 @CrossOrigin(origins = "*")
+@Tag(name = "Admin Management", description = "APIs for system administration and user management")
+@SecurityRequirement(name = "bearerAuth")
 public class AdminController {
 
     @Autowired

@@ -91,6 +91,18 @@ public class WebSecurityConfig {
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // Swagger/OpenAPI endpoints - MUST come first
+                .requestMatchers("/swagger-ui/**").permitAll()
+                .requestMatchers("/swagger-ui.html").permitAll()
+                .requestMatchers("/swagger-resources/**").permitAll()
+                .requestMatchers("/v3/api-docs/**").permitAll()
+                .requestMatchers("/v3/api-docs.yaml").permitAll()
+                .requestMatchers("/api-docs/**").permitAll()
+                .requestMatchers("/webjars/**").permitAll()
+                .requestMatchers("/swagger-ui/index.html").permitAll()
+                .requestMatchers("/configuration/ui").permitAll()
+                .requestMatchers("/configuration/security").permitAll()
+                
                 // Public API endpoints - MUST come first
                 .requestMatchers("/api/auth/**").permitAll() // Authentication endpoints
                 .requestMatchers(HttpMethod.GET, "/api/blog").permitAll() // Public blog list endpoint

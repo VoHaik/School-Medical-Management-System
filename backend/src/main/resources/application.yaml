@@ -32,6 +32,20 @@ server:
       enabled: true
       force: true
 
+#  Swagger Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    filter: true
+  packages-to-scan: com.swp391_8.schoolhealth.controller
+
 # JWT Configuration (using values from application.properties as they seemed more specific)
 # Please review and use the correct secret and expiration for your application
 schoolhealth:

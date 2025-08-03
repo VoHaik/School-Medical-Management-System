@@ -8,6 +8,7 @@ com\swp391_8\schoolhealth\repository\ParentRegistrationRequestRepository.class
 com\swp391_8\schoolhealth\repository\GradeLevelRepository.class
 com\swp391_8\schoolhealth\service\MedicationRequestServiceInterface.class
 com\swp391_8\schoolhealth\model\VaccinationConsent.class
+com\swp391_8\schoolhealth\config\OpenAPIConfig.class
 com\swp391_8\schoolhealth\controller\HealthCheckupRecordsController.class
 com\swp391_8\schoolhealth\dto\EmergencyContactDTO.class
 com\swp391_8\schoolhealth\config\JpaConfig.class
@@ -65,7 +66,9 @@ com\swp391_8\schoolhealth\controller\StudentDashboardController.class
 com\swp391_8\schoolhealth\controller\ParentConsentController.class
 com\swp391_8\schoolhealth\service\UserService$UserRole.class
 com\swp391_8\schoolhealth\service\StudentVaccinationService.class
+com\swp391_8\schoolhealth\dto\ErrorResponseSchema.class
 com\swp391_8\schoolhealth\model\Vaccine.class
+com\swp391_8\schoolhealth\controller\TestController.class
 com\swp391_8\schoolhealth\repository\HealthDeclarationRepository.class
 com\swp391_8\schoolhealth\service\ConsultationService.class
 com\swp391_8\schoolhealth\service\DeclaredVaccinationRecordService.class
@@ -133,6 +136,7 @@ com\swp391_8\schoolhealth\dto\MedicationInventoryDTO.class
 com\swp391_8\schoolhealth\controller\DeclaredVaccinationRecordController.class
 com\swp391_8\schoolhealth\service\ParentStudentService.class
 com\swp391_8\schoolhealth\model\User.class
+com\swp391_8\schoolhealth\config\SwaggerConfig.class
 com\swp391_8\schoolhealth\dto\GradeLevelDTO.class
 com\swp391_8\schoolhealth\service\MedicationRequestService.class
 com\swp391_8\schoolhealth\dto\JwtResponse.class

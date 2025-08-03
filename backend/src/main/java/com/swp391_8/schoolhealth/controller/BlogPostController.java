@@ -4,6 +4,15 @@ import com.swp391_8.schoolhealth.dto.BlogPostDTO;
 import com.swp391_8.schoolhealth.model.BlogPost;
 import com.swp391_8.schoolhealth.security.services.UserDetailsImpl;
 import com.swp391_8.schoolhealth.service.BlogPostService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +25,26 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/blog")
+@Tag(name = "Health Blog", description = "Health blog management for sharing medical information and health tips")
+@SecurityRequirement(name = "Bearer Authentication")
 public class BlogPostController {
 
     @Autowired
-    private BlogPostService blogPostService;    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    private BlogPostService blogPostService;    @Operation(
+        summary = "Get All Blog Posts",
+        description = "Retrieve all published health blog posts. This endpoint is public and doesn't require authentication."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Blog posts retrieved successfully",
+            content = @Content(
+                mediaType = "application/json",
+                array = @ArraySchema(schema = @Schema(implementation = BlogPostDTO.class))
+            )
+        )
+    })
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<BlogPostDTO>> getAllPosts() {
         List<BlogPostDTO> posts = blogPostService.getAllPostsDTO();
         return ResponseEntity.ok(posts);

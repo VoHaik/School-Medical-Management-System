@@ -3,6 +3,15 @@ package com.swp391_8.schoolhealth.controller;
 import com.swp391_8.schoolhealth.dto.MedicalEventDTO;
 import com.swp391_8.schoolhealth.service.MedicalEventService;
 import com.swp391_8.schoolhealth.service.SecurityService; // Added for @securityService
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +27,8 @@ import org.springframework.format.annotation.DateTimeFormat; // Import DateTimeF
 @RestController
 @RequestMapping("/api/medical-events")
 @CrossOrigin(origins = "*", maxAge = 3600)
+@Tag(name = "Medical Events", description = "Medical event management endpoints for recording, tracking and managing student medical incidents")
+@SecurityRequirement(name = "Bearer Authentication")
 public class MedicalEventController {
 
     @Autowired
@@ -27,15 +38,36 @@ public class MedicalEventController {
     private SecurityService securityService; // Added for @securityService
 
     // Endpoint to get all medical events - accessible by SCHOOLNURSE or ADMIN
+    @Operation(
+        summary = "Get All Medical Events",
+        description = "Retrieve all medical events with optional filtering by student, date range, severity, event type, and status. Accessible by School Nurses and Administrators."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Medical events retrieved successfully",
+            content = @Content(
+                mediaType = "application/json",
+                array = @ArraySchema(schema = @Schema(implementation = MedicalEventDTO.class))
+            )
+        ),
+        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions")
+    })
     @GetMapping
     @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<List<MedicalEventDTO>> getAllMedicalEvents(
-            @RequestParam(required = false) String studentCode, // Filter by student code
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate, // Filter by start date
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate, // Filter by end date
-            @RequestParam(required = false) String severity, // Filter by severity
-            @RequestParam(required = false) String eventType, // Filter by event type
-            @RequestParam(required = false) String status // Filter by status
+            @Parameter(description = "Filter by student code", example = "ST001") 
+            @RequestParam(required = false) String studentCode,
+            @Parameter(description = "Filter by start date (YYYY-MM-DD)", example = "2024-01-01") 
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @Parameter(description = "Filter by end date (YYYY-MM-DD)", example = "2024-12-31") 
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @Parameter(description = "Filter by severity level", example = "High") 
+            @RequestParam(required = false) String severity,
+            @Parameter(description = "Filter by event type", example = "INJURY") 
+            @RequestParam(required = false) String eventType,
+            @Parameter(description = "Filter by status", example = "Open") 
+            @RequestParam(required = false) String status
     ) {
         List<MedicalEventDTO> events = medicalEventService.getAllMedicalEvents(studentCode, startDate, endDate, severity, eventType, status);
         return ResponseEntity.ok(events);

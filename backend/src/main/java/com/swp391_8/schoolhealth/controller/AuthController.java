@@ -8,6 +8,14 @@ import com.swp391_8.schoolhealth.model.User;
 import com.swp391_8.schoolhealth.security.jwt.JwtUtils;
 import com.swp391_8.schoolhealth.security.services.UserDetailsImpl;
 import com.swp391_8.schoolhealth.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +35,7 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"}, maxAge = 3600, allowCredentials = "true")
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "Authentication and authorization endpoints for user login, registration and profile management")
 public class AuthController {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
@@ -38,10 +47,38 @@ public class AuthController {
     private JwtUtils jwtUtils;
 
     @Autowired
-    private UserService userService;    @PostMapping(value = "/signin", 
+    private UserService userService;    @Operation(
+        summary = "User Login",
+        description = "Authenticate user with username/email and password. Returns JWT token and user information."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Login successful",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = JwtResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401", 
+            description = "Invalid credentials",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = MessageResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400", 
+            description = "Bad request - Invalid input format"
+        )
+    })
+    @PostMapping(value = "/signin", 
                  produces = MediaType.APPLICATION_JSON_VALUE, 
                  consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> authenticateUser(
+            @Parameter(description = "Login credentials containing username/email and password", required = true)
+            @Valid @RequestBody LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
@@ -83,10 +120,36 @@ public class AuthController {
                     .status(500)
                     .body(new MessageResponse("Error: " + e.getMessage(), false));
         }
-    }    @PostMapping(value = "/signup", 
+    }
+
+    @Operation(
+        summary = "User Registration",
+        description = "Register a new user account. Note: STUDENT role registration is restricted."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Registration successful",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = MessageResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400", 
+            description = "Registration failed - validation errors or user already exists"
+        ),
+        @ApiResponse(
+            responseCode = "403", 
+            description = "Student registration not allowed"
+        )
+    })
+    @PostMapping(value = "/signup", 
                  produces = MediaType.APPLICATION_JSON_VALUE, 
                  consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signupRequest) {
+    public ResponseEntity<?> registerUser(
+            @Parameter(description = "Registration details including username, email, password and role", required = true)
+            @Valid @RequestBody SignupRequest signupRequest) {
         logger.info("Processing registration request for user: {}", signupRequest.getUsername());
         try {
             // Prevent self-registration for STUDENT role

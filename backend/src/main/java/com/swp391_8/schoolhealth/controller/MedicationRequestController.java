@@ -4,6 +4,15 @@ import com.swp391_8.schoolhealth.dto.MedicationRequestDTO;
 import com.swp391_8.schoolhealth.dto.MedicationRequestResponseDTO;
 // import com.swp391_8.schoolhealth.model.User; // Not directly used here
 import com.swp391_8.schoolhealth.service.MedicationRequestService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger; // Added for logging
 import org.slf4j.LoggerFactory; // Added for logging
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +29,8 @@ import java.util.Map; // For simple request bodies like rejection reason
 
 @RestController
 @RequestMapping("/api/medication-requests")
+@Tag(name = "Medication Requests", description = "Medication request management for parents to submit, track and manage student medication needs")
+@SecurityRequirement(name = "Bearer Authentication")
 public class MedicationRequestController {
 
     private static final Logger logger = LoggerFactory.getLogger(MedicationRequestController.class); // Added logger instance
@@ -28,9 +39,28 @@ public class MedicationRequestController {
     private MedicationRequestService medicationRequestService;
 
     // Parent endpoints
+    @Operation(
+        summary = "Create Medication Request",
+        description = "Submit a new medication request for a student. Only accessible by parents."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "201",
+            description = "Medication request created successfully",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = MedicationRequestResponseDTO.class)
+            )
+        ),
+        @ApiResponse(responseCode = "400", description = "Invalid request data"),
+        @ApiResponse(responseCode = "403", description = "Access denied - parent authorization required")
+    })
     @PostMapping("")
     @PreAuthorize("hasAuthority('Parent')")
-    public ResponseEntity<?> createMedicationRequest(@RequestBody MedicationRequestDTO requestDTO, Authentication authentication) {
+    public ResponseEntity<?> createMedicationRequest(
+            @Parameter(description = "Medication request details including student, medication and dosage information", required = true)
+            @RequestBody MedicationRequestDTO requestDTO, 
+            Authentication authentication) {
         logger.info(">>> createMedicationRequest: Received payload for studentCode: {}, medicationName: {}", requestDTO.getStudentCode(), requestDTO.getMedicationName()); // Log specific fields
         logger.debug(">>> createMedicationRequest: Full payload: {}", requestDTO); // Log full DTO if toString() is well-defined
         try {

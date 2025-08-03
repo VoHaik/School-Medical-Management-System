@@ -25,9 +25,20 @@ import java.util.stream.Collectors;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 @RestController
 @RequestMapping("/api/vaccination-management")
 @RequiredArgsConstructor
+@Tag(name = "Vaccination Management", description = "APIs for managing vaccination events, records, and student vaccination status")
+@SecurityRequirement(name = "bearerAuth")
 public class VaccinationManagementController {
 
     private final StudentVaccinationRecordRepository vaccinationRecordRepository;
@@ -43,9 +54,21 @@ public class VaccinationManagementController {
     /**
      * Get all students scheduled for vaccination for a specific event
      */
+    @Operation(
+        summary = "Get students for vaccination event",
+        description = "Retrieve all students scheduled for vaccination for a specific vaccination event. Requires nurse or admin role."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved student vaccination records",
+                    content = @Content(schema = @Schema(implementation = StudentVaccinationRecord.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Authentication required"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient privileges")
+    })
     @GetMapping("/event/{eventId}/students")
     @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
-    public ResponseEntity<List<StudentVaccinationRecord>> getStudentsForVaccinationEvent(@PathVariable Integer eventId) {
+    public ResponseEntity<List<StudentVaccinationRecord>> getStudentsForVaccinationEvent(
+            @Parameter(description = "ID of the vaccination event", required = true)
+            @PathVariable Integer eventId) {
         List<StudentVaccinationRecord> records = vaccinationRecordRepository.findByEventId(eventId);
         return ResponseEntity.ok(records);
     }
@@ -53,10 +76,23 @@ public class VaccinationManagementController {
     /**
      * Get vaccination records by status for an event
      */
+    @Operation(
+        summary = "Get vaccination records by status",
+        description = "Retrieve vaccination records filtered by vaccination status for a specific event. Requires nurse or admin role."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved vaccination records",
+                    content = @Content(schema = @Schema(implementation = StudentVaccinationRecord.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid vaccination status"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Authentication required"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient privileges")
+    })
     @GetMapping("/event/{eventId}/status/{status}")
     @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<List<StudentVaccinationRecord>> getVaccinationRecordsByStatus(
+            @Parameter(description = "ID of the vaccination event", required = true)
             @PathVariable Integer eventId, 
+            @Parameter(description = "Vaccination status (SCHEDULED, COMPLETED, MISSED, EXEMPTED)", required = true)
             @PathVariable String status) {
         try {
             StudentVaccinationRecord.VaccinationStatus vaccinationStatus = 
@@ -76,10 +112,24 @@ public class VaccinationManagementController {
     /**
      * Update vaccination record (mark as completed, add notes, etc.)
      */
+    @Operation(
+        summary = "Update vaccination record",
+        description = "Update a vaccination record with status, notes, adverse reactions, and other details. Requires nurse or admin role."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully updated vaccination record",
+                    content = @Content(schema = @Schema(implementation = MessageResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request data"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Authentication required"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient privileges"),
+        @ApiResponse(responseCode = "404", description = "Vaccination record not found")
+    })
     @PutMapping("/record/{recordId}")
     @PreAuthorize("hasAuthority('SchoolNurse') or hasAuthority('Admin')")
     public ResponseEntity<MessageResponse> updateVaccinationRecord(
+            @Parameter(description = "ID of the vaccination record", required = true)
             @PathVariable Integer recordId,
+            @Parameter(description = "Update data including status, notes, adverse reactions", required = true)
             @RequestBody Map<String, Object> updateData) {
         
         System.out.println("DEBUG: Attempting to update vaccination record with ID: " + recordId);

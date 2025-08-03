@@ -8,6 +8,15 @@ import com.swp391_8.schoolhealth.repository.UserRepository;
 import com.swp391_8.schoolhealth.security.services.UserDetailsImpl;
 import com.swp391_8.schoolhealth.dto.MessageResponse;
 import com.swp391_8.schoolhealth.dto.StudentDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +32,8 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/api/students")
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"}, maxAge = 3600)
+@Tag(name = "Student Management", description = "Student profile and health record management endpoints")
+@SecurityRequirement(name = "Bearer Authentication")
 public class StudentController {
 
     @Autowired

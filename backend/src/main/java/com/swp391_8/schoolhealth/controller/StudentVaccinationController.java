@@ -14,17 +14,41 @@ import java.util.Map; // For request body of administer vaccine
 import org.springframework.security.core.Authentication; // Added import
 import java.time.LocalDate; // Added import for LocalDate
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 @RestController
 @RequestMapping("/api/student-vaccinations")
+@Tag(name = "Student Vaccinations", description = "APIs for managing individual student vaccination records and consent")
+@SecurityRequirement(name = "bearerAuth")
 public class StudentVaccinationController {
 
     @Autowired
     private StudentVaccinationService studentVaccinationService;
 
     // Endpoint for a nurse or admin to create a new vaccination record for a student
+    @Operation(
+        summary = "Create student vaccination record",
+        description = "Create a new vaccination record for a student. Requires nurse or admin role."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Successfully created vaccination record",
+                    content = @Content(schema = @Schema(implementation = StudentVaccinationDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request data"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Authentication required"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient privileges")
+    })
     @PostMapping
     @PreAuthorize("hasAnyRole('SCHOOLNURSE', 'ADMIN')") // Corrected role names
-    public ResponseEntity<StudentVaccinationDTO> createStudentVaccination(@RequestBody StudentVaccinationRequestDTO requestDTO) {
+    public ResponseEntity<StudentVaccinationDTO> createStudentVaccination(
+            @Parameter(description = "Student vaccination details", required = true)
+            @RequestBody StudentVaccinationRequestDTO requestDTO) {
         StudentVaccinationDTO createdVaccination = studentVaccinationService.createStudentVaccination(requestDTO);
         return new ResponseEntity<>(createdVaccination, HttpStatus.CREATED);
     }
