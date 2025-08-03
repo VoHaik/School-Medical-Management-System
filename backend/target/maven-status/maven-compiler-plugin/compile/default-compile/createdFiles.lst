@@ -14,6 +14,7 @@ com\swp391_8\schoolhealth\dto\EmergencyContactDTO.class
 com\swp391_8\schoolhealth\config\JpaConfig.class
 com\swp391_8\schoolhealth\service\VaccinationConsentService.class
 com\swp391_8\schoolhealth\model\VaccinationConsent$ConsentStatus.class
+com\swp391_8\schoolhealth\dto\LoginRequestSchema.class
 com\swp391_8\schoolhealth\controller\StudentProfileController.class
 com\swp391_8\schoolhealth\exception\InvalidOperationException.class
 com\swp391_8\schoolhealth\model\HealthDeclarationMedication.class

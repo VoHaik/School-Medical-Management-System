@@ -1,77 +1,38 @@
 package com.swp391_8.schoolhealth.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
 
-@Schema(description = "Standard error response format")
-public class ErrorResponseSchema {
+@Schema(description = "Request body for user login")
+public class LoginRequestSchema {
     
-    @Schema(description = "Error code", example = "VALIDATION_ERROR")
-    private String code;
+    @Schema(description = "Username or email", example = "admin@school.com", required = true)
+    private String username;
     
-    @Schema(description = "Human readable error message", example = "Invalid username or password")
-    private String message;
-    
-    @Schema(description = "Timestamp when error occurred", example = "2024-01-15T10:30:00Z")
-    private LocalDateTime timestamp;
-    
-    @Schema(description = "HTTP status code", example = "400")
-    private int status;
-    
-    @Schema(description = "Request path that caused the error", example = "/api/auth/signin")
-    private String path;
+    @Schema(description = "User password", example = "password123", required = true)
+    private String password;
     
     // Constructors
-    public ErrorResponseSchema() {
-        this.timestamp = LocalDateTime.now();
-    }
+    public LoginRequestSchema() {}
     
-    public ErrorResponseSchema(String code, String message, int status, String path) {
-        this.code = code;
-        this.message = message;
-        this.status = status;
-        this.path = path;
-        this.timestamp = LocalDateTime.now();
+    public LoginRequestSchema(String username, String password) {
+        this.username = username;
+        this.password = password;
     }
     
     // Getters and setters
-    public String getCode() {
-        return code;
+    public String getUsername() {
+        return username;
     }
     
-    public void setCode(String code) {
-        this.code = code;
+    public void setUsername(String username) {
+        this.username = username;
     }
     
-    public String getMessage() {
-        return message;
+    public String getPassword() {
+        return password;
     }
     
-    public void setMessage(String message) {
-        this.message = message;
-    }
-    
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-    
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
-    
-    public int getStatus() {
-        return status;
-    }
-    
-    public void setStatus(int status) {
-        this.status = status;
-    }
-    
-    public String getPath() {
-        return path;
-    }
-    
-    public void setPath(String path) {
-        this.path = path;
+    public void setPassword(String password) {
+        this.password = password;
     }
 }
