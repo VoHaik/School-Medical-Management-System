@@ -477,7 +477,7 @@ const CheckupInformation = () => {
                 {students.map((student) => (
                   <MenuItem key={student.studentCode} value={student.studentCode}>
                     <Typography variant="body1" className="font-semibold text-gray-800">
-                      {student.fullName}
+                      {student.fullName} ({student.studentCode})
                     </Typography>
                   </MenuItem>
                 ))}

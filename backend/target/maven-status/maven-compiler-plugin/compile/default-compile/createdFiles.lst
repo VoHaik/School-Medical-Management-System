@@ -44,7 +44,6 @@ com\swp391_8\schoolhealth\model\HealthEventType.class
 com\swp391_8\schoolhealth\config\WebConfig.class
 com\swp391_8\schoolhealth\dto\StudentHealthCheckupRequestDTO.class
 com\swp391_8\schoolhealth\service\VaccineService.class
-com\swp391_8\schoolhealth\config\CorsFilter.class
 com\swp391_8\schoolhealth\repository\NurseRepository.class
 com\swp391_8\schoolhealth\repository\ParentStudentRelationshipRepository.class
 com\swp391_8\schoolhealth\config\EncodingConfig.class

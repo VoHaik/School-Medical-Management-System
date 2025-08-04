@@ -147,6 +147,7 @@ const HealthCheckupEventStudentManagement = () => {
             <TableHead>
               <TableRow>
                 <TableCell>Student Name</TableCell>
+                <TableCell>Student Code</TableCell>
                 <TableCell>Height</TableCell>
                 <TableCell>Weight</TableCell>
                 <TableCell>Vision</TableCell>
@@ -158,6 +159,7 @@ const HealthCheckupEventStudentManagement = () => {
               {studentCheckups.map((checkup) => (
                 <TableRow key={checkup.checkupId}>
                   <TableCell>{checkup.student?.firstName} {checkup.student?.lastName}</TableCell>
+                  <TableCell>{checkup.student?.studentCode || 'N/A'}</TableCell>
                   <TableCell>{checkup.height || 'N/A'}</TableCell>
                   <TableCell>{checkup.weight || 'N/A'}</TableCell>
                   <TableCell>{checkup.vision || 'N/A'}</TableCell>
@@ -186,7 +188,8 @@ const HealthCheckupEventStudentManagement = () => {
             <TableHead>
               <TableRow>
                 <TableCell>Student Name</TableCell>
-                <TableCell>Class</TableCell> {/* Assuming student object has class info */}
+                <TableCell>Student Code</TableCell>
+                <TableCell>Class</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -194,7 +197,8 @@ const HealthCheckupEventStudentManagement = () => {
               {studentsNotYetInCheckup.map((student) => (
                 <TableRow key={student.userId}>
                   <TableCell>{student.firstName} {student.lastName}</TableCell>
-                  <TableCell>{student.clazz?.name || 'N/A'}</TableCell> {/* Adjust based on actual student object structure */}
+                  <TableCell>{student.studentCode || 'N/A'}</TableCell>
+                  <TableCell>{student.clazz?.name || 'N/A'}</TableCell>
                   <TableCell>
                     <Button 
                       variant="outlined" 

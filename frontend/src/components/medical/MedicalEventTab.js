@@ -318,7 +318,9 @@ function MedicalEventTab() {  // State variables
                 medicalEvents.map((event) => (
                   <TableRow key={event.id}>
                     <TableCell>{event.id}</TableCell>
-                    <TableCell>{event.studentCode}</TableCell>
+                    <TableCell>
+                      {students.find(s => s.studentCode === event.studentCode)?.fullName || 'Unknown Student'} ({event.studentCode})
+                    </TableCell>
                     <TableCell>{event.eventType}</TableCell>
                     <TableCell>
                       <Chip 
@@ -394,7 +396,7 @@ function MedicalEventTab() {  // State variables
                       >
                         {students.map((student) => (
                           <MenuItem key={student.studentCode} value={student.studentCode}>
-                            {student.studentCode} - {student.firstName} {student.lastName}
+                            {student.fullName || `${student.firstName} ${student.lastName}` || 'Unknown Student'} ({student.studentCode})
                           </MenuItem>
                         ))}
                       </Select>

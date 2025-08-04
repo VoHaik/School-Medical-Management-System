@@ -59,7 +59,7 @@ const MedicationItem = ({ request, onCancelRequest }) => {
           secondary={
             <>
               <Typography component="div" variant="body2" color="text.primary">
-                Student: <Chip label={request.studentName || request.studentCode || 'N/A'} size="small" icon={<PersonIcon />} sx={{mr:1}}/>
+                Student: <Chip label={`${request.studentName || 'N/A'}${request.studentCode ? ` (${request.studentCode})` : ''}`} size="small" icon={<PersonIcon />} sx={{mr:1}}/>
                 Status: <Chip label={request.status || 'N/A'} size="small" color={getChipColor(request.status)} />
               </Typography>
               <Typography component="div" variant="body2" color="text.secondary" sx={{mt: 0.5}}>

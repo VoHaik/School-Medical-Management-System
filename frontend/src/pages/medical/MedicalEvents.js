@@ -724,11 +724,11 @@ const MedicalEvents = () => {
                     <tr key={event.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          {event.studentCode} {/* Display student code */}
+                          {students.find(s => s.studentCode === event.studentCode)?.fullName || 'Unknown Student'} ({event.studentCode})
                         </div>
-                        {/* Student's full name and class are not directly in event DTO */}
-                        {/* To display them, you might need to find the student in the `students` array */}
-                        {/* Example: students.find(s => s.studentCode === event.studentCode)?.fullName */}
+                        <div className="text-sm text-gray-500">
+                          {students.find(s => s.studentCode === event.studentCode)?.className || ''}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900 capitalize">

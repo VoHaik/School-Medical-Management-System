@@ -414,7 +414,7 @@ function NurseDashboard() {
                           <PendingIcon color="primary" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={`${request.studentFullName || request.studentName || 'Student'}`}
+                          primary={`${request.studentFullName || request.studentName || 'Student'} (${request.studentCode || 'N/A'})`}
                           secondary={`${request.medicationName} - ${request.dosage || ''}`}
                         />
                         <Chip

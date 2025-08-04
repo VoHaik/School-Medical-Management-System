@@ -529,7 +529,7 @@ const ParentDashboard = () => {
               </MenuItem>
               {dashboardData.children.map((child) => (
                 <MenuItem key={child.studentCode} value={child.studentCode}>
-                  {child.fullName}
+                  {child.fullName} ({child.studentCode})
                 </MenuItem>
               ))}
             </Select>

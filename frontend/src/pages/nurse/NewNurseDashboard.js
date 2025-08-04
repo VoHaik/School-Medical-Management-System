@@ -486,7 +486,7 @@ function NurseDashboard() {
                   <TableBody>
                     {dashboardData.recentMedicationRequests.map((request, index) => (
                       <TableRow key={index}>
-                        <TableCell>{request.studentName || `Student ${index + 1}`}</TableCell>
+                        <TableCell>{(request.studentName || `Student ${index + 1}`) + (request.studentCode ? ` (${request.studentCode})` : '')}</TableCell>
                         <TableCell>{request.medicationName || 'Paracetamol'}</TableCell>
                         <TableCell>
                           <Chip size="small" label="Pending" color="warning" />
@@ -528,7 +528,7 @@ function NurseDashboard() {
                   <TableBody>
                     {dashboardData.pendingHealthDeclarations.map((declaration, index) => (
                       <TableRow key={index}>
-                        <TableCell>{declaration.studentName || `Student ${index + 1}`}</TableCell>
+                        <TableCell>{(declaration.studentName || `Student ${index + 1}`) + (declaration.studentCode ? ` (${declaration.studentCode})` : '')}</TableCell>
                         <TableCell>Today</TableCell>
                         <TableCell>
                           <Chip 

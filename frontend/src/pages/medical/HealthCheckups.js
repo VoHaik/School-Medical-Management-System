@@ -516,7 +516,7 @@ const HealthCheckups = () => {
                                   </MenuItem>
                                   {students.map((student) => (
                                     <MenuItem key={student.studentCode} value={student.studentCode}>
-                                      {student.fullName} - {student.className}
+                                      {student.fullName} ({student.studentCode}) - {student.className}
                                     </MenuItem>
                                   ))}
                                 </Select>

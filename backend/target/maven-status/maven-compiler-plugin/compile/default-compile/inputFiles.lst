@@ -90,7 +90,6 @@ C:\Users\Khai\Documents\GitHub\School-Medical-Management-System-FFinal\School-Me
 C:\Users\Khai\Documents\GitHub\School-Medical-Management-System-FFinal\School-Medical-Management-System-FFinal\backend\src\main\java\com\swp391_8\schoolhealth\controller\NurseController.java
 C:\Users\Khai\Documents\GitHub\School-Medical-Management-System-FFinal\School-Medical-Management-System-FFinal\backend\src\main\java\com\swp391_8\schoolhealth\exception\InvalidOperationException.java
 C:\Users\Khai\Documents\GitHub\School-Medical-Management-System-FFinal\School-Medical-Management-System-FFinal\backend\src\main\java\com\swp391_8\schoolhealth\config\JacksonConfig.java
-C:\Users\Khai\Documents\GitHub\School-Medical-Management-System-FFinal\School-Medical-Management-System-FFinal\backend\src\main\java\com\swp391_8\schoolhealth\config\CorsFilter.java
 C:\Users\Khai\Documents\GitHub\School-Medical-Management-System-FFinal\School-Medical-Management-System-FFinal\backend\src\main\java\com\swp391_8\schoolhealth\controller\VaccinationConsentController.java
 C:\Users\Khai\Documents\GitHub\School-Medical-Management-System-FFinal\School-Medical-Management-System-FFinal\backend\src\main\java\com\swp391_8\schoolhealth\dto\DeclaredVaccinationRecordDTO.java
 C:\Users\Khai\Documents\GitHub\School-Medical-Management-System-FFinal\School-Medical-Management-System-FFinal\backend\src\main\java\com\swp391_8\schoolhealth\controller\VaccinationEventController.java
