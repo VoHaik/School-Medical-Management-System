@@ -200,7 +200,7 @@ const StudentDashboard = () => {
 
     fetchStudentData();
   }, [currentUser]);
-
+// loading ui when load data
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -210,7 +210,7 @@ const StudentDashboard = () => {
       </Container>
     );
   }
-
+// error ui when error
   if (error) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -223,6 +223,7 @@ const StudentDashboard = () => {
       </Container>
     );
   }
+// no data ui when no data
 
   if (!studentData) {
     return (
@@ -233,7 +234,7 @@ const StudentDashboard = () => {
       </Container>
     );
   }
-
+ // Main interface Student health Dashboard (admin viewing, tracking, analysis) 
   return (
     <Box
       sx={{
