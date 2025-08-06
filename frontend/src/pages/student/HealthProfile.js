@@ -160,7 +160,7 @@ const healthData = {
     }
   ]
 };
-
+  //Component TabPanel: displays the content of each tab
 function TabPanel({ children, value, index, ...other }) {
   return (
     <div
@@ -174,22 +174,23 @@ function TabPanel({ children, value, index, ...other }) {
     </div>
   );
 }
-
+  //State management tab, profile update dialog
 const HealthProfile = () => {
   const [tabValue, setTabValue] = useState(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  //Handles tab switching
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
-
+  //BMI Index Assessment
   const getBMIStatus = (bmi) => {
     if (bmi < 5) return { status: 'Underweight', color: 'warning' };
     if (bmi < 85) return { status: 'Normal', color: 'success' };
     if (bmi < 95) return { status: 'Overweight', color: 'warning' };
     return { status: 'Obese', color: 'error' };
   };
-
+  //Blood draw to measure severity
   const getSeverityColor = (severity) => {
     switch (severity.toLowerCase()) {
       case 'severe': return 'error';
@@ -243,6 +244,7 @@ const HealthProfile = () => {
                   </Typography>
                 </Grid>
               </Grid>
+             {/* Chip height, weight, BMI */}
               <Box className="mt-3 flex gap-2">
                 <Chip 
                   icon={<HeightIcon />}
@@ -266,6 +268,7 @@ const HealthProfile = () => {
             </Grid>
             <Grid item>
               <Box className="flex flex-col gap-2">
+              {/* Update and print profile button */}
                 <Button
                   variant="outlined"
                   startIcon={<EditIcon />}
@@ -284,7 +287,7 @@ const HealthProfile = () => {
           </Grid>
         </CardContent>
       </Card>
-
+  {/* Card containing health information tabs */}
       <Card>
         <CardContent>
           <Tabs value={tabValue} onChange={handleTabChange} aria-label="health profile tabs">
