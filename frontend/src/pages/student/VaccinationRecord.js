@@ -217,12 +217,12 @@ const VaccinationRecord = () => {
         return <Info />;
     }
   };
-
+  //Calculate the number of days due for injection
   const getDaysUntilDue = (dueDate) => {
     if (!dueDate) return null;
     return differenceInDays(parseISO(dueDate), new Date());
   };
-
+// Process to view vaccine details
   const handleViewDetails = (vaccine) => {
     setSelectedVaccine(vaccine);
     setDetailsOpen(true);
